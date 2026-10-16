@@ -20,6 +20,7 @@ export function OptionsTabContent({
   toggleOptSort,
   expandedGroups,
   toggleGroup,
+  ibNetForGroup,
   ...cbs
 }: {
   optSubTab: OptSubTab
@@ -31,6 +32,8 @@ export function OptionsTabContent({
   toggleOptSort: (col: OptSortCol) => void
   expandedGroups: Set<string>
   toggleGroup: (k: string) => void
+  /** IB's live position for an open group's contract and accounts; null = no snapshot. */
+  ibNetForGroup?: (g: OptExecutionGroup) => number | null
 } & OptGroupCallbacks) {
   const expandedDetailKeys = useMemo(() => [...expandedGroups], [expandedGroups])
 
@@ -86,6 +89,7 @@ export function OptionsTabContent({
       expandedDetailKeys={expandedDetailKeys}
       toggleDetailExpand={toggleGroup}
       linkByOptionId={linkByOptionId}
+      ibNetForGroup={ibNetForGroup}
       {...cbs}
     />
   )

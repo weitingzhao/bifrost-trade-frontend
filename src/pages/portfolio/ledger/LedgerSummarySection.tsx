@@ -39,6 +39,8 @@ type Props = {
   undatedNote: string
   onExplain: (kind: LedgerMetricExplainKind, id: string) => void
   onShowUndated: () => void
+  /** TWS fills Flex has not confirmed (in scope): listed, never added to these totals. */
+  pendingFills?: Execution[]
 }
 
 function MetricTrigger({
@@ -76,10 +78,21 @@ export function LedgerSummarySection({
   stkTotals,
   undatedCount,
   undatedNote,
+  pendingFills = [],
   onExplain,
   onShowUndated,
 }: Props) {
   const showOptions = activeTab === 'options' || activeTab === 'strategy' || activeTab === 'instance'
+  // The option figures come from Flex-confirmed groups only, so a pending option fill is listed
+  // here and kept out of them. (The share figures read every fill, TWS included.)
+  const pendingOpt = useMemo(
+    () => pendingFills.filter(e => (e.sec_type ?? '').toUpperCase() === 'OPT'),
+    [pendingFills],
+  )
+  const pendingOptRealized = useMemo(
+    () => pendingOpt.reduce((sum, e) => sum + (Number(e.realized_pnl) || 0), 0),
+    [pendingOpt],
+  )
   const showStocks = isSharesTab(activeTab)
 
   const optionSummaryRows = useMemo(
@@ -231,6 +244,20 @@ export function LedgerSummarySection({
           <span className="min-w-0 flex-1 text-dense-meta text-muted-foreground text-pretty">{undatedNote}</span>
           <span className="text-dense-meta text-link">show them →</span>
         </button>
+      ) : null}
+
+      {showOptions && pendingOpt.length > 0 ? (
+        <p
+          className="mt-2 flex w-full flex-wrap items-center gap-1.5 border-0 border-t border-border px-0 pt-2 text-left"
+          title="TWS fills Flex has not confirmed yet. Flex replaces them the next morning; until then IB's own realized figure is shown, not added."
+        >
+          <span className="size-2 shrink-0 rounded-full bg-warning" />
+          <span className="min-w-0 flex-1 text-dense-meta text-muted-foreground text-pretty">
+            Pending: {pendingOpt.length} option {pendingOpt.length === 1 ? 'fill' : 'fills'} from TWS not yet in
+            Flex — counted in the open positions&apos; net quantity, not in these totals · IB-reported realized{' '}
+            <span className={pnlClass(pendingOptRealized)}>{fmtCcy(pendingOptRealized)}</span>
+          </span>
+        </p>
       ) : null}
     </section>
   )

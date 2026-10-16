@@ -8,7 +8,7 @@ import { fmtIsoDateToken } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { useOpportunities } from '@/hooks/useStrategies'
-import { useLedgerExecutions, useLedgerExecutionsBook } from '@/hooks/useLedgerExecutions'
+import { useLedgerExecutions, useLedgerExecutionsBook, useLedgerExecutionsPending } from '@/hooks/useLedgerExecutions'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { useLedgerUiSync } from '@/pages/portfolio/ledger/useLedgerUiSync'
 import { useTradeLedgerModel } from '@/pages/portfolio/ledger/useTradeLedgerModel'
@@ -89,6 +89,9 @@ export default function TradeLedgerPage() {
 
   const { data: canonData, isLoading: canonLoading, isError: canonError, refetch: refetchCanon } = useLedgerExecutions({ limit: 0, enabled: true })
   const { data: bookData, isLoading: bookLoading, isError: bookError, refetch: refetchBook } = useLedgerExecutionsBook({ limit: 0, enabled: true })
+  // TWS fills Flex has not confirmed: they join the open positions' net quantity only. Not part of
+  // isLoading: the page reads fine without them, and a failed read only leaves them out.
+  const { data: pendingData } = useLedgerExecutionsPending({ limit: 0, enabled: true })
   const isLoading = canonLoading || bookLoading
 
   // ── Core filters ────────────────────────────────────────────────────────
@@ -249,6 +252,8 @@ export default function TradeLedgerPage() {
     filteredClosedOptGroups,
     sortedOpenOptGroups,
     allOrphanGroups,
+    pendingInScope,
+    ibNetForGroup,
     strategyOpportunityGroups,
     filteredStrategyOpportunityGroups,
     strategyPanelOptionRights,
@@ -280,6 +285,7 @@ export default function TradeLedgerPage() {
     status,
     canonData,
     bookData,
+    pendingData,
     oppData,
     sincePreset,
     tradeDay,
@@ -641,6 +647,7 @@ export default function TradeLedgerPage() {
             undatedNote={undatedNote}
             onExplain={openExplain}
             onShowUndated={() => setInspector({ type: 'reconcile', focus: 'undated' })}
+            pendingFills={pendingInScope}
           />
         )}
 
@@ -665,6 +672,7 @@ export default function TradeLedgerPage() {
             closedGroups={filteredClosedOptGroups}
             openActiveGroups={sortedOpenOptGroups.filter(g => !isOptionExpired(g.expiry))}
             openExpiredGroups={sortedOpenOptGroups.filter(g => isOptionExpired(g.expiry))}
+            ibNetForGroup={ibNetForGroup}
             linkByOptionId={linkByOptionId}
             optSort={optSort}
             toggleOptSort={toggleOptSort}

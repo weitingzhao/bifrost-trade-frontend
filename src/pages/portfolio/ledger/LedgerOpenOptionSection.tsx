@@ -39,6 +39,7 @@ import {
 import {
   denseTable,
   DenseDataTable,
+  DenseTag,
   DenseTableBody,
   DenseTableCell,
   DenseTableHead,
@@ -62,13 +63,38 @@ function tradesSummary(g: OptExecutionGroup): string {
       const q = ex.quantity != null ? Math.abs(Number(ex.quantity)) : NaN
       const p = ex.price != null ? Number(ex.price) : NaN
       const idLabel = ex.account_executions_id != null ? `#${ex.account_executions_id}` : 'id?'
+      const pendingMark = ex.pending ? ' pending' : ''
       const parts: string[] = [sideLabel(ex)]
       if (Number.isFinite(q)) parts.push(String(q))
       if (Number.isFinite(p)) parts.push(`@${p}`)
-      parts.push(`(${idLabel})`)
+      parts.push(`(${idLabel}${pendingMark})`)
       return parts.join(' ')
     })
     .join('; ')
+}
+
+const PENDING_TITLE =
+  'TWS fills Flex has not confirmed yet. They count in the net quantity, so it follows IB intraday, and not in the Summary; Flex replaces them the next morning.'
+
+/** The net quantity, and IB's live position beside it: a check when they agree, IB's figure when not. */
+function OpenNetQty({ net, ib }: { net: number; ib: number | null | undefined }) {
+  if (ib == null) return <>{net}</>
+  const same = Math.abs(net - ib) < 1e-9
+  return (
+    <span className="inline-flex items-baseline justify-end gap-1.5">
+      <span>{net}</span>
+      <span
+        className={cn('text-dense-meta font-normal', same ? 'text-success' : 'text-warning')}
+        title={
+          same
+            ? "Matches IB's live position (account snapshot)"
+            : `IB's live position is ${ib}: a fill is missing here, or IB has not reported it yet`
+        }
+      >
+        {same ? '✓ IB' : `IB ${ib}`}
+      </span>
+    </span>
+  )
 }
 
 function OpenGroupTable({
@@ -79,6 +105,7 @@ function OpenGroupTable({
   onExpiredClose,
   linkByOptionId,
   onViewLinks,
+  ibNetForGroup,
 }: {
   groups: OptExecutionGroup[]
   expandedDetailKeys: string[]
@@ -87,6 +114,7 @@ function OpenGroupTable({
   onExpiredClose?: (group: OptExecutionGroup) => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
   onViewLinks?: OptGroupCallbacks['onViewLinks']
+  ibNetForGroup?: (g: OptExecutionGroup) => number | null
 }) {
   return (
     <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={openOptTableClass}>
@@ -116,6 +144,7 @@ function OpenGroupTable({
           const uniqueSources = Array.from(
             new Set((g.trades ?? []).map(ex => (ex.source ?? '').trim()).filter(Boolean)),
           )
+          const pendingCount = (g.trades ?? []).filter(ex => ex.pending).length
           return (
             <DenseTableRow
               key={groupKey}
@@ -153,12 +182,19 @@ function OpenGroupTable({
                 {fmtExpiryOccToken(g.expiry)}
               </DenseTableCell>
               <DenseTableCell className={openOptNumCell}>{fmtUsd(g.strike)}</DenseTableCell>
-              <DenseTableCell className={cn(openOptNumCell, 'font-semibold')}>{g.net_qty}</DenseTableCell>
+              <DenseTableCell className={cn(openOptNumCell, 'font-semibold')}>
+                <OpenNetQty net={g.net_qty} ib={ibNetForGroup?.(g)} />
+              </DenseTableCell>
               <DenseTableCell className={openOptTradesCell}>{tradesSummary(g) || '—'}</DenseTableCell>
               <DenseTableCell className={openOptMetaCell}>
                 {uniqueSources.length > 0
                   ? uniqueSources.map(s => <ExecSourceBadge key={s} source={s} />)
                   : '—'}
+                {pendingCount > 0 && (
+                  <DenseTag variant="warning" size="cell" className="ml-1 whitespace-nowrap" title={PENDING_TITLE}>
+                    {pendingCount} pending
+                  </DenseTag>
+                )}
               </DenseTableCell>
               {showExpiredClose && (
                 <DenseTableCell className={openOptNumCell}>
@@ -196,6 +232,7 @@ type Props = {
   expandedDetailKeys: string[]
   toggleDetailExpand: (key: string) => void
   linkByOptionId: Record<number, OptionStockLinkSummary>
+  ibNetForGroup?: (g: OptExecutionGroup) => number | null
 } & OptGroupCallbacks
 
 export function LedgerOpenOptionSection({
@@ -205,6 +242,7 @@ export function LedgerOpenOptionSection({
   expandedDetailKeys,
   toggleDetailExpand,
   linkByOptionId,
+  ibNetForGroup,
   onEdit,
   onDelete,
   onLinkStrategy,
@@ -227,7 +265,7 @@ export function LedgerOpenOptionSection({
           <LedgerPanelBar
             title="Open option"
             subject={`${openActiveGroups.length} ${openActiveGroups.length === 1 ? 'contract' : 'contracts'}`}
-            hint="net quantity not zero, expiry ahead · not in the Summary, which counts closed contracts only"
+            hint="net quantity not zero, expiry ahead · includes TWS fills not yet in Flex (pending) · not in the Summary, which counts closed contracts only"
           />
           <OpenGroupTable
             groups={openActiveGroups}
@@ -235,6 +273,7 @@ export function LedgerOpenOptionSection({
             toggleDetailExpand={toggleDetailExpand}
             linkByOptionId={linkByOptionId}
             onViewLinks={onViewLinks}
+            ibNetForGroup={ibNetForGroup}
           />
         </>
       )}
@@ -254,6 +293,7 @@ export function LedgerOpenOptionSection({
             onExpiredClose={onExpiredClose}
             linkByOptionId={linkByOptionId}
             onViewLinks={onViewLinks}
+            ibNetForGroup={ibNetForGroup}
           />
         </>
       )}
@@ -302,7 +342,10 @@ export function LedgerOpenOptionSection({
                 const { displayPnl } = ledgerOptDetailRowPnl(ex, linkByOptionId)
 
                 return (
-                  <DenseTableRow key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}>
+                  <DenseTableRow
+                    key={`${getOptGroupKey(g)}-${ti}-${ex.time ?? ti}`}
+                    className={ex.pending ? 'opacity-70' : undefined}
+                  >
                     <DenseTableCell className={closedOptDetailContractCell}>
                       <LedgerOptContractCell
                         group={g}
@@ -337,12 +380,19 @@ export function LedgerOpenOptionSection({
                     </DenseTableCell>
                     <DenseTableCell>
                       <ExecSourceBadge source={ex.source} />
+                      {ex.pending && (
+                        <DenseTag variant="warning" size="cell" className="ml-1 whitespace-nowrap" title={PENDING_TITLE}>
+                          pending
+                        </DenseTag>
+                      )}
                     </DenseTableCell>
                     <DenseTableCell>
                       <LedgerBookingTagForFill ex={ex} stockFills={stockFills} />
                     </DenseTableCell>
                     <DenseTableCell className={closedOptDetailActionsCell}>
-                      {ex.account_executions_id != null ? (
+                      {ex.pending ? (
+                        <span className={denseTable.mutedMeta} title="Actions open once Flex confirms this fill">—</span>
+                      ) : ex.account_executions_id != null ? (
                         <LedgerOptActionButtons
                           onEdit={onEdit ? () => onEdit(ex) : undefined}
                           onLink={

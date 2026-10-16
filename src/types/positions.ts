@@ -152,8 +152,12 @@ export interface PositionAttributionResponse {
 
 export type { FillSplit }
 
-/** One execution row as the API sends it — see `ExecutionRowSchema` for the wire rules. */
-export type Execution = ExecutionRow
+/**
+ * One execution row as the API sends it — see `ExecutionRowSchema` for the wire rules — plus
+ * `pending`, set by the Ledger (never the API) on a TWS fill Flex has not confirmed yet
+ * (`utils/ledger/pendingFills`).
+ */
+export type Execution = ExecutionRow & { pending?: boolean }
 
 export interface ExecutionsResponse {
   items: Execution[]

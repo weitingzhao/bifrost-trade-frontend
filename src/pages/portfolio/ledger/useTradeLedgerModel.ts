@@ -42,11 +42,15 @@ import { isSharesTab } from '@/pages/portfolio/ledger/ledgerTypes'
 import { executionPassesLedgerFilters } from '@/pages/portfolio/ledger/ledgerFilterMatch'
 import { LEDGER_ROW_TYPE_TABS, countUnreportedTransactionType, type LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
 import { optGroupsForView } from './ledgerContractGroups'
+import { optIdentity, pendingTwsFills } from '@/utils/ledger/pendingFills'
+import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 
 export type TradeLedgerModelParams = {
   status: StatusResponse | null | undefined
   canonData: ExecutionsResponse | undefined
   bookData: ExecutionsResponse | undefined
+  /** `source_scope=on_the_fly`: TWS fills Flex has not confirmed (core 0.61.0). */
+  pendingData?: ExecutionsResponse | undefined
   oppData: { items?: StrategyOpportunity[] } | undefined
   sincePreset: LedgerSincePreset
   /** `?date=`: one trade date instead of the Since window. */
@@ -77,6 +81,7 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
     status,
     canonData,
     bookData,
+    pendingData,
     oppData,
     sincePreset,
     tradeDay,
@@ -230,7 +235,46 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   }, [bookFiltered, optGroups])
   const { data: linkByOptionId = {} } = useLedgerOptionStockLinks(optGroupFills)
   const closedOptGroups = useMemo(() => optGroups.filter(g => g.status === 'realized'), [optGroups])
-  const openOptGroups = useMemo(() => optGroups.filter(g => g.status === 'unrealized'), [optGroups])
+  // TWS fills Flex has not confirmed (core 0.61.0 on_the_fly, the same rule applied again here):
+  // they count in the open positions' net quantity, so it follows IB intraday, and nowhere else.
+  // The closed groups, the Summary and every other view stay on the Flex-confirmed book.
+  const pendingFills = useMemo(
+    () => pendingTwsFills(bookData?.items ?? [], pendingData?.items ?? []),
+    [bookData, pendingData],
+  )
+  const pendingInScope = useMemo(() => pendingFills.filter(contractFilterExec), [pendingFills, contractFilterExec])
+  const openSourceGroups = useMemo(() => {
+    if (pendingInScope.length === 0) return optGroups
+    const shown = new Set<Execution>([...bookFiltered, ...pendingInScope.filter(filterExec)])
+    return optGroupsForView([...(bookData?.items ?? []), ...pendingFills], contractFilterExec, shown)
+  }, [optGroups, pendingInScope, pendingFills, bookData, bookFiltered, contractFilterExec, filterExec])
+  const openOptGroups = useMemo(() => openSourceGroups.filter(g => g.status === 'unrealized'), [openSourceGroups])
+
+  // IB's live option positions (the account snapshot), per account and contract, to check an open
+  // group's net quantity against: null when there is no snapshot to compare with.
+  const ibOptPositions = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const a of status?.portfolio?.accounts ?? []) {
+      for (const pos of a.positions ?? []) {
+        if ((pos.secType ?? '').toUpperCase() !== 'OPT') continue
+        const id = optIdentity(pos.symbol, pos.expiry ?? pos.lastTradeDateOrContractMonth, pos.strike, pos.right)
+        if (!id) continue
+        const key = `${a.account_id ?? pos.account ?? ''}|${id}`
+        m.set(key, (m.get(key) ?? 0) + Number(pos.position ?? 0))
+      }
+    }
+    return m
+  }, [status])
+  const hasIbSnapshot = (status?.portfolio?.accounts ?? []).length > 0
+  const ibNetForGroup = useCallback((g: OptExecutionGroup): number | null => {
+    if (!hasIbSnapshot) return null
+    const id = optIdentity(g.symbol, g.expiry, g.strike, g.option_right)
+    if (!id) return null
+    const accts = new Set((g.trades ?? []).map(t => (t.account_id ?? '').trim()).filter(Boolean))
+    let sum = 0
+    for (const a of accts) sum += ibOptPositions.get(`${a}|${id}`) ?? 0
+    return sum
+  }, [hasIbSnapshot, ibOptPositions])
 
   // Split open groups: active (not expired) and expired unrealized
   const activeOpenOptGroups = useMemo(() => openOptGroups.filter(g => !isOptionExpired(g.expiry)), [openOptGroups])
@@ -676,6 +720,8 @@ type InstGroupBase = typeof filteredTradeGroups[number]
     bookContractScope,
     closedOptGroups,
     openOptGroups,
+    pendingInScope,
+    ibNetForGroup,
     activeOpenOptGroups,
     expiredUnrealizedGroups,
     allOrphanGroups,

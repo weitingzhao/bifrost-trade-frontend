@@ -15,6 +15,29 @@ describe('stkContractKey', () => {
   it('trims and uppercases symbol', () => {
     expect(stkContractKey(' nvda ', ' U123 ')).toBe('U123|NVDA|STK|||')
   })
+
+  it('does not throw on a missing account or symbol', () => {
+    expect(stkContractKey('nvda', null)).toBe('|NVDA|STK|||')
+    expect(stkContractKey(null, 'U123')).toBe('U123||STK|||')
+    expect(stkContractKey(undefined, undefined)).toBe('||STK|||')
+  })
+})
+
+describe('getStkLedgerBucketForExecution with a TWS fill that has no account (PROD 2026-10-15)', () => {
+  // The daemon stored fills with NULL account_id / contract_key before core 0.60.1; one such
+  // stock row made the whole Ledger fail to render ("Cannot read properties of null (reading 'trim')").
+  const keyless = {
+    account_executions_id: -6201,
+    sec_type: 'STK',
+    symbol: 'ZZQ',
+    side: 'SLD',
+    account_id: null,
+    contract_key: null,
+  } as unknown as Execution
+
+  it('buckets it instead of throwing', () => {
+    expect(getStkLedgerBucketForExecution(keyless, new Map())).toBe('stocks')
+  })
 })
 
 describe('buildPositionCategoryByAccountContract', () => {

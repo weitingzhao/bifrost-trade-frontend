@@ -4,8 +4,12 @@ import type { Execution } from '@/types/positions'
 export type StkLedgerBucket = 'stocks' | 'fixed_income' | 'cash_like'
 export type PerformanceCalendarAssetTab = 'options' | StkLedgerBucket
 
-export function stkContractKey(symbol: string, accountId: string): string {
-  return `${accountId.trim()}|${symbol.trim().toUpperCase()}|STK|||`
+/**
+ * Null-safe: a TWS fill the daemon stored before core 0.60.1 has no account_id (PROD 2026-10-15),
+ * and one such row made the whole Ledger fail to render.
+ */
+export function stkContractKey(symbol: string | null | undefined, accountId: string | null | undefined): string {
+  return `${(accountId ?? '').trim()}|${(symbol ?? '').trim().toUpperCase()}|STK|||`
 }
 
 export function buildPositionCategoryByAccountContract(

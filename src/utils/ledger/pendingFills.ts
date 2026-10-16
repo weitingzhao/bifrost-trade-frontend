@@ -15,6 +15,10 @@ import type { Execution } from '@/types/positions'
  * (`AMD  261120C…`), and grouping by the raw key would split one contract into two rows.
  */
 
+/** What a "pending" tag says on hover, wherever the Ledger shows one. */
+export const LEDGER_PENDING_TITLE =
+  'TWS fills Flex has not confirmed yet. Listed, and counted in positions so they follow IB intraday; not in the Summary. Flex replaces them the next morning.'
+
 /** symbol root | expiry digits | strike | C/P; null when a part is missing. */
 export function optIdentity(
   symbol: string | null | undefined,

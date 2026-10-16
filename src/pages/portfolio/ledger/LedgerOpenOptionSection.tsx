@@ -56,6 +56,7 @@ import { LedgerPanelBar } from './LedgerPanelBar'
 import { ledgerDetailsSubject } from './ledgerDetailsSubject'
 import { ledgerShell } from './ledgerShellUi'
 import { fillQtyShown } from '@/utils/fillQuantity'
+import { LEDGER_PENDING_TITLE } from '@/utils/ledger/pendingFills'
 
 function tradesSummary(g: OptExecutionGroup): string {
   return (g.trades ?? [])
@@ -73,8 +74,7 @@ function tradesSummary(g: OptExecutionGroup): string {
     .join('; ')
 }
 
-const PENDING_TITLE =
-  'TWS fills Flex has not confirmed yet. They count in the net quantity, so it follows IB intraday, and not in the Summary; Flex replaces them the next morning.'
+const PENDING_TITLE = LEDGER_PENDING_TITLE
 
 /** The net quantity, and IB's live position beside it: a check when they agree, IB's figure when not. */
 function OpenNetQty({ net, ib }: { net: number; ib: number | null | undefined }) {

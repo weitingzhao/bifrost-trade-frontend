@@ -43,6 +43,7 @@ import { executionPassesLedgerFilters } from '@/pages/portfolio/ledger/ledgerFil
 import { LEDGER_ROW_TYPE_TABS, countUnreportedTransactionType, type LedgerRowType } from '@/pages/portfolio/ledger/ledgerRowType'
 import { optGroupsForView } from './ledgerContractGroups'
 import { optIdentity, pendingTwsFills } from '@/utils/ledger/pendingFills'
+import { buildStkTotals } from '@/utils/ledger/stkTotals'
 import type { OptExecutionGroup } from '@/utils/ledger/optExecutionGroups'
 
 export type TradeLedgerModelParams = {
@@ -308,15 +309,24 @@ export function useTradeLedgerModel(p: TradeLedgerModelParams) {
   }, [allOrphanGroups, optSort, optRightFilter])
 
   // ── STK buckets ──────────────────────────────────────────────────────────
+  // The share fills are the Flex-confirmed book plus the pending TWS fills, the same rule as the
+  // options: not every fill (`all`), where a TWS row Flex holds under another exec_id would count
+  // twice. A pending fill is listed, tagged, and kept out of the Summary and the totals.
+  const stkSourceFills = useMemo(
+    () => [
+      ...bookFiltered.filter(e => e.sec_type === 'STK'),
+      ...pendingFills.filter(e => e.sec_type === 'STK').filter(filterExec),
+    ],
+    [bookFiltered, pendingFills, filterExec],
+  )
   const stkByBucket = useMemo(() => {
   const b: Record<StkLedgerBucket, Execution[]> = { stocks: [], fixed_income: [], cash_like: [] }
-  for (const e of canonFiltered) {
-    if (e.sec_type !== 'STK') continue
+  for (const e of stkSourceFills) {
     const bucket = getStkLedgerBucketForExecution(e, catMap)
     if (bucket) b[bucket].push(e)
   }
   return b
-  }, [canonFiltered, catMap])
+  }, [stkSourceFills, catMap])
 
   const comboExecs = useMemo(
     () => canonFiltered.filter(e => (e.sec_type ?? '').toUpperCase() === 'BAG'),
@@ -650,7 +660,7 @@ type InstGroupBase = typeof filteredTradeGroups[number]
   )
 
   const stocksSummaryByMonth = useMemo(() => {
-  return buildStocksSummaryByMonth(stkExecsSorted)
+  return buildStocksSummaryByMonth(stkExecsSorted.filter(e => !e.pending))
   }, [stkExecsSorted])
 
   const closedOptGroupsPnlSum = useMemo(
@@ -670,34 +680,10 @@ type InstGroupBase = typeof filteredTradeGroups[number]
   return m
   }, [stkPositionSnapshotMap])
 
-  const stkTotals = useMemo(() => {
-  const execs = stkExecsForDisplay
-  let notional = 0
-  let realized = 0
-  for (const e of execs) {
-    notional += Math.abs(Number(e.quantity) || 0) * (Number(e.price) || 0)
-    realized += Number(e.realized_pnl) || 0
-  }
-  const seen = new Set<string>()
-  let unrealized: number | null = 0
-  let anyU = false
-  for (const e of execs) {
-    const ck = e.contract_key?.trim() ?? `${e.symbol.toUpperCase()}|STK|||`
-    const key = `${e.account_id}|${ck}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    if (!stkUnrealizedByKey.has(key)) continue
-    anyU = true
-    const u = stkUnrealizedByKey.get(key)
-    if (u != null && Number.isFinite(u)) unrealized = (unrealized ?? 0) + u
-  }
-  return {
-    count: execs.length,
-    notional,
-    realized,
-    unrealized: anyU ? unrealized : null,
-  }
-  }, [stkExecsForDisplay, stkUnrealizedByKey])
+  const stkTotals = useMemo(
+    () => buildStkTotals(stkExecsForDisplay, stkUnrealizedByKey),
+    [stkExecsForDisplay, stkUnrealizedByKey],
+  )
 
   return {
     accountTabs,

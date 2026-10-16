@@ -8,6 +8,7 @@ import {
 } from '@/utils/ledger/stkDisplay'
 import { fmtUsd } from '@/lib/format'
 import { ExecSourceBadge } from './ExecSourceBadge'
+import { LEDGER_PENDING_TITLE } from '@/utils/ledger/pendingFills'
 import {
   LedgerStkGroupBasisPct,
   LedgerStkGroupPositionSnap,
@@ -75,6 +76,13 @@ function StkRowActions({
   onEdit: (e: Execution) => void
   onDelete: (e: Execution) => void
 }) {
+  if (ex.pending) {
+    return (
+      <DenseTableCell className={stkActionsCell} title="Actions open once Flex confirms this fill">
+        —
+      </DenseTableCell>
+    )
+  }
   if (ex.account_executions_id == null) {
     return <DenseTableCell>—</DenseTableCell>
   }
@@ -117,7 +125,7 @@ function StkFillRow({
       symbolMark
     )
   return (
-    <DenseTableRow>
+    <DenseTableRow className={ex.pending ? 'opacity-70' : undefined}>
       <LedgerStkTimeCells
         ex={ex}
         timeClassName={stkTimeCell}
@@ -148,6 +156,11 @@ function StkFillRow({
       <DenseTableCell className={denseTableNumCell}>{fmtUsd(ex.commission ?? 0)}</DenseTableCell>
       <DenseTableCell className={stkMetaCell}>
         <ExecSourceBadge source={ex.source} />
+        {ex.pending && (
+          <DenseTag variant="warning" size="cell" className="ml-1 whitespace-nowrap" title={LEDGER_PENDING_TITLE}>
+            pending
+          </DenseTag>
+        )}
       </DenseTableCell>
       <StkRowActions ex={ex} onEdit={onEdit} onDelete={onDelete} />
     </DenseTableRow>

@@ -10,8 +10,13 @@
  * App-level until the DS takes `phoneDefaultOpen` / `padDefaultOpen` on
  * `SectionBand` itself (HANDOFF Rev .163, proposed for 0.14.0).
  */
-import { SectionBand, type SectionBandProps } from '@bifrost/ui'
+import type { ComponentProps } from 'react'
+import { SectionBand } from '@bifrost/ui'
 import { useDevice } from '@/lib/device'
+
+// Read off the component, not imported: @bifrost/ui 0.14.0 stopped exporting
+// the props types neither app imported.
+type SectionBandProps = ComponentProps<typeof SectionBand>
 
 export interface DeviceSectionBandProps extends SectionBandProps {
   /** The phone's default; the desk's (`defaultOpen`) when unset. */

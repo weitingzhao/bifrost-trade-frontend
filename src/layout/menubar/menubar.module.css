@@ -367,3 +367,11 @@ button.tile:active {
 .fs14 { font-size: 14px; }
 .fs16 { font-size: 16px; }
 .fs24 { font-size: 24px; }
+
+/* Rev .163 (契约 §18.4): on a phone the search field takes the row between
+   the leaf and the Lens — the collapse above would hold it to its glass. */
+:global(html[data-device='phone']) .omni {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 0;
+}

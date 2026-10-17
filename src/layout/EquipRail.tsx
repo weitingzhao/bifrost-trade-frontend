@@ -503,15 +503,18 @@ export function EquipRail() {
       // The dock keeps its own labels (Rev .68: the one tooltip skips it).
       data-no-tip=""
       data-vt="rail"
+      // Rev .163: the hook the iPad's step-aside reads (styles/device.css).
+      data-sr-dockbar=""
       className={css.rail}
       aria-label="Equipment"
       style={
         {
           // The bottom toolbar (design Rev .57–.60): floating over the page,
-          // centred in the content's lane, 12 off the bottom.
+          // centred in the content's lane, 12 off the bottom — and off the
+          // home indicator on an iPad (Rev .163; 0 on a desk).
           left: lane.left,
           right: lane.right,
-          bottom: 12,
+          bottom: 'calc(12px + var(--sr-safe-b))',
         } as CSSProperties
       }
     >

@@ -52,6 +52,8 @@ import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import { useStuckMarks } from '@bifrost/ui'
 import { X } from 'lucide-react'
+import { useDevice } from '@/lib/device'
+import { SheetGrip } from '@/components/ui/SheetGrip'
 
 /** The width grip's drag: the column follows the pointer, and is kept on release. */
 function resizeFrom(e: ReactPointerEvent<HTMLDivElement>): void {
@@ -144,6 +146,16 @@ export function EquipPanel() {
   const card = useRef<HTMLElement | null>(null)
   const wasOpen = useRef(false)
   const open = Boolean(panel)
+  // Rev .163 (契约 §18.5): on a phone the panel is a bottom sheet — no
+  // column, no width grip, no slide in from the edge.
+  const phone = useDevice().device === 'phone'
+  const [full, setFull] = useState(false)
+  // Opened again, it starts at the half detent, not where it was dragged.
+  const [wasShown, setWasShown] = useState(open)
+  if (open !== wasShown) {
+    setWasShown(open)
+    if (!open) setFull(false)
+  }
 
   useEffect(() => {
     const onResize = () => setViewport(window.innerWidth)
@@ -154,10 +166,10 @@ export function EquipPanel() {
   // The panel slides in from the edge when it opens — not when a tab is added
   // to one already open, which is the panel staying, not arriving.
   useLayoutEffect(() => {
-    registerSurfaceElement('panel', card.current)
-    if (open && !wasOpen.current && card.current) animatePanelIn(card.current)
+    registerSurfaceElement('panel', phone ? null : card.current)
+    if (open && !wasOpen.current && card.current && !phone) animatePanelIn(card.current)
     wasOpen.current = open
-  }, [open])
+  }, [open, phone])
 
   // Sticky heads, bars and wide boxes in every body mark themselves stuck
   // (@bifrost/ui 0.10.0, Rev .150–.153) — the panel's scrollers, not the page's.
@@ -172,7 +184,7 @@ export function EquipPanel() {
 
   const strip = stripFor(panel)
   const menuOpen = menuOver === panel.active && strip.over.length > 0
-  const pushes = sidePanelPushes(true, viewport - dock.width)
+  const pushes = !phone && sidePanelPushes(true, viewport - dock.width)
 
   return (
     <>
@@ -181,12 +193,14 @@ export function EquipPanel() {
       {pushes ? (
         <div className={css.spacer} style={{ width: panelW + 16 }} aria-hidden />
       ) : null}
+      {phone ? <div className={css.phoneScrim} aria-hidden onClick={() => dismissSurface(active.key)} /> : null}
       <aside
         ref={card}
-        className={`${css.card} ${css.panel}`}
+        className={`${css.card} ${phone ? css.phoneSheet : css.panel}`}
         data-glass-surface="surface"
         data-vt="panel"
-        style={{
+        data-sr-detent={phone && full ? 'full' : undefined}
+        style={phone ? { ['--rh' as string]: surfaceHue(active) } : {
           ['--rh' as string]: surfaceHue(active),
           // Pushed, the page has already stepped aside, so the card can take
           // the full height. Overlaying, it starts below the top bar — which
@@ -198,8 +212,10 @@ export function EquipPanel() {
         }}
         aria-label="Side panel"
       >
+        {phone ? <SheetGrip sheet={card} full={full} onDetent={setFull} onClose={() => dismissSurface(active.key)} /> : null}
         {/* Rev .72 §6: drag the left edge, 360–640; a double-click puts it back at 440. */}
         <div
+          data-sr-phone="hide"
           className={css.widthGrip}
           role="separator"
           aria-orientation="vertical"
@@ -284,6 +300,8 @@ export function EquipPanel() {
             // Frost (Rev .151–.152): a page tab sits on thick glass, a drawer-kind
             // tab (canPage:false — Loop Run, Thread) straight on the panel's.
             data-frost-host={t.canPage ? 'thick' : 'drawer'}
+            // A surface, not the page: the device hooks that narrow a page leave it alone (Rev .163).
+            data-sr-embed=""
             data-mat=""
             // The list grammar, as in the page lane (Rev .153–.154).
             data-sr-list=""

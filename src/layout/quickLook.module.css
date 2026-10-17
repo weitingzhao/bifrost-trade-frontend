@@ -74,3 +74,16 @@
     transition: none;
   }
 }
+
+/* Rev .163 (契约 §18.5): a phone's Quick Look is a half-height bottom sheet. */
+.card[data-phone] {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: var(--sr-sheet-half);
+  max-height: var(--sr-sheet-full);
+  padding-bottom: var(--sr-safe-b);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+}

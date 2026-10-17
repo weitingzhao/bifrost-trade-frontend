@@ -1,0 +1,321 @@
+/*
+ * The device tiers' page hooks (design Rev .163, DESIGN_CONTRACTS §18.3–§18.11).
+ *
+ * `lib/device.ts` writes `data-device` (phone | pad | desk), `data-touch`,
+ * `data-orient` and `data-pwa` on <html>. Pages only add the §18.7 attributes;
+ * nothing here, and nothing in a page, measures the width again.
+ *
+ * Imported after index.css and unlayered, so these rules outrank Tailwind's
+ * utilities (which sit in a layer) and the DS's unlayered materials (by
+ * specificity) without !important. The one exception is Radix's popper
+ * wrapper, whose position is an inline style; it is marked where it is.
+ */
+
+:root {
+  /* The four edges (§18.9). `lib/device.ts` overrides them inline for a ?sim=1 preview. */
+  --sr-safe-t: env(safe-area-inset-top, 0px);
+  --sr-safe-b: env(safe-area-inset-bottom, 0px);
+  --sr-safe-l: env(safe-area-inset-left, 0px);
+  --sr-safe-r: env(safe-area-inset-right, 0px);
+  /* The phone's tab bar and the sheet's two detents (§18.4, §18.5). */
+  --sr-tab-h: 49px;
+  --sr-sheet-half: 62dvh;
+  --sr-sheet-full: calc(100dvh - var(--sr-safe-t) - 10px);
+}
+
+/* ── Page hooks: phone (§18.2, §18.7) ───────────────────────────────────── */
+
+/* Builders and editors hide on a phone; read pages stay readable. Not inside
+   a surface (the panel, the float, Quick Look — `data-sr-embed`): those draw
+   the 440 face, which is already the narrow form (the registry's
+   `:not([data-embed])`). */
+html[data-device='phone'] :is([data-sr-build], [data-sr-phone='hide']):not([data-sr-embed] *) {
+  display: none;
+}
+
+html:not([data-device='phone']) [data-sr-phone='only'] {
+  display: none;
+}
+
+html[data-device='phone'] [data-sr-phone-grid='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+html[data-device='phone'] [data-sr-phone-stack] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+html[data-device='phone'] [data-sr-phone-stack] > * {
+  border-right: 0;
+}
+
+html[data-device='phone'] [data-sr-phone-scroll] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+html[data-device='phone'] [data-sr-phone-scroll] > * {
+  flex-shrink: 0;
+}
+
+/* A page head wraps its title and its controls rather than squeezing either. */
+html[data-device='phone'] [data-sr-pagehead] > div:first-child {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+/* Wide tables keep 2–3 columns (§18.6): `layout/phoneKeep.ts` writes the
+   per-value column rules; these are the parts every kept table shares. No
+   inner scroller (the lane scrolls), no totals row (it would re-open the
+   hidden columns — a total belongs in a KPI or the toolbar). */
+html[data-device='phone'] [data-sr-keep] :is(div, table) {
+  overflow: visible;
+}
+
+html[data-device='phone'] [data-sr-keep] table {
+  min-width: 0;
+  width: 100%;
+}
+
+html[data-device='phone'] [data-sr-keep] tfoot {
+  display: none;
+}
+
+/* ── Page hooks: pad (§18.11) ───────────────────────────────────────────── */
+
+html[data-device='pad'] [data-sr-pad='hide']:not([data-sr-embed] *) {
+  display: none;
+}
+
+html:not([data-device='pad']) [data-sr-pad='only'],
+html[data-device='pad'] [data-sr-embed] [data-sr-pad='only'] {
+  display: none;
+}
+
+html[data-device='pad'] [data-sr-pad-scroll] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+html[data-device='pad'] [data-sr-pad-scroll] > * {
+  flex-shrink: 0;
+}
+
+/* ── KPI heroes by tier (§16.2 narrow grammar, now keyed by the device) ─── */
+
+/* Phone: two to a line, the reading at 22, the sub line cut to one. */
+html[data-device='phone'] [data-sr-kpi='hero'] {
+  flex: 1 1 calc(50% - 5px);
+  min-width: 0;
+  padding: 9px 11px 10px;
+  gap: 3px;
+}
+
+html[data-device='phone'] [data-sr-kpi='hero'] [data-sr-kpi-v] {
+  font-size: 22px;
+}
+
+html[data-device='phone'] [data-sr-kpi='hero'] [data-sr-kpi-s] {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Pad: four in a row as on the desk, the reading at 22, the sub line at most two. */
+html[data-device='pad'] [data-sr-kpi='hero'] {
+  padding: 9px 11px 10px;
+  gap: 3px;
+}
+
+html[data-device='pad'] [data-sr-kpi='hero'] [data-sr-kpi-v] {
+  font-size: 22px;
+}
+
+html[data-device='pad'] [data-sr-kpi='hero'] [data-sr-kpi-s] {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Touch (§18.3): no hover-only affordances, no callouts ──────────────── */
+
+/* What only a hover reveals is always shown: the design's two hooks, and the
+   app's own `opacity-0 group-hover:opacity-100` idiom (Tailwind's hover
+   variant sits under `@media (hover: hover)`, so on glass it never fires). */
+html[data-touch='1'] :is([data-sr-reveal], .sr-quiet, .opacity-0.group-hover\:opacity-100) {
+  opacity: 1;
+}
+
+/* Keyboard hints name keys a phone or an iPad on its own does not have. */
+html[data-touch='1'] [data-sr-touch='hide'] {
+  display: none;
+}
+
+html[data-touch='1'] :is(button, a, [role='button'], [role='tab'], tr, [data-sr-row], label) {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* A long-press is the context menu (§18.3), not a text selection. */
+html[data-touch='1'] :is(tbody tr, [data-sr-row], button, [role='button'], a[href]) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── Floats on a phone (§18.5) ──────────────────────────────────────────── */
+
+@keyframes sr-sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes sr-sheet-out {
+  to {
+    translate: 0 100%;
+  }
+}
+
+/* A DS dialog is a bottom sheet: half the screen, or the whole of it for an
+   edit / create sheet (md, lg — opaque, DS 0.11.0's material rule). The
+   grip is drawn by `components/ui/dialog.tsx` while the device is a phone. */
+html[data-device='phone'] [data-slot='dialog-content']:not([data-spotlight]) {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  height: var(--sr-sheet-half);
+  max-height: var(--sr-sheet-full);
+  margin: 0;
+  translate: none;
+  transform: none;
+  border-radius: 16px 16px 0 0;
+  padding-top: 22px;
+  padding-left: calc(16px + var(--sr-safe-l));
+  padding-right: calc(16px + var(--sr-safe-r));
+  padding-bottom: calc(12px + var(--sr-safe-b));
+  box-sizing: border-box;
+  align-content: start;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+html[data-device='phone'] [data-slot='dialog-content']:not([data-spotlight])[data-state='open'] {
+  animation: sr-sheet-in var(--mo-in, 0.24s) var(--mo-ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+}
+
+html[data-device='phone'] [data-slot='dialog-content']:not([data-spotlight])[data-state='closed'] {
+  animation: sr-sheet-out 0.18s var(--mo-ease-in, ease-in) both;
+}
+
+html[data-device='phone'] [data-slot='dialog-content']:not([data-spotlight]):is([data-sr-detent='full'], [data-size='md'], [data-size='lg']) {
+  height: var(--sr-sheet-full);
+}
+
+html[data-device='phone'] [data-slot='dialog-overlay'] {
+  background: rgb(0 0 0 / 0.34);
+}
+
+/* The footer is a row of equal buttons, the primary on the right. */
+html[data-device='phone'] [data-slot='dialog-content']:not([data-spotlight]) [data-slot='dialog-footer'] {
+  flex-direction: row;
+  justify-content: stretch;
+  gap: 8px;
+}
+
+html[data-device='phone'] [data-slot='dialog-content']:not([data-spotlight]) [data-slot='dialog-footer'] > * {
+  flex: 1;
+}
+
+/* Spotlight hangs from the top, full width, above the keyboard. */
+html[data-device='phone'] [data-slot='dialog-content'][data-spotlight] {
+  top: calc(8px + var(--sr-safe-t));
+  left: calc(8px + var(--sr-safe-l));
+  right: calc(8px + var(--sr-safe-r));
+  width: auto;
+  translate: none;
+  max-height: calc(100dvh - var(--sr-safe-t) - 16px);
+}
+
+/* Popovers sit at the bottom, above the tab bar; the shell's context menu is
+   the bottom action sheet and covers the tab bar. !important: Radix positions
+   its popper wrapper with an inline transform, and only this beats it. */
+html[data-device='phone'] [data-radix-popper-content-wrapper]:not(:has([data-slot='tooltip-content'])) {
+  position: fixed !important;
+  transform: none !important;
+  left: calc(8px + var(--sr-safe-l)) !important;
+  right: calc(8px + var(--sr-safe-r)) !important;
+  top: auto !important;
+  bottom: calc(var(--sr-tab-h) + var(--sr-safe-b) + 8px) !important;
+  min-width: 0 !important;
+}
+
+html[data-device='phone'] [data-radix-popper-content-wrapper]:has([data-shell-ctx]) {
+  bottom: calc(8px + var(--sr-safe-b)) !important;
+}
+
+html[data-device='phone'] [data-radix-popper-content-wrapper]:not(:has([data-slot='tooltip-content'])) > * {
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  max-height: 70dvh;
+  overflow-y: auto;
+}
+
+/* The action sheet's rows take a finger. */
+html[data-device='phone'] [data-shell-ctx] [role='menuitem'] {
+  min-height: 44px;
+}
+
+/* ── Pad: insets and the dock bar that steps aside (§18.11) ─────────────── */
+
+html[data-device='pad'] [data-sr-dockbar] {
+  transition:
+    left 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+    right 0.24s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 220ms;
+}
+
+/* Its capsules take pointer events of their own; stepped aside, none of them do. */
+html[data-device='pad'][data-sr-dockhide] [data-sr-dockbar] {
+  transform: translateY(calc(100% + 16px + var(--sr-safe-b)));
+  opacity: 0;
+}
+
+html[data-device='pad'][data-sr-dockhide] [data-sr-dockbar],
+html[data-device='pad'][data-sr-dockhide] [data-sr-dockbar] * {
+  pointer-events: none;
+}
+
+html[data-device='pad'] [data-slot='sidebar-container'] {
+  padding-top: calc(8px + var(--sr-safe-t));
+  padding-bottom: calc(8px + var(--sr-safe-b));
+}
+
+/* The DS Tooltip (Radix) does not open its content under a finger either (§18.3). */
+html[data-touch='1'] [data-slot='tooltip-content'] {
+  display: none;
+}
+
+/* The phone's page is the screen: the frost glass sheet (index.css, Rev .152)
+   gives up its 8px inset, its radius and its rim — edge to edge, as an app. */
+html[data-device='phone'][data-frost='on']:not([data-glass='solid']) [data-slot='sidebar-inset'] {
+  margin: 0;
+  height: 100svh;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* The DS context menu's shortcut column, for the same reason (§18.3). */
+html[data-touch='1'] [data-slot='context-menu-shortcut'] {
+  display: none;
+}

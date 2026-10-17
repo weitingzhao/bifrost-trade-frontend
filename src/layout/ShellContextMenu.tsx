@@ -170,6 +170,9 @@ export function ShellContextMenu() {
         side="bottom"
         sideOffset={2}
         className="min-w-[220px] max-w-[320px]"
+        // Rev .163 (契约 §18.5): on a phone this is the bottom action sheet
+        // (styles/device.css) — opened by a long-press (touchLayer.tsx).
+        data-shell-ctx=""
         onCloseAutoFocus={(e) => {
           e.preventDefault()
           if (back.current && document.contains(back.current)) back.current.focus({ preventScroll: true })

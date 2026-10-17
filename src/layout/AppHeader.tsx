@@ -37,6 +37,7 @@ import mb from './menubar/menubar.module.css'
 import type { AlertGroup, AlertsSummary } from '@/hooks/useAlerts'
 import { useSymbolGo } from './symbolGo'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
+import { useDevice } from '@/lib/device'
 
 /** Top-level headings a first crumb can fall back to; System's is its first page. */
 const CRUMB_GROUPS = [...NAV_GROUPS, { label: 'System', to: SYSTEM_ITEM.to }]
@@ -78,7 +79,12 @@ export function AppHeader({
   // §16.12: while the page head shows the page's name, the leaf (and the `›`
   // before it) folds; it fades back once the head scrolls away. A page that
   // has not moved to PageHead reports nothing, and keeps its leaf.
-  const leafFolded = usePageHeadVisibility() === 'in'
+  // Rev .163 (契约 §18.4): a phone's bar is one row — the leaf (or the
+  // module's ‹), the search field across the middle, the Lens and the Copilot
+  // — under the status bar. No sidebar to toggle, no note or feedback button
+  // (`data-sr-phone="hide"`), and the leaf stays: there is no trail to fold into.
+  const phone = useDevice().device === 'phone'
+  const leafFolded = usePageHeadVisibility() === 'in' && !phone
   const omniOpen = omnibarStore.useStore().open
 
   return (
@@ -99,13 +105,14 @@ export function AppHeader({
         // 10px between controls, 12px from the edge — the design's own
         // `gap: 6px 10px; padding: 5px 12px`.
         'relative z-30 flex items-center gap-x-2.5 px-3',
+        phone && 'h-[calc(42px+var(--sr-safe-t))] pt-[var(--sr-safe-t)] pr-[calc(12px+var(--sr-safe-r))] pl-[calc(12px+var(--sr-safe-l))]',
       )}
     >
       {/* A borderless menu-bar item like every other on the bar (Rev .60 §8).
           The glyph stays chevrons rather than the design's panel rect: it
           comes from `@bifrost/ui`, and which way they point is a reading the
           Ops Console gets too. */}
-      <SidebarTrigger className={cn(mb.item, 'size-7 justify-center p-0')} aria-label="Toggle sidebar" />
+      <SidebarTrigger data-sr-phone="hide" className={cn(mb.item, 'size-7 justify-center p-0')} aria-label="Toggle sidebar" />
       <nav
         aria-label="Breadcrumb"
         className="flex min-w-0 shrink items-center gap-1.5 text-dense-body"
@@ -132,6 +139,7 @@ export function AppHeader({
           // each to an ellipsis; the page's own name is the last to be cut.
           <span
             key={crumb.label}
+            data-sr-phone="hide"
             className="hidden min-w-0 shrink-[6] items-center gap-1.5 text-muted-foreground sm:flex"
             title={crumb.label}
           >
@@ -183,6 +191,8 @@ export function AppHeader({
           mb.search,
           mb.omni,
           'ml-3 hidden h-8 flex-none items-center gap-2 pr-3 pl-[11px] text-left text-xs whitespace-nowrap md:inline-flex',
+          // The phone's search field takes the row (Rev .163, menubar.module.css).
+          phone && 'inline-flex',
         )}
         aria-label="Search symbols, pages and commands"
         title="Search symbols, pages and commands (⌘K)"
@@ -241,8 +251,9 @@ export function AppHeader({
             </span>
           </span>
         ) : null}
-        <span className={cn(mb.omniText, mb.fs12)}>Search</span>
-        <span className={cn(mb.omniText, mb.mono, mb.fs10, 'text-[var(--sk-faint)]')}>⌘K</span>
+        <span data-sr-phone="hide" className={cn(mb.omniText, mb.fs12)}>Search</span>
+        {/* A key a touch screen does not have (§18.3). */}
+        <span data-sr-touch="hide" className={cn(mb.omniText, mb.mono, mb.fs10, 'text-[var(--sk-faint)]')}>⌘K</span>
       </button>
 
       {/* The right cluster as a macOS menu bar (Rev .60 §1), in its order:
@@ -253,7 +264,7 @@ export function AppHeader({
       <div className="ml-auto flex shrink-0 flex-nowrap items-center gap-1">
         <ObjectiveControl />
         <BookControl />
-        <FeedbackButton />
+        {phone ? null : <FeedbackButton />}
         {/* Rev .97 #5: the note button — a Journal note with this page and the
             carried symbol attached; ⌥N does the same from anywhere. */}
         <MenubarTip tip="New note — this page and symbol attached · ⌥N">
@@ -261,6 +272,7 @@ export function AppHeader({
             type="button"
             onClick={() => openNoteComposer()}
             aria-label="New note"
+            data-sr-phone="hide"
             className={cn(mb.item, 'relative px-[3px]')}
           >
             <span className="inline-flex size-[22px] flex-none items-center justify-center text-[var(--sk-soft)]">
@@ -305,8 +317,10 @@ export function AppHeader({
             ) : null}
           </button>
         </MenubarTip>
-        <ControlCenter />
-        <SessionClock groups={alertGroups} alerts={alerts} onDismissAll={onDismissAllAlerts} />
+        {/* The phone's bar ends at the Copilot (契约 §18.4): the clock's Alerts
+            is a row in More there, and System status answers the Control Center. */}
+        {phone ? null : <ControlCenter />}
+        {phone ? null : <SessionClock groups={alertGroups} alerts={alerts} onDismissAll={onDismissAllAlerts} />}
       </div>
     </header>
   )

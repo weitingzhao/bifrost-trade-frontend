@@ -21,7 +21,10 @@ export function SymbolScopeChip({ symbol, onClear }: { symbol: string; onClear: 
         title="Filter by symbol — pick one in the top bar search (⌘K). It follows you to every page that reads it."
         className="inline-flex h-[22px] flex-none cursor-pointer items-center gap-1.5 rounded-full border-0 bg-[color-mix(in_srgb,var(--sk-ink)_7%,transparent)] px-2 text-dense-caption whitespace-nowrap text-[var(--sk-mute2)] hover:bg-[color-mix(in_srgb,var(--sk-ink)_12%,transparent)]"
       >
-        Symbol <span className="font-mono text-dense-micro text-[var(--sk-mute)]">⌘K</span>
+        Symbol{' '}
+        <span data-sr-touch="hide" className="font-mono text-dense-micro text-[var(--sk-mute)]">
+          ⌘K
+        </span>
       </button>
     )
   }

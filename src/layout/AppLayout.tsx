@@ -47,6 +47,14 @@ import { useRecentPagesTrail } from '@/lib/omnibar'
 import { Omnibar } from './Omnibar'
 import { InspectorSlotContext } from '@/components/layout/inspectorSlot'
 import { layerForPath } from '@/lib/design/layers'
+import { useDevice } from '@/lib/device'
+import { phoneTier } from './phoneTier'
+import { PhoneTabBar } from './phone/PhoneTabBar'
+import { PhoneMoreSheet } from './phone/PhoneMoreSheet'
+import { DeskGate } from './phone/DeskGate'
+import { useTouchLayer } from './touchLayer'
+import { usePadDockAutoHide, usePhoneKeepRules } from './deviceRules'
+import { ShellSheetHost } from './ShellSheetHost'
 
 /** Stable ErrorBoundary key — keep Instances mounted when opening/closing detail. */
 function outletBoundaryKey(pathname: string): string {
@@ -117,11 +125,25 @@ export function AppLayout() {
   const toolbarShown = useToolbarShown()
   // Rev .72: display options on <html>, and Enter confirms a sheet.
   useDisplaySync()
+  // Rev .163 (契约 §18): the device tier. A phone has no sidebar, no bottom
+  // toolbar and no right-edge column — five tabs and More instead — and a
+  // desk-tier page there is a card that says where it lives. An iPad opens on
+  // the icon rail, and its toolbar steps aside while you read.
+  const { device } = useDevice()
+  const phone = device === 'phone'
+  const [moreOpen, setMoreOpen] = useState(false)
+  useTouchLayer()
+  usePhoneKeepRules()
+  usePadDockAutoHide()
+  const gated = phone && phoneTier(pathname) === 'desk'
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
       <SidebarProvider
-        defaultOpen={initialSidebarOpen(document.cookie, window.innerWidth)}
+        // A new tier is a new shell: the iPad's rail and the phone's tabs are
+        // read once, when the provider mounts.
+        key={device}
+        defaultOpen={device === 'desk' && initialSidebarOpen(document.cookie, window.innerWidth)}
         style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
       >
         {/* Before the sidebar, not after: the ~40 nav links are exactly what
@@ -134,13 +156,13 @@ export function AppLayout() {
         <ShellContextMenu />
         {/* Rev .70–.71: drag a symbol to the drop bar, Space for Quick Look,
             hold ⌘ for the shortcut sheet. */}
-        <SymbolDrop />
+        {phone ? null : <SymbolDrop />}
         <QuickLook />
-        <ShortcutSheet />
+        {phone ? null : <ShortcutSheet />}
         {/* Rev .72: numeric fields step; What's New once per design Rev. */}
         <NumberStepper />
         <WhatsNew />
-        <AppSidebar />
+        {phone ? null : <AppSidebar />}
         {/* h-svh + overflow-hidden keeps the three bars pinned to the viewport.
           Transparent, with the lane below: one window ground (Rev .61) — the
           floating sidebar, the top bar and the page share the body's. With the
@@ -171,9 +193,16 @@ export function AppLayout() {
             tabIndex={-1}
             // The last row scrolls clear of the floating toolbar (Rev .73 §3):
             // its height plus the gap, while the toolbar is shown.
-            className={cn('@container/page flex-1 overflow-auto min-w-0 outline-none', toolbarShown && 'pb-[72px]')}
+            className={cn(
+              '@container/page flex-1 overflow-auto min-w-0 outline-none',
+              // The phone's lane clears the tab bar, the home indicator and 20;
+              // its sides keep a landscape notch's insets.
+              phone
+                ? 'pb-[calc(var(--sr-tab-h)+var(--sr-safe-b)+20px)] pl-[var(--sr-safe-l)] pr-[var(--sr-safe-r)]'
+                : toolbarShown && 'pb-[72px]',
+            )}
           >
-            <BoundedOutlet />
+            {gated ? <DeskGate /> : <BoundedOutlet />}
           </main>
         </SidebarInset>
         {/* A docked inspector portals in here — a page opens it, but a panel that
@@ -193,7 +222,7 @@ export function AppLayout() {
         {/* The Symbol list (design Rev .56–.58): the outermost column, right of
             the panel — docked or a strip it takes its width from the page,
             floating it sits over it. */}
-        <SymbolDockHost />
+        {phone ? null : <SymbolDockHost />}
         <NoteComposer />
         {/* K6: the visits beacon — a journal.visit row per page dwell. */}
         <VisitBeaconHost />
@@ -204,7 +233,7 @@ export function AppLayout() {
         {/* The equipment's edge. After the panel and the dock, so it floats
             over both — the rail is shell furniture, not page furniture, and
             it keeps the screen edge for Fitts. */}
-        <EquipRail />
+        {phone ? null : <EquipRail />}
         {/* The other place a surface can rest. No scrim on either: the page
             behind stays completely interactive, which is the whole claim of
             the word float — and the evidence of cross-phase work is approving
@@ -212,6 +241,13 @@ export function AppLayout() {
             hovering over a Trade page. */}
         <EquipFloat />
         <Omnibar />
+        <ShellSheetHost />
+        {phone ? (
+          <>
+            <PhoneTabBar moreOpen={moreOpen} onMore={() => setMoreOpen(true)} />
+            {moreOpen ? <PhoneMoreSheet open={moreOpen} onOpenChange={setMoreOpen} /> : null}
+          </>
+        ) : null}
         <MessageToastStack
           messages={stream.messages}
           dismissedIds={stream.dismissedIds}

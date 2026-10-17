@@ -13,6 +13,7 @@
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { panelDocks, SIDE_PANEL_FLOOR_PX } from '@/lib/panelDocks'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
+import { useDevice } from '@/lib/device'
 import { useSurfaces } from '@/layout/equipSurface'
 
 export type DockMode = 'strip' | 'docked' | 'float'
@@ -129,9 +130,15 @@ export function dockColumnFor(
   return { mode, width: mode === 'docked' ? DOCK_FULL_PX : DOCK_STRIP_PX }
 }
 
-/** The column, for the panel and the inspector, which sit left of it. */
+/**
+ * The column, for the panel and the inspector, which sit left of it. None on
+ * a phone (design Rev .163): the shell there has no right-edge column at all,
+ * and the lists are a row in More.
+ */
 export function useDockColumn(): DockColumn {
   const state = useDockState()
   const { panel } = useSurfaces()
-  return dockColumnFor(state, panel != null, useWindowWidth())
+  const phone = useDevice().device === 'phone'
+  const column = dockColumnFor(state, panel != null, useWindowWidth())
+  return phone ? { mode: null, width: 0 } : column
 }

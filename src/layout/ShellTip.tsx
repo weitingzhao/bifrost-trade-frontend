@@ -17,6 +17,7 @@
  */
 import { useEffect, useRef } from 'react'
 import css from './shellTip.module.css'
+import { deviceNow } from '@/lib/device'
 
 const FIRST_MS = 450
 const WARM_MS = 600
@@ -84,6 +85,9 @@ export function ShellTip() {
     }
 
     const onOver = (e: MouseEvent) => {
+      // Rev .163 (契约 §18.3): no tooltip under a finger — a tap's emulated
+      // hover would pop one up; the `title` is left as written.
+      if (deviceNow().touch) return
       const el = tipOf(e.target)
       if (el !== cur) arm(el)
     }
@@ -98,7 +102,7 @@ export function ShellTip() {
           return false
         }
       })()
-      if (visible) arm(tipOf(e.target), true)
+      if (visible && !deviceNow().touch) arm(tipOf(e.target), true)
     }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') hide()

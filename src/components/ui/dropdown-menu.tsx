@@ -180,6 +180,8 @@ function DropdownMenuShortcut({
 }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
+      // A key a touch screen does not have (design Rev .163, §18.3): hidden there.
+      data-sr-touch="hide"
       className={cn('ml-auto text-xs tracking-widest text-muted-foreground', className)}
       {...props}
     />

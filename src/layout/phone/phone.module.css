@@ -1,0 +1,179 @@
+/*
+ * The phone's shell (DESIGN_CONTRACTS §18.4): tab bar, More, the desk-tier
+ * gate. Values are the design's `shell-registry.js` `.sr-tabs` / `.sr-more-*`
+ * / `.sr-gate`.
+ */
+
+/* ── tab bar ── */
+.tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 62;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 0 var(--sr-safe-r) var(--sr-safe-b) var(--sr-safe-l);
+  background: var(--glass-bg-float);
+  -webkit-backdrop-filter: var(--glass-filter-float);
+  backdrop-filter: var(--glass-filter-float);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sk-ink) 8%, transparent);
+}
+
+:global(html[data-glass='solid']) .tabs {
+  background: var(--popover);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.tab {
+  position: relative;
+  height: var(--sr-tab-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sk-mute2);
+  font: 500 10px/1 var(--font-sans);
+  cursor: pointer;
+}
+
+.tab svg {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+.tab[aria-current='page'] {
+  color: var(--sk-accent);
+}
+
+.tab:active {
+  filter: var(--press, brightness(1.25));
+}
+
+/* ── More ── */
+.more {
+  display: flex;
+  flex-direction: column;
+}
+
+.moreSec {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 8px;
+}
+
+.moreHead {
+  padding: 10px 6px 4px;
+  font: 600 11px var(--font-sans);
+  color: var(--sk-mute);
+}
+
+.moreRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sk-ink);
+  font: 400 13px var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+.moreRow:nth-of-type(even) {
+  background: color-mix(in srgb, var(--sk-ink) 3%, transparent);
+}
+
+.moreLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moreRow:not([aria-disabled])::after {
+  content: '›';
+  color: var(--sk-mute);
+  font-size: 15px;
+}
+
+.moreRow[aria-current='page'] {
+  color: var(--sk-accent);
+}
+
+.moreRow[aria-disabled='true'] {
+  color: var(--sk-faint);
+  cursor: default;
+}
+
+.moreTier {
+  font: 500 10px var(--font-sans);
+  color: var(--sk-faint);
+}
+
+/* ── the desk-tier gate ── */
+.gate {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 28px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.gateKind {
+  font: 600 11px var(--font-sans);
+  color: var(--sk-mute);
+}
+
+.gateTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sk-ink);
+  text-wrap: balance;
+}
+
+.gateBody {
+  margin: 0;
+  max-width: 36ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sk-mute2);
+  text-wrap: pretty;
+}
+
+.gateActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gateBtn {
+  height: 32px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
+  color: var(--sk-ink);
+  font: 600 13px var(--font-sans);
+  cursor: pointer;
+}
+
+.gateBtn[data-primary] {
+  background: color-mix(in srgb, var(--sk-accent) 84%, transparent);
+  color: var(--sk-on-accent, var(--background));
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+}

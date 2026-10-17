@@ -18,6 +18,7 @@ import { symbolSurface } from './equipSurface'
 import { parseContract, symbolIn, type SymbolHit } from './shellContextTarget'
 import { contractParams, useSymbolGo } from './symbolGo'
 import css from './quickLook.module.css'
+import { useDevice } from '@/lib/device'
 import { QUICK_LOOK_NAME as NAME, QUICK_LOOK_ROW as ROW } from './quickLookTargets'
 const W = 420
 const H = 540
@@ -63,6 +64,9 @@ export function QuickLook() {
   const body = useRef<HTMLDivElement | null>(null)
   const hover = useRef<Element | null>(null)
   const lookRef = useRef<Look | null>(null)
+  // Rev .163 (契约 §18.5): on a phone (a keyboard attached to it is the one way
+  // to press Space there) the card lands as a bottom sheet, not beside the row.
+  const phone = useDevice().device === 'phone'
   useEffect(() => {
     lookRef.current = look
   }, [look])
@@ -159,16 +163,19 @@ export function QuickLook() {
       aria-label={`Quick Look · ${hit.contract ?? hit.sym}`}
       className={css.card}
       data-on={shown ? '1' : '0'}
+      data-phone={phone ? '1' : undefined}
       data-glass-surface="surface"
-      style={{ left: look.x, top: look.y }}
+      style={phone ? undefined : { left: look.x, top: look.y }}
     >
       <div className={css.head}>
         <span style={{ color: hit.contract ? 'var(--sk-contract)' : 'var(--sk-ticker)' }}>{hit.contract ?? hit.sym}</span>
-        <span className={css.keys}>␣ close · ↑↓ next · ↵ open</span>
+        <span className={css.keys} data-sr-touch="hide">
+          ␣ close · ↑↓ next · ↵ open
+        </span>
       </div>
       {/* A page host like a panel body: the page materials and the list
           grammar (Rev .153–.154). */}
-      <div ref={body} className={css.body} data-mat="" data-sr-list="">
+      <div ref={body} className={css.body} data-mat="" data-sr-list="" data-sr-embed="">
         <SurfaceBody key={surface.key + (hit.contract ?? '')} surface={surface} />
       </div>
     </div>,

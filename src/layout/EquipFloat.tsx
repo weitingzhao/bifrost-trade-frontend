@@ -50,6 +50,9 @@ import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import css from './equipSurface.module.css'
 import { useStuckMarks } from '@bifrost/ui'
+import { useDevice } from '@/lib/device'
+import { SheetGrip } from '@/components/ui/SheetGrip'
+import { dismissSurface } from './equipMotion'
 
 /**
  * One toggle: the icon is the size it is, the title says what a click makes it.
@@ -146,6 +149,15 @@ export function EquipFloat() {
   const [viewport, setViewport] = useState(() => window.innerWidth)
   // Sticky heads, bars and wide boxes in the body mark themselves stuck (0.10.0).
   useStuckMarks(ref, key != null)
+  // Rev .163 (契约 §18.5): on a phone the float is a bottom sheet — nothing
+  // to drag, size or tile; the grip switches its two detents.
+  const phone = useDevice().device === 'phone'
+  const [full, setFull] = useState(false)
+  const [wasKey, setWasKey] = useState(key)
+  if (key !== wasKey) {
+    setWasKey(key)
+    setFull(false)
+  }
 
   useEffect(() => {
     const onResize = () => setViewport(window.innerWidth)
@@ -166,16 +178,16 @@ export function EquipFloat() {
   // springs out of where it was summoned. Before paint, so the first frame is
   // already the animation's first frame rather than the window at rest.
   useLayoutEffect(() => {
-    registerSurfaceElement('float', ref.current)
+    registerSurfaceElement('float', phone ? null : ref.current)
     if (key && key !== shown.current && ref.current) {
-      animateFloatIn(ref.current, key)
+      if (!phone) animateFloatIn(ref.current, key)
       // Focus follows the eye (Rev .26): the keyboard lands in the window that
       // just opened; closing hands it back (`equipMotion`). The panel never
       // takes focus — it is beside the work, not in front of it.
       ref.current.focus({ preventScroll: true })
     }
     shown.current = key
-  }, [key])
+  }, [key, phone])
 
   // Esc lives in `useCockpitKeybinds`, not here: an inspector and a float can
   // both be open, and two listeners racing would close both. The order is one
@@ -213,7 +225,7 @@ export function EquipFloat() {
   const onDrag = useCallback(
     (e: React.PointerEvent) => {
       const el = ref.current
-      if (!el || !key) return
+      if (!el || !key || phone) return
       // Not from a control in the bar — a size button is a click, not a grab.
       if ((e.target as HTMLElement).closest('button')) return
       const start = el.getBoundingClientRect()
@@ -296,7 +308,7 @@ export function EquipFloat() {
       window.addEventListener('pointermove', move)
       window.addEventListener('pointerup', up)
     },
-    [key, size, panelOpen, dockPx],
+    [key, size, panelOpen, dockPx, phone],
   )
 
   /**
@@ -341,16 +353,20 @@ export function EquipFloat() {
   if (!float || !box) return null
 
   return (
+    <>
+    {phone ? <div className={css.phoneScrim} aria-hidden onClick={() => dismissSurface(float.key)} /> : null}
     <div
       ref={ref}
       tabIndex={-1}
-      className={`${css.card} ${css.float}`}
+      className={`${css.card} ${phone ? css.phoneSheet : css.float}`}
       data-glass-surface="surface"
       data-vt="float"
-      style={{ ...box, ['--rh' as string]: surfaceHue(float) }}
+      data-sr-detent={phone && full ? 'full' : undefined}
+      style={phone ? { ['--rh' as string]: surfaceHue(float) } : { ...box, ['--rh' as string]: surfaceHue(float) }}
       role="dialog"
       aria-label={`${surfaceLabel(float, carried)} — floating`}
     >
+      {phone ? <SheetGrip sheet={ref} full={full} onDetent={setFull} onClose={() => dismissSurface(float.key)} /> : null}
       <div
         className={css.bar}
         onPointerDown={onDrag}
@@ -368,6 +384,7 @@ export function EquipFloat() {
         {/* Size and place are two questions: the toggle is the float's alone. */}
         <button
           type="button"
+          data-sr-phone="hide"
           className={css.size}
           title={SIZE_TOGGLE[size].title}
           aria-label={SIZE_TOGGLE[size].title}
@@ -379,13 +396,15 @@ export function EquipFloat() {
             ))}
           </svg>
         </button>
-        <span className={css.barSep} aria-hidden />
+        <span className={css.barSep} aria-hidden data-sr-phone="hide" />
         <PlaceButtons surface={float} here="float" />
       </div>
       <div
         className={css.body}
         // Frost (Rev .151–.152): thick glass under a page, none under a drawer-kind surface.
         data-frost-host={float.canPage ? 'thick' : 'drawer'}
+        // A surface, not the page: the device hooks that narrow a page leave it alone (Rev .163).
+        data-sr-embed=""
         data-mat=""
         // The list grammar, as in the page lane (Rev .153–.154).
         data-sr-list=""
@@ -393,7 +412,8 @@ export function EquipFloat() {
       >
         <SurfaceBody surface={float} />
       </div>
-      <span className={css.grip} onPointerDown={onGrip} title="Drag to resize" aria-hidden />
+      {phone ? null : <span className={css.grip} onPointerDown={onGrip} title="Drag to resize" aria-hidden />}
     </div>
+    </>
   )
 }

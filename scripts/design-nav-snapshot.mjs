@@ -213,7 +213,7 @@ function generate(pkg) {
     // way a prototype does beats a second parser for the SVG.
     React: { createElement: (t, p, ...c) => ({ __el: t, props: p ?? {}, children: c.flat() }) },
     localStorage: { getItem: (k) => store[k] ?? null, setItem: (k, v) => (store[k] = v) },
-    location: { hash: '', search: '' },
+    location: { hash: '', search: '', pathname: '/' },
     addEventListener() {},
     innerWidth: 1800,
   }
@@ -221,7 +221,8 @@ function generate(pkg) {
     documentElement: stubEl(),
     getElementById: () => stubEl(),
     createElement: stubEl,
-    head: { appendChild() {} },
+    // Rev .163 adds the home-screen metas to the head when they are missing.
+    head: { appendChild() {}, querySelector: () => null },
     body: stubEl(),
     querySelector: () => stubEl(),
     querySelectorAll: () => [],
@@ -271,6 +272,18 @@ function generate(pkg) {
     IntersectionObserver: NoObserver,
     matchMedia: noMedia,
     getComputedStyle: () => ({ getPropertyValue: () => '' }),
+    // Rev 2026-10-17.163 (the device layer, `shellDevice`) judges the tier from
+    // bare `innerWidth` / `innerHeight` / `navigator` at load time: a desk.
+    innerWidth: 1800,
+    innerHeight: 1100,
+    navigator: { standalone: false, vibrate() {} },
+    CustomEvent: class {
+      constructor(type, init) {
+        this.type = type
+        this.detail = init?.detail
+      }
+    },
+    MouseEvent: class {},
   }
   Object.assign(window, browserStubs)
   new Function(...Object.keys(browserStubs), src)(...Object.values(browserStubs))

@@ -1,0 +1,49 @@
+/* The touch layer's sheets: a kept table's row detail, the order confirm. */
+.kv {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.kvRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
+}
+
+.kvRow > dt,
+.kvRow > dd {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+.kvRow > dt {
+  padding-right: 12px;
+  color: var(--sk-mute2);
+}
+
+.kvRow > dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cell,
+.cell > * {
+  justify-content: flex-end;
+}
+
+.note b {
+  display: block;
+  margin: 4px 0 8px;
+  font: 600 14px var(--font-mono);
+}
+
+.note p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sk-mute2);
+  text-wrap: pretty;
+}

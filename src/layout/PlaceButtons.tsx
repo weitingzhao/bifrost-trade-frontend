@@ -68,7 +68,9 @@ export function PlaceButtons({ surface, here }: { surface: Surface; here: Place 
 
   return (
     <>
-      <div className={css.seg} role="group" aria-label="Where this opens">
+      {/* Rev .163: on a phone the panel and the float are both a bottom sheet —
+          no place to choose (契约 §18.5); the close stays. */}
+      <div className={css.seg} role="group" aria-label="Where this opens" data-sr-phone="hide">
         {PLACES.map((p) => {
           const current = p.place === here
           const off = p.place === 'page' && !surface.canPage

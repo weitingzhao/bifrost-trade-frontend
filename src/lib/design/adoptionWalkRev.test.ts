@@ -146,7 +146,10 @@ describe('the design walk, by revision', () => {
     // Backtest's Simulator and Pine library, Signal Decay's Indicator & Pine
     // panel), then their receipts; the registry moved no route or page rev
     // (synced 2026-10-06, TD-188).
-    expect(DESIGN_REV).toBe('2026-10-06.162')
+    // Package .64 @ Rev .163 (2026-10-17, increment): iPhone / iPad — the
+    // registry's device layer (`shellDevice`) and four sample pages; no route
+    // or page rev moved (synced 2026-10-17).
+    expect(DESIGN_REV).toBe('2026-10-17.163')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

@@ -580,3 +580,44 @@
   height: 72px;
   background: var(--sk-accent);
 }
+
+/* ── Phone (design Rev .163, 契约 §18.5): the panel and the float are bottom
+   sheets — half the screen or the whole of it, the grip on top, a scrim
+   behind that closes the one in front. After .panel / .float on purpose:
+   the same specificity, so the later rule wins. ───────────────────────── */
+@keyframes phone-sheet-in {
+  from {
+    translate: 0 100%;
+  }
+}
+
+.phoneSheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  min-height: 0;
+  height: var(--sr-sheet-half);
+  max-height: var(--sr-sheet-full);
+  padding-top: 18px;
+  padding-bottom: var(--sr-safe-b);
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  z-index: 64;
+  animation: phone-sheet-in var(--mo-in, 0.24s) var(--mo-ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
+}
+
+.phoneSheet[data-sr-detent='full'] {
+  height: var(--sr-sheet-full);
+}
+
+.phoneScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 63;
+  background: rgb(0 0 0 / 0.34);
+}

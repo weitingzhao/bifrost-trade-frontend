@@ -4,6 +4,11 @@
  * model's own bar (S / R / P, lit when cleared, — when not covered). Names the
  * model does not cover sit under a "Not rated by X" group, A–Z, never mixed
  * into the ranking.
+ *
+ * Phone (Rev .163, DESIGN_CONTRACTS §18.6): the table keeps Symbol · Models ·
+ * the model's own score (columns 2, 4, 5). The row's detail is this page's
+ * Why, so the shell only folds the columns (`data-sr-detail="page"`) and the
+ * tap still selects the row, which opens Why as a bottom sheet.
  */
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
@@ -48,6 +53,9 @@ export interface Scored {
 }
 
 export type SortKey = 'score' | 'trend' | 'growth' | 'ivr' | 'vrp'
+
+/** # · Symbol · Book · Models · then the model's columns, its score first. */
+const PHONE_KEEP = '2,4,5'
 
 function pathVariant(p: string): 'success' | 'info' | 'danger' | 'neutral' {
   return p === 'PIVOT' ? 'success' : p === 'SETUP' ? 'info' : p === 'AVOID' ? 'danger' : 'neutral'
@@ -324,58 +332,60 @@ export function ResultTable({
   }
   return (
     <>
-      <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto">
-        <DenseTableHeader>
-          <DenseTableHeadRow>
-            <DenseTableHead className="w-8 max-w-none text-right">#</DenseTableHead>
-            <DenseTableHead className="w-16 max-w-none">Symbol</DenseTableHead>
-            <DenseTableHead className="w-20 max-w-none">Book</DenseTableHead>
-            <DenseTableHead
-              className="w-[150px] max-w-none"
-              title="Each model’s own bar, lit when cleared: SEPA SETUP / PIVOT · Radar A+ / A · Premium ≥ 70. — = not covered by that model."
-            >
-              Models
-            </DenseTableHead>
-            {cols.map((c) => (
+      <div data-sr-keep={PHONE_KEEP} data-sr-detail="page">
+        <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto">
+          <DenseTableHeader>
+            <DenseTableHeadRow>
+              <DenseTableHead className="w-8 max-w-none text-right">#</DenseTableHead>
+              <DenseTableHead className="w-16 max-w-none">Symbol</DenseTableHead>
+              <DenseTableHead className="w-20 max-w-none">Book</DenseTableHead>
               <DenseTableHead
-                key={c.label}
-                title={c.title ?? (c.sort ? `Sort by ${c.label}` : undefined)}
-                onClick={c.sort ? () => onSort(c.sort!) : undefined}
-                className={cn('max-w-none whitespace-nowrap', c.num && 'text-right', c.sort && 'cursor-pointer hover:text-foreground')}
+                className="w-[150px] max-w-none"
+                title="Each model’s own bar, lit when cleared: SEPA SETUP / PIVOT · Radar A+ / A · Premium ≥ 70. — = not covered by that model."
               >
-                {c.label}
-                {c.sort && sort === c.sort ? (dir === -1 ? ' ↓' : ' ↑') : ''}
+                Models
               </DenseTableHead>
-            ))}
-            <DenseTableHead
-              className="w-12 max-w-none text-right"
-              title="Days to the next print, estimated by Research: last year’s same-quarter results 8-K plus 52 weeks. Confirmed dates are not in the subscription; — = no estimate (hover for why)."
-            >
-              Earn
-            </DenseTableHead>
-            <DenseTableHead
-              className="w-[150px] max-w-none"
-              title="Which active opportunity is registered on this name. It does not say that the opportunity’s entry conditions are met."
-            >
-              Rule
-            </DenseTableHead>
-            <DenseTableHead className="w-28 max-w-none">Capture</DenseTableHead>
-          </DenseTableHeadRow>
-        </DenseTableHeader>
-        <DenseTableBody>
-          {ratedShown.map((x, i) => row(x, model === 'none' ? null : i + 1))}
-          {unrated.length && model !== 'none' && unratedShown.length ? (
-            <Fragment>
-              <DenseTableRow>
-                <DenseTableCell colSpan={colSpan} className="max-w-none bg-foreground/[0.03] px-3 py-2 text-dense-meta text-muted-foreground">
-                  {NOT_RATED[model]} {unrated.length} of {rated.length + unrated.length} names that passed the screen. Listed A–Z.
-                </DenseTableCell>
-              </DenseTableRow>
-              {unratedShown.map((x) => row(x, null))}
-            </Fragment>
-          ) : null}
-        </DenseTableBody>
-      </DenseDataTable>
+              {cols.map((c) => (
+                <DenseTableHead
+                  key={c.label}
+                  title={c.title ?? (c.sort ? `Sort by ${c.label}` : undefined)}
+                  onClick={c.sort ? () => onSort(c.sort!) : undefined}
+                  className={cn('max-w-none whitespace-nowrap', c.num && 'text-right', c.sort && 'cursor-pointer hover:text-foreground')}
+                >
+                  {c.label}
+                  {c.sort && sort === c.sort ? (dir === -1 ? ' ↓' : ' ↑') : ''}
+                </DenseTableHead>
+              ))}
+              <DenseTableHead
+                className="w-12 max-w-none text-right"
+                title="Days to the next print, estimated by Research: last year’s same-quarter results 8-K plus 52 weeks. Confirmed dates are not in the subscription; — = no estimate (hover for why)."
+              >
+                Earn
+              </DenseTableHead>
+              <DenseTableHead
+                className="w-[150px] max-w-none"
+                title="Which active opportunity is registered on this name. It does not say that the opportunity’s entry conditions are met."
+              >
+                Rule
+              </DenseTableHead>
+              <DenseTableHead className="w-28 max-w-none">Capture</DenseTableHead>
+            </DenseTableHeadRow>
+          </DenseTableHeader>
+          <DenseTableBody>
+            {ratedShown.map((x, i) => row(x, model === 'none' ? null : i + 1))}
+            {unrated.length && model !== 'none' && unratedShown.length ? (
+              <Fragment>
+                <DenseTableRow>
+                  <DenseTableCell colSpan={colSpan} className="max-w-none bg-foreground/[0.03] px-3 py-2 text-dense-meta text-muted-foreground">
+                    {NOT_RATED[model]} {unrated.length} of {rated.length + unrated.length} names that passed the screen. Listed A–Z.
+                  </DenseTableCell>
+                </DenseTableRow>
+                {unratedShown.map((x) => row(x, null))}
+              </Fragment>
+            ) : null}
+          </DenseTableBody>
+        </DenseDataTable>
+      </div>
       {hidden > 0 ? (
         <div className="border-t border-foreground/[0.06] px-3 py-1.5 text-dense-meta text-muted-foreground">
           The list stops at {ROW_CAP} rows; {hidden.toLocaleString('en-US')} more pass.{' '}

@@ -128,8 +128,10 @@ export default function TodayPage() {
           <span className={positionsUi.mono}>{fmtIsoDateToken(today)}</span>
           {accountIds.length > 1 ? (
             <>
+              {/* The design's account note; a phone drops it (Rev .163) and keeps
+                  the control, which still names the scope it narrows to. */}
               {hidden > 0 ? (
-                <span>
+                <span data-sr-phone="hide">
                   scoped to {accountFilter} · {hidden} {hidden === 1 ? 'item' : 'items'} hidden
                 </span>
               ) : null}
@@ -244,8 +246,11 @@ export default function TodayPage() {
                     key={r.key}
                     to={r.to}
                     title={`Opens ${destinationLabel(r.to) ?? r.to} in ${HOME_LAYERS[r.layer].label}`}
+                    // Three named tracks; the layer-and-go cell takes an implicit
+                    // auto one after them, so where a phone hides it (Rev .163)
+                    // neither its track nor its gap is left behind.
                     className={cn(
-                      'group grid grid-cols-[0.5rem_3.625rem_minmax(0,1fr)_auto] items-start gap-x-3',
+                      'group grid grid-flow-col grid-cols-[0.5rem_3.625rem_minmax(0,1fr)] auto-cols-auto items-start gap-x-3',
                       'border-b px-3 py-2.25 text-inherit no-underline last:border-b-0',
                       'hover:bg-[color-mix(in_srgb,var(--sk-ink)_4%,transparent)] hover:text-inherit',
                     )}
@@ -267,11 +272,20 @@ export default function TodayPage() {
                         {r.why}
                       </span>
                     </span>
-                    <span className="mt-0.5 inline-flex flex-none items-center gap-2 whitespace-nowrap">
+                    {/* Rev .163: a phone drops the layer label and the go hint (the
+                        square already names the layer); under a finger the hint has
+                        no hover to wait for, so touch shows it always. */}
+                    <span
+                      data-sr-phone="hide"
+                      className="mt-0.5 inline-flex flex-none items-center gap-2 whitespace-nowrap"
+                    >
                       <span className={cn(positionsUi.mono, 'text-dense-caption text-muted-foreground')}>
                         {HOME_LAYERS[r.layer].label}
                       </span>
-                      <span className="text-dense-meta text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                      <span
+                        data-sr-reveal=""
+                        className="text-dense-meta text-primary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                      >
                         {destinationLabel(r.to) ?? 'open'} →
                       </span>
                     </span>

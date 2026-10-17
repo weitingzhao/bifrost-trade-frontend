@@ -12,6 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
 import { useQueryClient } from '@tanstack/react-query'
+import { useDevice } from '@/lib/device'
 import { SegmentControl } from '@/components/data-display'
 import { CloseButton } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -89,6 +90,7 @@ export function SharesBand({
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
   const today = etTodayIso()
+  const phone = useDevice().device === 'phone'
 
   // A registration shows at once: the monitor's status is cached for about 15 s
   // server-side, and the select must not snap back to the old type meanwhile.
@@ -315,7 +317,9 @@ export function SharesBand({
             : `No ${bucket === 'all' ? 'shares' : SHARE_BUCKETS.find(([k]) => k === bucket)?.[1].toLowerCase()} held in the accounts in scope.`}
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        // A phone keeps Symbol · Qty · Value (Rev .163, the prototype's 1·3·5); a tap
+        // opens the row's every column in the shell's sheet.
+        <div className="overflow-x-auto" data-sr-keep="1,3,5">
           <table className="w-full min-w-[1080px]">
             <thead>
               <tr>
@@ -343,6 +347,7 @@ export function SharesBand({
                   key={g.key}
                   g={g}
                   head={grouping !== 'none'}
+                  phone={phone}
                   categories={categoryItems.map((c) => c.name)}
                   yields={yields}
                   accountLabel={accountLabel}
@@ -382,6 +387,7 @@ export function SharesBand({
 function GroupRows({
   g,
   head,
+  phone,
   categories,
   yields,
   accountLabel,
@@ -391,6 +397,12 @@ function GroupRows({
 }: {
   g: ShareGroup
   head: boolean
+  /**
+   * A phone's group head is one cell across the three kept columns, with the
+   * subtotal at its end under Value: the desk's head spans four and then sits
+   * a cell under each money column, which a three-column table cannot place.
+   */
+  phone: boolean
   categories: readonly string[]
   yields: ReadonlyMap<string, number | null | undefined>
   accountLabel: (accountId: string) => string
@@ -400,7 +412,19 @@ function GroupRows({
 }) {
   return (
     <>
-      {head ? (
+      {head && phone ? (
+        <tr className={HEAD_ROW}>
+          <td className={cn(positionsUi.td, 'pl-3 text-left font-sans')} colSpan={3}>
+            <span className="flex items-baseline gap-2">
+              <span className="text-dense-meta font-bold text-[var(--sk-soft)]">{g.label}</span>
+              <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>
+                {g.rows.length} {g.rows.length === 1 ? 'holding' : 'holdings'}
+              </span>
+              <span className={cn(positionsUi.mono, 'ml-auto text-[var(--sk-soft)]')}>{fmtUsd(g.value)}</span>
+            </span>
+          </td>
+        </tr>
+      ) : head ? (
         <tr className={HEAD_ROW}>
           <td className={cn(positionsUi.td, 'pl-3 text-left font-sans')} colSpan={4}>
             <span className="text-dense-meta font-bold text-[var(--sk-soft)]">

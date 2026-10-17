@@ -186,6 +186,29 @@
   gap: 4px 10px;
 }
 
+/* ── Device forms (Rev .163, contract §18) ────────────────────────────── */
+
+/* Phone: the subject line stays one line — the name gives way, the held tag ends it. */
+.phoneLine {
+  flex-wrap: nowrap;
+}
+
+/* iPad: the verdict joins the subject line (§18.11), cut to one line; the
+   whole of it is in the title. */
+.padVerdict {
+  align-self: center;
+  flex: 1 1 200px;
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 1px solid var(--sk-line);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sk-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* A capsule track at ink 7%, no frame (Rev .142). */
 .seg {
   display: inline-flex;

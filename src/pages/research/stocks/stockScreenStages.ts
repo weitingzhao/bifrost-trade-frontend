@@ -28,6 +28,8 @@
  */
 import { MOMENTUM_INDICATORS, SENTIMENT_INDICATORS, STRUCTURE_INDICATORS } from '@/constants/stockScreenerCatalog'
 import { pineLibraryEntries, type PineLibraryEntry } from '@/api/research/pine'
+import { SYMBOL_PATH } from '@/lib/analyzeHubs'
+import { withChartSignal, withSymbolParam } from '@/lib/symbolLink'
 import { NARRATIVE_CONDITIONS } from '@/lib/research/narrativeItems'
 import { AGREE_BAR, type ScreenState, type Stage } from './stockScreenModel'
 import { EARN_CHIP_TITLE } from './stockScreenEarnings'
@@ -230,6 +232,11 @@ export function stagesWithPine(scripts: readonly PineLibraryEntry[]): readonly S
 export function pineChartSignal(on: Readonly<Record<string, boolean>>): string | null {
   const id = Object.keys(on).find((k) => on[k] && k.startsWith('pine:'))
   return id ? `pine:${id.split(':')[1]}` : null
+}
+
+/** Where a name opens from Why: Symbol, on the screen's Pine signal when it selects one. */
+export function screenSymbolHref(sym: string, on: Readonly<Record<string, boolean>>): string {
+  return withSymbolParam(withChartSignal(SYMBOL_PATH, pineChartSignal(on)), sym)
 }
 
 /**

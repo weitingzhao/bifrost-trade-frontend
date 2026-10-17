@@ -9,16 +9,21 @@
  *
  * The data and every rule are in `stockScreenModel` / `stockScreenStages`;
  * this file holds state and wiring.
+ *
+ * Devices (Rev .163, DESIGN_CONTRACTS §18): on a phone the page is read-only
+ * — the Screen column and Flow do not draw, the result keeps three columns
+ * and Why is a bottom sheet (`WhyPanel`). An iPad opens Funnel · lineage
+ * folded and keeps its own fold (§18.11).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
 import { PageFaceSwitch, PageHead, PageHeadAction, PageShell } from '@/components/layout'
-import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
 import { SegmentControl, type SegmentOption } from '@/components/data-display'
 import { fetchSavedScreens, screenV1, screenV2, type SavedScreen } from '@/api/research/savedScreens'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
+import { useDevice } from '@/lib/device'
 import { usePageViewState } from '@/lib/pageView'
 import { notify } from '@/lib/shellNotify'
 import { publishSymbolTrail } from '@/lib/symbolTrail'
@@ -33,7 +38,7 @@ import { orderNoModel, type NoneSort } from './stockScreenEarnings'
 import { SaveScreenAction } from './SaveScreenAction'
 import { ScreenPanel } from './ScreenPanel'
 import { presetChoices, screenFromV1, screenFromV2, type WeightSet } from './stockScreenView'
-import { WhyDrawer } from './WhyDrawer'
+import { WhyPanel } from './WhyPanel'
 import { useStockScreenData } from './useStockScreenData'
 import {
   AGREE_IDS,
@@ -115,7 +120,12 @@ export default function StockScreenPage() {
   const [view, setView] = usePageViewState<'ranked' | 'leaders'>('view', 'ranked')
   const [lsort, setLsort] = usePageViewState<LeaderSortKey>('lsort', 'peak')
   const [lsel, setLsel] = usePageViewState<{ symbol: string; date: string } | null>('lsel', null)
-  const [flowOpen, setFlowOpen] = usePageViewState('flowOpen', true)
+  // Funnel · lineage: open on the desk, folded on an iPad; each tier keeps its own fold (§18.11).
+  const { device } = useDevice()
+  const [flowDesk, setFlowDesk] = usePageViewState('flowOpen', true)
+  const [flowPad, setFlowPad] = usePageViewState('flowOpen@pad', false)
+  const flowOpen = device === 'pad' ? flowPad : flowDesk
+  const setFlowOpen = device === 'pad' ? setFlowPad : setFlowDesk
   const [lf, setLf] = usePageViewState<LineageFocus>('lf', {})
   const [ff, setFf] = usePageViewState<FunnelFocus | null>('ff', null)
   const [startId, setStartId] = useState<string | null>(null)
@@ -728,43 +738,34 @@ export default function StockScreenPage() {
         </>
       )}
 
-      <RightInspectorShell
-        open={whyRow != null}
-        ariaLabel="Why this name"
+      <WhyPanel
+        row={whyRow}
+        model={view === 'leaders' ? 'radar' : model}
+        weights={weights}
+        score={whyRow ? scoreOf(whyRow) : null}
+        pos={
+          !whyRow
+            ? ''
+            : view === 'leaders' && lsel
+              ? `Leaders · ${lsel.date}`
+              : model === 'none'
+                ? `${walk.indexOf(whyRow.sym) + 1} of ${walk.length} · A–Z`
+                : scoreOf(whyRow) == null
+                  ? `not rated by ${MODEL_LABEL[model]}`
+                  : `#${walk.indexOf(whyRow.sym) + 1} of ${rated.length} ranked by ${MODEL_LABEL[model]}`
+        }
+        screen={screen}
+        stages={stages}
+        probe={probe}
+        rankIn={rankIn}
+        leadersSession={view === 'leaders' && lsel ? lsel.date : null}
+        onPrev={() => step(-1)}
+        onNext={() => step(1)}
         onClose={() => {
           setSel(null)
           setLsel(null)
         }}
-      >
-        {whyRow ? (
-          <WhyDrawer
-            row={whyRow}
-            model={view === 'leaders' ? 'radar' : model}
-            weights={weights}
-            score={scoreOf(whyRow)}
-            pos={
-              view === 'leaders' && lsel
-                ? `Leaders · ${lsel.date}`
-                : model === 'none'
-                  ? `${walk.indexOf(whyRow.sym) + 1} of ${walk.length} · A–Z`
-                  : scoreOf(whyRow) == null
-                    ? `not rated by ${MODEL_LABEL[model]}`
-                    : `#${walk.indexOf(whyRow.sym) + 1} of ${rated.length} ranked by ${MODEL_LABEL[model]}`
-            }
-            screen={screen}
-            stages={stages}
-            probe={probe}
-            rankIn={rankIn}
-            leadersSession={view === 'leaders' && lsel ? lsel.date : null}
-            onPrev={() => step(-1)}
-            onNext={() => step(1)}
-            onClose={() => {
-              setSel(null)
-              setLsel(null)
-            }}
-          />
-        ) : null}
-      </RightInspectorShell>
+      />
     </PageShell>
   )
 

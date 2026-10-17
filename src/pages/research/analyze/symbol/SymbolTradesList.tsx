@@ -6,23 +6,17 @@
  */
 import { useMemo, useState } from 'react'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
-import { fmtPl, tradeTracksFor } from '@/components/symbolChart/symbolPriceModel'
-import { useLedgerExecutionsBook } from '@/hooks/useLedgerExecutions'
-import { useSymbolLegs } from '@/hooks/useSymbolLegs'
+import { fmtPl } from '@/components/symbolChart/symbolPriceModel'
 import { cn } from '@/lib/utils'
 import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
+import { useSymbolTradeTracks } from './useSymbolTradeTracks'
 
 const SHOWN = 3
 
 export function SymbolTradesList({ symbol }: { symbol: string }) {
   const sym = symbol.trim().toUpperCase()
-  const bookQ = useLedgerExecutionsBook({ limit: 0 })
-  const legs = useSymbolLegs(sym)
+  const { tracks, loading } = useSymbolTradeTracks(sym)
   const [all, setAll] = useState(false)
-  const tracks = useMemo(
-    () => tradeTracksFor(bookQ.data?.items ?? [], sym, legs).filter((t) => t.id != null),
-    [bookQ.data, sym, legs],
-  )
   const recent = useMemo(() => [...tracks].sort((a, b) => b.openDate.localeCompare(a.openDate)), [tracks])
   const everyOne = useMemo(
     () => [...recent].sort((a, b) => Number(a.closeDate != null) - Number(b.closeDate != null)),
@@ -30,7 +24,7 @@ export function SymbolTradesList({ symbol }: { symbol: string }) {
   )
   const ids = useMemo(() => everyOne.map((t) => t.id as number), [everyOne])
   const rows = all ? everyOne : recent.slice(0, SHOWN)
-  if (bookQ.isLoading) return <p className="m-0 text-dense-micro text-muted-foreground">Reading the trades on {sym}…</p>
+  if (loading) return <p className="m-0 text-dense-micro text-muted-foreground">Reading the trades on {sym}…</p>
   if (tracks.length === 0)
     return <p className="m-0 text-dense-micro text-muted-foreground">No trade on record for {sym} — nothing in the book to open.</p>
   return (

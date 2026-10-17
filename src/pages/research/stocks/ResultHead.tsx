@@ -75,7 +75,10 @@ export function ResultHead({
       <header className="flex flex-wrap items-baseline gap-2 border-b border-foreground/[0.06] px-3 py-2">
         <span data-sr-tb="label">Result</span>
         <span className="text-dense-body font-semibold">{title}</span>
-        <span className="ml-auto text-dense-meta text-muted-foreground">click a row for why · j k walk · esc</span>
+        {/* Keys a phone or an iPad on its own does not have (§18.3). */}
+        <span data-sr-touch="hide" className="ml-auto text-dense-meta text-muted-foreground">
+          click a row for why · j k walk · esc
+        </span>
       </header>
       <div className="grid border-b border-foreground/[0.06] [grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))]">
         <div

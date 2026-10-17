@@ -17,6 +17,7 @@ import { useTradeRoot } from '@/hooks/useTradeRoot'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { useDevice } from '@/lib/device'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
@@ -49,6 +50,8 @@ import { PositionsOpenControls } from '@/components/positions/PositionsOpenContr
 import { BookVsBaseCockpit } from '@/components/positions/BookVsBaseCockpit'
 import { BookHeroBand } from './positions/BookHeroBand'
 import { SharesBand } from './positions/SharesBand'
+import { useBookFold, usePressureFold } from './positions/tierFolds'
+import { faceUnderlyingHint, fillSubject, snapshotCarries } from './positions/pageReadings'
 import { positionMatchesAccountFilter } from '@/utils/positionsGrouping'
 import { MarginByAccountStrip } from '@/components/positions/MarginByAccountStrip'
 import { ShortLegsPanel } from '@/components/positions/ShortLegsPanel'
@@ -192,7 +195,10 @@ export default function PositionsPage() {
     // filterSymbol is read at arrival only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusInst, focusRoot.isFetched, focusRoot.data])
-  const [pressureOpen, setPressureOpen] = usePageViewState('pressure', true)
+  // Book and Pressure points start folded on a phone and an iPad, each tier
+  // remembering its own (Rev .163); the desk's folds are as they were.
+  const [pressureOpen, setPressureOpen] = usePressureFold()
+  const bookFold = useBookFold()
   // Rev .116: the page's two holding bands — Options and Shares — as a scope axis; one stays on.
   const [types, setTypes] = usePageViewState('types', { opt: true, sh: true })
   // The one slot beside the grid: one thing at a time, on the face that answers it.
@@ -200,6 +206,10 @@ export default function PositionsPage() {
   // leg or fill, which is data, and reopens on the next pick.
   const [face, setFace] = usePageViewState<PositionsFace>('face', 'risk')
   const [faceOpen, setFaceOpen] = useState(false)
+  // A phone has no right-hand slot (Rev .163, §18.8): a strategy reads in its
+  // own sheet, and the contract / risk / ledger faces are not drawn there.
+  const { device } = useDevice()
+  const faceShown = faceOpen && device !== 'phone'
   const [faceContract, setFaceContract] = useState<OpenOptionPosition | null>(null)
   const [faceRisk, setFaceRisk] = useState<FaceRisk | null>(null)
   const [faceExec, setFaceExec] = useState<Execution | null>(null)
@@ -263,6 +273,8 @@ export default function PositionsPage() {
       } else if (t === 'lines') {
         scrollTo('positions-lines')
       } else if (t === 'margin') {
+        // The margin rows are in Book, folded by default on a phone and an iPad.
+        bookFold.onOpenChange?.(true)
         scrollTo('positions-margin')
       } else if (t === 'room') {
         setPressureOpen(true)
@@ -271,7 +283,7 @@ export default function PositionsPage() {
         navigate(backingHref({ scopeSearch, sort, anchor: BACKING_TARGET_ANCHOR[t] }))
       }
     },
-    [navigate, scopeSearch, setLinesView, setPressureOpen],
+    [navigate, scopeSearch, setLinesView, setPressureOpen, bookFold],
   )
   const openFromBackingSegment = useCallback(
     (target: 'calls' | 'puts' | 'free' | 'income') => {
@@ -335,27 +347,12 @@ export default function PositionsPage() {
     setFaceOpen(true)
   }, [setFace])
 
-  const openOptionPosition = faceContract
-  const openOptionUnderlyingHint = useMemo(() => {
-    if (!openOptionPosition) return null
-    const sym = (openOptionPosition.symbol ?? '').trim().toUpperCase()
-    const bench = book.benchBySymbol[sym]
-    if (bench?.close != null && Number.isFinite(bench.close)) return bench.close
-    const q = book.quotesBySymbol[sym]
-    if (q?.last != null && Number.isFinite(q.last)) return q.last
-    if (q?.mid != null && Number.isFinite(q.mid)) return q.mid
-    return null
-  }, [openOptionPosition, book.benchBySymbol, book.quotesBySymbol])
+  const openOptionUnderlyingHint = useMemo(
+    () => faceUnderlyingHint(faceContract, book.benchBySymbol, book.quotesBySymbol),
+    [faceContract, book.benchBySymbol, book.quotesBySymbol],
+  )
   const inspectorDrawerState: InspectorState = inspector.type === 'option' ? { type: null } : inspector
-  const faceSubject = faceExec
-    ? [
-        faceExec.account_executions_id != null ? `exec #${faceExec.account_executions_id}` : 'fill',
-        faceExec.symbol,
-        faceExec.trade_id != null ? `strategy #${faceExec.trade_id}` : null,
-      ]
-        .filter(Boolean)
-        .join(' · ')
-    : null
+  const faceSubject = fillSubject(faceExec)
 
   function refreshExecData() {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.trading.executions })
@@ -400,23 +397,13 @@ export default function PositionsPage() {
   const scopedCount = book.hasAccountSelection ? book.totalPositions : 0
   const rowsInView =
     linesView === 'strategy' ? filteredTradeGroups.length : linesView === 'contract' ? contractsInView.length : expiriesInView.length
-  const accountsWord =
-    accountFilter.host && accountFilter.secondary
-      ? 'both accounts'
-      : accountFilter.host
-        ? 'host'
-        : accountFilter.secondary
-          ? 'secondary'
-          : 'no account'
-  const carries = [
-    { strategy: 'strategies', contract: 'contracts', expiries: 'expiries' }[linesView],
-    `${rowsInView} rows`,
-    accountsWord,
-    filterSymbol || null,
-    filterExpiry || null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
+  const carries = snapshotCarries({
+    view: linesView,
+    rows: rowsInView,
+    accounts: accountFilter,
+    symbol: filterSymbol,
+    expiry: filterExpiry,
+  })
   const openOffTrack = () => {
     setLinesView('strategy')
     setTradeFilters({ ...CLEAR_FILTERS, attributionType: 'unassigned' })
@@ -441,6 +428,7 @@ export default function PositionsPage() {
       onClearScope={clearScope}
       types={types}
       onTypesChange={setTypes}
+      trimOnPhone
     />
   )
 
@@ -550,7 +538,7 @@ export default function PositionsPage() {
                   onOpenTarget={openTarget}
                 />
 
-                <PositionsTier label="Book" note="How tight · how backed · how exposed · how much room — in that order" />
+                <PositionsTier label="Book" note="How tight · how backed · how exposed · how much room — in that order" {...bookFold} />
                 {/* Demand against supply — what the readings grade — then the margin rows
                     Pressure opens and the Backing pool Backing grades: three panels, one
                     height (§16.5). */}
@@ -607,12 +595,17 @@ export default function PositionsPage() {
                         onClearSymbol={() => setFilterSymbol('')}
                         selected={selectedLeg}
                         onSelect={setPickedLeg}
-                        onOpenContract={(leg) => {
-                          const pos = book.filteredOptions.find(
-                            (p) => p.contract_key === leg.contractKey && (!leg.accountId || p.account_id === leg.accountId),
-                          )
-                          if (pos) openContractFace(pos)
-                        }}
+                        // No contract face on a phone, so no button that would open one.
+                        onOpenContract={
+                          device === 'phone'
+                            ? undefined
+                            : (leg) => {
+                                const pos = book.filteredOptions.find(
+                                  (p) => p.contract_key === leg.contractKey && (!leg.accountId || p.account_id === leg.accountId),
+                                )
+                                if (pos) openContractFace(pos)
+                              }
+                        }
                       />
                     </div>
                     <div className={positionsUi.bandItemWide}>
@@ -626,7 +619,7 @@ export default function PositionsPage() {
                 <div
                   className={cn(
                     'sk-rise grid min-w-0 items-start gap-3',
-                    faceOpen ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]' : 'grid-cols-1',
+                    faceShown ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]' : 'grid-cols-1',
                   )}
                 >
                 <section id="positions-lines" className={positionsUi.panel} aria-label="Options">
@@ -704,7 +697,7 @@ export default function PositionsPage() {
                     />
                   )}
                 </section>
-                {faceOpen ? (
+                {faceShown ? (
                   <PositionsFaceSlot
                     face={face}
                     onFace={setFace}

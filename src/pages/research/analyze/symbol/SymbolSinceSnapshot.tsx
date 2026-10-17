@@ -14,6 +14,10 @@
  * The next earnings print (Research's estimate) rides the same snapshot and
  * gets the design's Earnings row (`earningsChange`); the rail waits for it so a
  * snapshot is never saved without it.
+ *
+ * `variant="moved"` is the phone's `Moved` block (design Rev .163, Symbol on
+ * an iPhone): the same rows, band flips only, at most four, under the face
+ * rows — and nothing at all when nothing flipped, as the design draws it.
  */
 import { useEffect, useMemo } from 'react'
 import type { ExhibitPayload } from '@/api/research/exhibit'
@@ -85,7 +89,10 @@ function writeSessionRows(key: string, rows: BandChangeRow[]): void {
   }
 }
 
-export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
+/** The phone's Moved block lists this many flips; the count says how many there were. */
+const MOVED_SHOWN = 4
+
+export function SymbolSinceSnapshot({ symbol, variant = 'rail' }: { symbol: string; variant?: 'rail' | 'moved' }) {
   const sym = symbol.trim().toUpperCase()
   const q = useExhibitComposite(RIBBON_LENSES, sym)
   const earnQ = useEarningsDates(sym)
@@ -119,6 +126,39 @@ export function SymbolSinceSnapshot({ symbol }: { symbol: string }) {
 
   // Still loading (or no symbol): nothing to seat yet.
   if (rows == null) return null
+
+  if (variant === 'moved') {
+    const flipped = rows.filter((r) => r.kind === 'flip')
+    if (flipped.length === 0) return null
+    return (
+      <section
+        aria-label="Moved since your last look"
+        className="flex flex-col gap-0.5"
+        title="Prior readings come from this browser, not Research's last snapshot."
+      >
+        <div className="flex items-baseline gap-2 text-dense-micro text-muted-foreground">
+          <span className="font-semibold text-secondary-foreground">Moved</span>
+          <span>
+            {flipped.length} band flip{flipped.length === 1 ? '' : 's'} since your last look
+          </span>
+        </div>
+        <ul className="m-0 flex list-none flex-col p-0">
+          {flipped.slice(0, MOVED_SHOWN).map((r) => (
+            <li key={r.lens} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 py-1 text-dense-label">
+              <span className="truncate text-[var(--sk-soft)]">{r.label}</span>
+              <span className="font-mono tabular-nums">
+                <span className="text-muted-foreground">{r.from}</span>
+                <span className="text-muted-foreground/60"> → </span>
+                <span className={r.tone === 'danger' ? 'font-semibold text-destructive' : 'font-semibold text-foreground'}>
+                  {r.to}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
 
   /* The panel keeps its seat when there is nothing to list — a rail section
      that vanishes on a first visit reads as unbuilt, not as quiet. Which of

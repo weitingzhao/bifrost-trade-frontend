@@ -4,6 +4,9 @@
  * (`StageRow`). Stages are AND; chips in a stage are OR unless the stage has a
  * min or reads "all selected". Every change is a new version. The panel
  * collapses to a 38px strip so the table can take the row.
+ *
+ * Both shapes are the screen's builder (`data-sr-build`, DESIGN_CONTRACTS
+ * §18.2): a phone reads the result and builds nothing, so neither draws there.
  */
 import { useState } from 'react'
 import { stageActive, type PineStageSettings, type ScreenState, type Stage, type StageCount } from './stockScreenModel'
@@ -81,7 +84,7 @@ export function ScreenPanel({
     : []
   if (collapsed) {
     return (
-      <section className="mat-card w-[38px] flex-none self-stretch overflow-hidden border">
+      <section data-sr-build="" className="mat-card w-[38px] flex-none self-stretch overflow-hidden border">
         <button
           type="button"
           onClick={onToggle}
@@ -100,7 +103,7 @@ export function ScreenPanel({
     )
   }
   return (
-    <aside className="flex min-w-[290px] max-w-full flex-[0_1_330px] flex-col gap-2.5">
+    <aside data-sr-build="" className="flex min-w-[290px] max-w-full flex-[0_1_330px] flex-col gap-2.5">
     <section className="mat-card min-w-0 overflow-hidden border">
       <header className="flex flex-wrap items-baseline gap-2 border-b border-foreground/[0.06] px-3 py-2">
         <button

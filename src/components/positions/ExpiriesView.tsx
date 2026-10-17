@@ -10,6 +10,7 @@
  * flat list sorted by days to expiry reads faster than five group headers.
  */
 import { useMemo } from 'react'
+import { useDevice } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import {
   DenseDataTable,
@@ -50,6 +51,7 @@ export function ExpiriesView({
   onExpiryClick: (expiry: string) => void
 }) {
   const feedAgeSec = quoteFeedAgeSec(Object.values(quotesBySymbol))
+  const phone = useDevice().device === 'phone'
 
   const totals = useMemo(() => {
     let shortContracts = 0
@@ -73,6 +75,11 @@ export function ExpiriesView({
   // With nothing priced, ITM and Tightest would be a column of dashes each.
   const showPriced = rows.some((r) => r.tightestCushionPct != null || r.itmShortCount > 0)
   const sorted = [...rows].sort((a, b) => (a.dte ?? Number.MAX_SAFE_INTEGER) - (b.dte ?? Number.MAX_SAFE_INTEGER))
+  // A phone keeps three (Rev .163): Expiry · ITM · Tightest. The prototype's
+  // third is Option P&L, which this view deliberately does not sum (see
+  // `ExpiryLadderRow.tightestCushionPct`); the cushion answers which week is
+  // dangerous. With nothing priced, Expiry · DTE · Short.
+  const phoneKeep = showPriced ? '1,5,8' : '1,2,3'
 
   return (
     <div className="min-w-0 space-y-1">
@@ -107,7 +114,7 @@ export function ExpiriesView({
         ) : null}
         <span className="ml-auto text-dense-caption">click a date to scope the page to it</span>
       </div>
-      <div className={tradePanel.tableWrap}>
+      <div className={tradePanel.tableWrap} data-sr-keep={phoneKeep}>
         <DenseDataTable tableClassName="min-w-[46rem]">
           <DenseTableHeader>
             <DenseTableHeadRow>
@@ -142,6 +149,7 @@ export function ExpiriesView({
                 showPriced={showPriced}
                 active={activeExpiry === r.expiry}
                 onClick={() => onExpiryClick(r.expiry)}
+                phone={phone}
               />
             ))}
           </DenseTableBody>
@@ -157,23 +165,39 @@ function ExpiryRow({
   showPriced,
   active,
   onClick,
+  phone,
 }: {
   row: ExpiryLadderRow
   tightPct: number
   showPriced: boolean
   active: boolean
   onClick: () => void
+  /**
+   * On a phone a tap opens the row's every column in the shell's sheet; its
+   * `Open` runs the row's click, which here is the date's own: scope the page
+   * to it (or clear it). The desk keeps the date button as the one target.
+   */
+  phone: boolean
 }) {
   const urgent = row.dte != null && row.dte >= 0 && row.dte <= 7
   const past = row.dte != null && row.dte < 0
 
   return (
     // The scoped expiry is the list's selection (accent 18% capsule, Rev .153).
-    <DenseTableRow selected={active} className="[&_td]:whitespace-nowrap [&_td]:text-dense-body">
+    <DenseTableRow
+      selected={active}
+      className="[&_td]:whitespace-nowrap [&_td]:text-dense-body"
+      onClick={phone ? onClick : undefined}
+      data-sr-open={phone ? (active ? 'Clear expiry scope' : 'Scope to this expiry') : undefined}
+    >
       <DenseTableCell>
         <button
           type="button"
-          onClick={onClick}
+          onClick={(e) => {
+            // The phone's row runs the same click: one tap on the date toggles once.
+            if (phone) e.stopPropagation()
+            onClick()
+          }}
           className="font-mono text-xs text-foreground hover:text-link hover:underline"
           aria-pressed={active}
           title={active ? 'Clear the expiry scope' : 'Scope the page to this expiry'}

@@ -3,6 +3,10 @@
  * then this set) and All three — over the lineage ribbons. Every funnel step
  * is a button: it lists exactly the names that step counts (Rev .129), and it
  * intersects with any lineage focus.
+ *
+ * Devices (Rev .163, DESIGN_CONTRACTS §18): a phone does not draw it (the
+ * funnels and ribbons are a builder's reading); an iPad opens it folded, and
+ * the page keeps the iPad's fold apart from the desk's (§18.11).
  */
 import { cn } from '@/lib/utils'
 import { AGREE_BAR, AGREE_OF, AXES, type Funnel, type LineageFocus, type NameRow } from './stockScreenModel'
@@ -60,7 +64,7 @@ export function FlowPanel({
     : 'all three models · pick cards above to narrow'
   const laNote = hover ? `hover · ${hover.note}` : pickNote
   return (
-    <section className="mat-card min-w-0 overflow-hidden border">
+    <section data-sr-phone="hide" className="mat-card min-w-0 overflow-hidden border">
       <header className="flex flex-wrap items-baseline gap-2 border-b border-foreground/[0.06] px-3 py-2">
         <span data-sr-tb="label">Flow</span>
         <span className="text-dense-body font-semibold">Funnel · lineage</span>

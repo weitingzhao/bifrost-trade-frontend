@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SectionBand } from '@bifrost/ui'
+import { DeviceSectionBand } from '@/components/layout/DeviceSectionBand'
 
 /**
  * A band across Positions: what the panels below it answer (design Rev .117,
@@ -9,6 +9,12 @@ import { SectionBand } from '@bifrost/ui'
  * Pressure points passes `open` / `onOpenChange` because a reading elsewhere
  * on the page opens it to show what it points at; its folded summary is the
  * legs, their premium range and the close the cushions are priced against.
+ *
+ * Device tiers (Rev .163, §18.7 · §18.11): each tier remembers its own fold
+ * (`DeviceSectionBand`); the desk's is the one it always had. Book and
+ * Pressure points, folded by default on a phone and an iPad, are folded by
+ * the page there (`pages/portfolio/positions/tierFolds`), because a reading
+ * opens them.
  */
 export function PositionsTier({
   label,
@@ -26,7 +32,7 @@ export function PositionsTier({
   onOpenChange?: (open: boolean) => void
 }) {
   return (
-    <SectionBand
+    <DeviceSectionBand
       id={label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}
       title={label}
       note={note}

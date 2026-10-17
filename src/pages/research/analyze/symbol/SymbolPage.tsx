@@ -32,6 +32,15 @@
  *
  * `?tab=` still drives the tabs, so every link and bookmark written against
  * them is unchanged, and every retired `?view=` still lands on its anchor.
+ *
+ * ## Device tiers (Rev .163, contract §18)
+ *
+ * On a **phone** the page is the 440 face — the same reading re-authored for
+ * one column — rather than the wide page with blocks hidden one by one
+ * (§18.2: "页面已有 440 面的(Symbol),phone 直接用 440 面"). On an **iPad**
+ * the wide page keeps its body and its head goes from four lines to three
+ * (§18.11). A panel or a float is a surface, and keeps its own form on every
+ * device.
  */
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -41,6 +50,7 @@ import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useInSurface } from '@/lib/surfaceScope'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
+import { useDevice } from '@/lib/device'
 import { SymbolCompact } from '@/pages/research/analyze/symbol/SymbolCompact'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
@@ -89,6 +99,9 @@ export default function SymbolPage() {
   const inSurface = useInSurface()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const width = useContainerWidth(rootRef, 1200)
+  const { device } = useDevice()
+  const phonePage = device === 'phone' && !inSurface
+  const padPage = device === 'pad' && !inSurface
 
   const setTab = (id: SymbolTabId) => {
     setParams((prev) => {
@@ -137,17 +150,34 @@ export default function SymbolPage() {
 
   // The 440 page (Rev .57): in a surface no wider than 640, the same page
   // re-authored for a panel — chosen by its own width, not a second route.
-  if (inSurface && width <= COMPACT_MAX_PX && symbol) {
+  // A phone's page is that face too (Rev .163), chosen by the device tier.
+  if (symbol && (phonePage || (inSurface && width <= COMPACT_MAX_PX))) {
+    const face = (
+      <SymbolCompact
+        symbol={symbol}
+        faces={faces}
+        thesis={thesis}
+        active={active}
+        setTab={setTab}
+        lampFor={lampFor}
+        phone={phonePage}
+      />
+    )
+    return (
+      // A page root is a PageShell; in a surface the panel body is the shell.
+      <div ref={rootRef}>{phonePage ? <PageShell padding="none">{face}</PageShell> : face}</div>
+    )
+  }
+
+  // A phone with no name yet: what the page is, and where a name comes from.
+  // The wide page's Method switch and its seven empty tabs are not for a phone.
+  if (phonePage) {
     return (
       <div ref={rootRef}>
-        <SymbolCompact
-          symbol={symbol}
-          faces={faces}
-          thesis={thesis}
-          active={active}
-          setTab={setTab}
-          lampFor={lampFor}
-        />
+        <PageShell padding="compact" className="space-y-2">
+          <PageHeader title="Symbol" description="One symbol, every face. Observe-only." />
+          <p className="m-0 text-dense-meta text-muted-foreground">Search a name in the bar above to read it here.</p>
+        </PageShell>
       </div>
     )
   }
@@ -163,7 +193,13 @@ export default function SymbolPage() {
           <PageHeader title="Symbol" description="One symbol, every face. Observe-only." />
         </div>
       ) : (
-        <SymbolIdentity symbol={symbol} faces={faces} tab={active} asof={<SymbolAsofTag symbol={symbol} />} />
+        <SymbolIdentity
+          symbol={symbol}
+          faces={faces}
+          tab={active}
+          pad={padPage}
+          asof={<SymbolAsofTag symbol={symbol} />}
+        />
       )}
 
       {/* Rev .142: the faces are capsule segments on a sticky bar with no slab —

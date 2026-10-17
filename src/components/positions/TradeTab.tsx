@@ -1,4 +1,5 @@
-import { Fragment, useEffect, useMemo } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
+import { useDevice } from '@/lib/device'
 import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { DenseTag, CollapsibleChevron } from '@/components/data-display'
@@ -45,6 +46,7 @@ import type { RiskProfile } from '@/utils/riskProfile'
 import { TradeRef } from '@/components/tradeRecord/TradeRef'
 import { flashFound, scrollWhenPresent } from '@/lib/scrollWhenPresent'
 import { titleCaseCode } from '@/utils/strategyFormUtils'
+import { StrategyPhoneSheet, type StrategySheetRow } from './StrategyPhoneSheet'
 
 const EXEC_QTY_TITLE =
   'Per option: execution quantities (comma-separated). Uses Final book only when at least one matching Final exists; otherwise TWS. Multiple option lines separated by |.'
@@ -113,6 +115,17 @@ interface Props {
   canonicalOptContractKeys?: Set<string>
 }
 
+/** Shares held on the coverage row's own account × symbol. */
+function heldShares(sc: TradeAllGroup['stock_coverage'][number], liveStocks: LivePositionRow[]): number {
+  return liveStocks
+    .filter(
+      (s) =>
+        (s.symbol ?? '').toUpperCase() === sc.symbol.toUpperCase() &&
+        s.account_id === sc.account_id,
+    )
+    .reduce((sum, s) => sum + Math.abs(s.position ?? 0), 0)
+}
+
 function coverageBadge(
   coverage: TradeAllGroup['stock_coverage'],
   liveStocks: LivePositionRow[],
@@ -121,13 +134,7 @@ function coverageBadge(
   let allCovered = true
   let anyNaked = false
   for (const sc of coverage) {
-    const held = liveStocks
-      .filter(
-        (s) =>
-          (s.symbol ?? '').toUpperCase() === sc.symbol.toUpperCase() &&
-          s.account_id === sc.account_id,
-      )
-      .reduce((sum, s) => sum + Math.abs(s.position ?? 0), 0)
+    const held = heldShares(sc, liveStocks)
     if (held >= sc.required_shares) continue
     allCovered = false
     if (held === 0) anyNaked = true
@@ -169,6 +176,12 @@ export function TradeTab({
   // The open rows are the page's view (Rev .75 `openRow`), kept for the session.
   const [expandedKeys, setExpandedKeys] = usePageViewSet<string>('openRows.instances')
   const { pct: cushionTightPct } = useCushionThreshold()
+  // A phone keeps three columns and reads a strategy in its own sheet instead
+  // of opening its legs in place (Rev .163, `data-sr-detail="page"`). The sheet
+  // is a look, not the page's view: it is not restored on return, and the key
+  // outlives `open` so the sheet keeps its reading while it slides away.
+  const phone = useDevice().device === 'phone'
+  const [sheetState, setSheet] = useState<{ key: string; open: boolean } | null>(null)
 
   const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])
   const twsMap = useMemo(() => buildLiveOptExecutionMap(executionsTws), [executionsTws])
@@ -186,9 +199,16 @@ export function TradeTab({
     const g = focusTradeId != null ? groups.find((x) => x.trade_id === focusTradeId) : undefined
     return g ? tradeGroupKey(g) : null
   }, [focusTradeId, groups])
+  // On a phone the deep link's row opens as its sheet, set while rendering
+  // (as the page reads `?inst=`); the effect below still brings it into view.
+  const [seenFocus, setSeenFocus] = useState<string | null>(null)
+  if (phone && focusKey !== seenFocus) {
+    setSeenFocus(focusKey)
+    if (focusKey != null) setSheet({ key: focusKey, open: true })
+  }
   useEffect(() => {
     if (focusKey == null) return
-    setExpandedKeys((prev) => (detailViewMode === 'accordion' ? new Set([focusKey]) : new Set([...prev, focusKey])))
+    if (!phone) setExpandedKeys((prev) => (detailViewMode === 'accordion' ? new Set([focusKey]) : new Set([...prev, focusKey])))
     // Not cancelled on cleanup: reporting back clears the focus, which re-runs
     // this effect before the row has rendered. The poll ends on its own.
     scrollWhenPresent(`#${CSS.escape(`lines-row-${focusKey}`)}`, 5_000, flashFound)
@@ -217,6 +237,10 @@ export function TradeTab({
 
   /** A row opens its legs and, beside the grid, its risk at expiry — one click, both. */
   function openRow(instKey: string, id: number | null, profile: RiskProfile | null, title: string) {
+    if (phone) {
+      setSheet({ key: instKey, open: true })
+      return
+    }
     toggleExpand(instKey)
     if (id != null) onOpenStrategy?.(id, { title, profile })
   }
@@ -258,24 +282,290 @@ export function TradeTab({
     (g) => summarizeCushion(g.options, spotOfLeg).cushionPct != null,
   )
   const colSpan = showMoneyness ? COL_SPAN : COL_SPAN - 1
+  // The phone's three: Opportunity · Days to expiry · Option P&L (the
+  // prototype's 1·4·8) — one place earlier when Moneyness steps out.
+  const phoneKeep = showMoneyness ? '1,4,8' : '1,4,7'
+  const lines = ranked.map((group) => {
+    const instKey = tradeGroupKey(group)
+    const id = group.trade_id
+    const isExpanded = phone ? sheetState?.open === true && sheetState.key === instKey : expandedKeys.has(instKey)
+    const instLabel =
+      group.trade_label ?? (id != null ? `Strategy #${id}` : 'Uncategorized')
+    const oppName = group.strategy_opportunity_name?.trim() || null
+    const structLabel = group.template_code
+      ? (group.template_label ?? titleCaseCode(group.template_code))
+      : '—'
+
+    const opp =
+      group.strategy_opportunity_id != null
+        ? oppMap.get(group.strategy_opportunity_id)
+        : undefined
+    const scopeType = group.scope_type
+    // Instance row symbol = underlyings on this instance's options, not the full Opp book list
+    const fromOptions = Array.from(
+      new Set(
+        group.options
+          .map((p) => extractUnderlyingRootSymbol(p.symbol))
+          .filter(Boolean),
+      ),
+    ).sort()
+    const scopeSymbols =
+      fromOptions.length > 0
+        ? fromOptions
+        : opp?.symbols?.length === 1
+          ? opp.symbols
+          : []
+    const defaultStockAcct = tradeDefaultAccountForStockInspect(group)
+    const optExecQty = formatTradeOptExecQtyCell(group, finalMap, twsMap)
+    const optN = group.options.length
+    // Opened is instance metadata, so it rides under the instance label
+    // rather than paying for a column of its own.
+    const openedMeta =
+      group.trade_opened_at_epoch != null ? (
+        <span className="text-dense-caption text-muted-foreground">
+          {fmtDate(group.trade_opened_at_epoch)}
+          {fmtDaysAgo(group.trade_opened_at_epoch)
+            ? ` · ${fmtDaysAgo(group.trade_opened_at_epoch)}`
+            : ''}
+        </span>
+      ) : null
+    const rp = id != null ? (riskProfiles.get(id) ?? null) : null
+    const rl = rp ? formatRiskDisplayLabels(rp) : null
+    // A breakeven is a price on one underlying. With two underlyings in
+    // the instance there is no single spot to measure it against.
+    const beSpot =
+      fromOptions.length === 1 ? (resolveSpot(fromOptions[0] as string)?.price ?? null) : null
+
+    // The open strategy is a full-cell fill, as the prototype paints it
+    // (`r.bg` = surface on every cell, Owner #7): ink 8% on the frost page.
+    // Hover is the list grammar's capsule — no row hover of the page's own.
+    const rowBg = isExpanded ? '[&>td]:bg-[var(--sk-surface)]' : ''
+    const name = oppName ?? instLabel
+    const sub = oppName ? instLabel : id == null ? 'not on any strategy' : 'unnamed trade'
+    const nameInk = oppName ? 'text-foreground' : id == null ? 'text-warning' : 'text-secondary-foreground'
+
+    const structCell = group.template_code ? (
+      <span title={group.structure_name ?? undefined}>{structLabel}</span>
+    ) : (
+      <span className="text-muted-foreground">—</span>
+    )
+    const dteCell = <TradeDteCell legs={group.options} />
+    const cushionCell = (
+      <TradeCushionCell legs={group.options} spotOf={spotOfLeg} tightPct={cushionTightPct} />
+    )
+    const execQtyCell =
+      optN > 0
+        ? optExecQty.split(' ｜ ').map((leg, i, legs) => (
+            <Fragment key={i}>
+              {/* The break falls after a separator, never inside a leg (the prototype's narrow `|`). */}
+              <span className="whitespace-nowrap">
+                {leg}
+                {i < legs.length - 1 ? '\u00a0|' : ''}
+              </span>
+              {i < legs.length - 1 ? ' ' : null}
+            </Fragment>
+          ))
+        : '—'
+    const underlyingCell = coverageBadge(group.stock_coverage, liveStocks)
+    const pnlInk = optN > 0 ? pnlColorClass(group.options_unrealized_pnl) : 'text-muted-foreground'
+    const pnlCell = optN > 0 ? fmtUsd(group.options_unrealized_pnl) : '—'
+    const payoffCell =
+      rp && rl ? (
+        <TradePayoffCell
+          gainLabel={rl.gainLabel}
+          lossLabel={rl.lossLabel}
+          unlimited={rp.risk_type === 'unlimited'}
+          prices={rp.breakeven_prices}
+          spot={beSpot}
+        />
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      )
+
+    // The sheet's facts are the row's columns in table order. Symbols read as
+    // text there: the sheet's only ways out are its two buttons.
+    const symbolsText =
+      scopeType === 'watchlist_stk' ? 'Watchlist' : scopeSymbols.length > 0 ? scopeSymbols.join(' ') : '—'
+    const sheet: StrategySheetRow | null =
+      phone && sheetState?.key === instKey
+        ? {
+            name,
+            nameInk,
+            sub: id != null ? `#${id}${group.trade_label?.trim() ? ` · ${group.trade_label.trim()}` : ''}` : sub,
+            tradeId: id,
+            tradeList: rankedIds,
+            facts: [
+              { k: 'Contract type', v: structCell },
+              { k: 'Symbols', v: <span className="font-bold text-[var(--color-entity-option)]">{symbolsText}</span> },
+              { k: 'Days to expiry', v: dteCell },
+              ...(showMoneyness ? [{ k: 'Moneyness', v: cushionCell }] : []),
+              { k: 'Executed qty', v: <span className="whitespace-normal text-muted-foreground">{execQtyCell}</span> },
+              { k: 'Underlying', v: underlyingCell },
+              { k: 'Option P&L · open', v: <span className={cn('font-bold', pnlInk)}>{pnlCell}</span> },
+              { k: 'Gain / loss at expiry', v: payoffCell },
+              ...(openedMeta ? [{ k: 'Opened', v: openedMeta }] : []),
+            ],
+            legs: group.options,
+            cover: group.stock_coverage.map((sc) => ({
+              symbol: sc.symbol,
+              accountId: sc.account_id,
+              direction: sc.direction,
+              required: sc.required_shares,
+              held: heldShares(sc, liveStocks),
+            })),
+          }
+        : null
+
+    const mainRow = (
+      <tr
+        key={`inst-${instKey}`}
+        id={`lines-row-${instKey}`}
+        className={cn('cursor-pointer', rowBg)}
+        onClick={() => openRow(instKey, id, rp, name)}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        title={isExpanded ? 'Collapse' : 'Open the legs behind this strategy'}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            openRow(instKey, id, rp, name)
+          }
+        }}
+      >
+        <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')}>
+          <span className="flex items-baseline gap-1.5">
+            <CollapsibleChevron expanded={isExpanded} className="size-3" />
+            <span className="flex min-w-0 flex-col gap-px">
+              <span className={cn('text-xs font-semibold leading-normal', nameInk)}>{name}</span>
+              {id != null ? (
+                <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
+                  <TradeRef id={id} list={rankedIds} from="Positions · strategies" />
+                  {group.trade_label?.trim() ? ` · ${group.trade_label.trim()}` : ''}
+                </span>
+              ) : (
+                <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
+                  {sub}
+                </span>
+              )}
+            </span>
+          </span>
+        </td>
+        <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-secondary-foreground')}>
+          {structCell}
+        </td>
+        <td className={cn(positionsUi.td, 'text-left whitespace-normal')}>
+          {scopeType === 'watchlist_stk' ? (
+            <DenseTag variant="info" size="cell">
+              Watchlist
+            </DenseTag>
+          ) : scopeSymbols.length > 0 ? (
+            <span className="inline-flex flex-wrap gap-x-1.5 gap-y-0.5">
+              {scopeSymbols.map((sym) =>
+                onOpenStock ? (
+                  <span
+                    key={sym}
+                    className="inline"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    role="presentation"
+                  >
+                    <button
+                      type="button"
+                      className="cursor-pointer border-0 bg-transparent p-0 font-mono text-xs font-bold text-[var(--color-entity-option)] hover:underline"
+                      aria-label={`Open ${sym}`}
+                      data-ctx-sym={sym}
+                      onClick={() => onOpenStock(sym, defaultStockAcct)}
+                    >
+                      {sym}
+                    </button>
+                  </span>
+                ) : (
+                  <span key={sym} className="font-mono text-xs font-bold text-[var(--color-entity-option)]">
+                    {sym}
+                  </span>
+                ),
+              )}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </td>
+        <td className={positionsUi.td}>{dteCell}</td>
+        {showMoneyness ? <td className={positionsUi.td}>{cushionCell}</td> : null}
+        {/* A many-legged row (Uncategorized: `1 ｜ 1 ｜ −5, 4, 5`) is wider than
+            its 8% column: it wraps between legs, each leg's fills kept on
+            one line, instead of running over Option P&L. */}
+        <td className={cn(positionsUi.td, 'whitespace-normal text-muted-foreground')} title={EXEC_QTY_TITLE}>
+          {execQtyCell}
+        </td>
+        <td className={cn(positionsUi.td, 'text-right')}>{underlyingCell}</td>
+        <td className={cn(positionsUi.td, 'font-bold', pnlInk)}>{pnlCell}</td>
+        <td className={positionsUi.td}>{payoffCell}</td>
+      </tr>
+    )
+
+    const detailRow = isExpanded && !phone ? (
+      <tr key={`inst-detail-${instKey}`}>
+        <td colSpan={colSpan} className="bg-[var(--sk-raised2)] px-2.5 pt-1 pb-2.5 pl-6.5 align-top">
+          <div className={tradePanel.detailStack}>
+            {openedMeta ? <div className="text-dense-caption text-muted-foreground">Opened {openedMeta}</div> : null}
+            <TradeOptionSubTable
+              group={group}
+              options={group.options}
+              quotesBySymbol={quotesBySymbol}
+              quotesByCk={quotesByCk}
+              perShareByTicker={perShareByTicker}
+              executionsFinal={executionsFinal}
+              executionsTws={executionsTws}
+              finalMap={finalMap}
+              twsMap={twsMap}
+              detailViewMode={detailViewMode}
+              onOpenOption={onOpenOption}
+              onEditExec={onEditExec}
+              onLinkExec={onLinkExec}
+              onDeleteExec={onDeleteExec}
+              onRefreshExecs={onRefreshExecs}
+              onOpenStrategy={onOpenStrategy}
+              canonicalOptContractKeys={canonicalOptContractKeys}
+            />
+            <TradeCoverageSubTable
+              coverage={group.stock_coverage}
+              liveStocks={liveStocks}
+              quotesBySymbol={quotesBySymbol}
+              benchBySymbol={benchBySymbol}
+              onOpenStock={onOpenStock}
+            />
+          </div>
+        </td>
+      </tr>
+    ) : null
+
+    return { mainRow, detailRow, sheet }
+  })
+  const sheetRow = lines.find((l) => l.sheet != null)?.sheet ?? null
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" data-sr-keep={phoneKeep} data-sr-detail="page">
       {/* §14.6: nine columns, the design's 940 floor. */}
       {/* Collapse is the list grammar's to set (separate, 6px side inset — Rev .153). */}
-      <table className="w-full min-w-[940px] table-fixed">
+      {/* A phone lays out the three it keeps by their content: fixed widths
+          would hand them the first three columns' shares. */}
+      <table className={cn('w-full min-w-[940px]', !phone && 'table-fixed')}>
         {/* Measured at the 940 floor with every row open: the name column takes the slack. */}
-        <colgroup>
-          <col style={{ width: '21%' }} />
-          <col style={{ width: '11%' }} />
-          <col style={{ width: '8.5%' }} />
-          <col style={{ width: '8%' }} />
-          {showMoneyness ? <col style={{ width: '8.5%' }} /> : null}
-          <col style={{ width: '6.5%' }} />
-          <col style={{ width: '8%' }} />
-          <col style={{ width: '11.5%' }} />
-          <col style={{ width: '17%' }} />
-        </colgroup>
+        {phone ? null : (
+          <colgroup>
+            <col style={{ width: '21%' }} />
+            <col style={{ width: '11%' }} />
+            <col style={{ width: '8.5%' }} />
+            <col style={{ width: '8%' }} />
+            {showMoneyness ? <col style={{ width: '8.5%' }} /> : null}
+            <col style={{ width: '6.5%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '11.5%' }} />
+            <col style={{ width: '17%' }} />
+          </colgroup>
+        )}
         <thead>
           <tr>
             <ColHead word="Opportunity" code="Opp" align="left" title="Opportunity · trade · when it was opened" />
@@ -289,235 +579,7 @@ export function TradeTab({
             <ColHead word="Gain / loss at expiry" code="Gain/Loss @exp" title={AT_EXPIRY_TITLE} />
           </tr>
         </thead>
-        <tbody>
-          {ranked.flatMap((group) => {
-            const instKey = tradeGroupKey(group)
-            const id = group.trade_id
-            const isExpanded = expandedKeys.has(instKey)
-            const instLabel =
-              group.trade_label ?? (id != null ? `Strategy #${id}` : 'Uncategorized')
-            const oppName = group.strategy_opportunity_name?.trim() || null
-            const structLabel = group.template_code
-              ? (group.template_label ?? titleCaseCode(group.template_code))
-              : '—'
-
-            const opp =
-              group.strategy_opportunity_id != null
-                ? oppMap.get(group.strategy_opportunity_id)
-                : undefined
-            const scopeType = group.scope_type
-            // Instance row symbol = underlyings on this instance's options, not the full Opp book list
-            const fromOptions = Array.from(
-              new Set(
-                group.options
-                  .map((p) => extractUnderlyingRootSymbol(p.symbol))
-                  .filter(Boolean),
-              ),
-            ).sort()
-            const scopeSymbols =
-              fromOptions.length > 0
-                ? fromOptions
-                : opp?.symbols?.length === 1
-                  ? opp.symbols
-                  : []
-            const defaultStockAcct = tradeDefaultAccountForStockInspect(group)
-            const optExecQty = formatTradeOptExecQtyCell(group, finalMap, twsMap)
-            const optN = group.options.length
-            // Opened is instance metadata, so it rides under the instance label
-            // rather than paying for a column of its own.
-            const openedMeta =
-              group.trade_opened_at_epoch != null ? (
-                <span className="text-dense-caption text-muted-foreground">
-                  {fmtDate(group.trade_opened_at_epoch)}
-                  {fmtDaysAgo(group.trade_opened_at_epoch)
-                    ? ` · ${fmtDaysAgo(group.trade_opened_at_epoch)}`
-                    : ''}
-                </span>
-              ) : null
-            const rp = id != null ? (riskProfiles.get(id) ?? null) : null
-            const rl = rp ? formatRiskDisplayLabels(rp) : null
-            // A breakeven is a price on one underlying. With two underlyings in
-            // the instance there is no single spot to measure it against.
-            const beSpot =
-              fromOptions.length === 1 ? (resolveSpot(fromOptions[0] as string)?.price ?? null) : null
-
-            // The open strategy is a full-cell fill, as the prototype paints it
-            // (`r.bg` = surface on every cell, Owner #7): ink 8% on the frost page.
-            // Hover is the list grammar's capsule — no row hover of the page's own.
-            const rowBg = isExpanded ? '[&>td]:bg-[var(--sk-surface)]' : ''
-            const name = oppName ?? instLabel
-            const sub = oppName ? instLabel : id == null ? 'not on any strategy' : 'unnamed trade'
-            const nameInk = oppName ? 'text-foreground' : id == null ? 'text-warning' : 'text-secondary-foreground'
-
-            const mainRow = (
-              <tr
-                key={`inst-${instKey}`}
-                id={`lines-row-${instKey}`}
-                className={cn('cursor-pointer', rowBg)}
-                onClick={() => openRow(instKey, id, rp, name)}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                title={isExpanded ? 'Collapse' : 'Open the legs behind this strategy'}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    openRow(instKey, id, rp, name)
-                  }
-                }}
-              >
-                <td className={cn(positionsUi.td, 'pl-2 text-left font-sans whitespace-normal')}>
-                  <span className="flex items-baseline gap-1.5">
-                    <CollapsibleChevron expanded={isExpanded} className="size-3" />
-                    <span className="flex min-w-0 flex-col gap-px">
-                      <span className={cn('text-xs font-semibold leading-normal', nameInk)}>{name}</span>
-                      {id != null ? (
-                        <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
-                          <TradeRef id={id} list={rankedIds} from="Positions · strategies" />
-                          {group.trade_label?.trim() ? ` · ${group.trade_label.trim()}` : ''}
-                        </span>
-                      ) : (
-                        <span className={cn(positionsUi.mono, 'text-dense-caption leading-normal text-muted-foreground')}>
-                          {sub}
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                </td>
-                <td className={cn(positionsUi.td, 'text-left font-sans whitespace-normal text-secondary-foreground')}>
-                  {group.template_code ? (
-                    <span title={group.structure_name ?? undefined}>{structLabel}</span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className={cn(positionsUi.td, 'text-left whitespace-normal')}>
-                  {scopeType === 'watchlist_stk' ? (
-                    <DenseTag variant="info" size="cell">
-                      Watchlist
-                    </DenseTag>
-                  ) : scopeSymbols.length > 0 ? (
-                    <span className="inline-flex flex-wrap gap-x-1.5 gap-y-0.5">
-                      {scopeSymbols.map((sym) =>
-                        onOpenStock ? (
-                          <span
-                            key={sym}
-                            className="inline"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            role="presentation"
-                          >
-                            <button
-                              type="button"
-                              className="cursor-pointer border-0 bg-transparent p-0 font-mono text-xs font-bold text-[var(--color-entity-option)] hover:underline"
-                              aria-label={`Open ${sym}`}
-                              data-ctx-sym={sym}
-                              onClick={() => onOpenStock(sym, defaultStockAcct)}
-                            >
-                              {sym}
-                            </button>
-                          </span>
-                        ) : (
-                          <span key={sym} className="font-mono text-xs font-bold text-[var(--color-entity-option)]">
-                            {sym}
-                          </span>
-                        ),
-                      )}
-                    </span>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className={positionsUi.td}>
-                  <TradeDteCell legs={group.options} />
-                </td>
-                {showMoneyness ? (
-                  <td className={positionsUi.td}>
-                    <TradeCushionCell legs={group.options} spotOf={spotOfLeg} tightPct={cushionTightPct} />
-                  </td>
-                ) : null}
-                {/* A many-legged row (Uncategorized: `1 ｜ 1 ｜ −5, 4, 5`) is wider than
-                    its 8% column: it wraps between legs, each leg's fills kept on
-                    one line, instead of running over Option P&L. */}
-                <td className={cn(positionsUi.td, 'whitespace-normal text-muted-foreground')} title={EXEC_QTY_TITLE}>
-                  {optN > 0
-                    ? optExecQty.split(' ｜ ').map((leg, i, legs) => (
-                        <Fragment key={i}>
-                          {/* The break falls after a separator, never inside a leg (the prototype's narrow `|`). */}
-                          <span className="whitespace-nowrap">
-                            {leg}
-                            {i < legs.length - 1 ? '\u00a0|' : ''}
-                          </span>
-                          {i < legs.length - 1 ? ' ' : null}
-                        </Fragment>
-                      ))
-                    : '—'}
-                </td>
-                <td className={cn(positionsUi.td, 'text-right')}>{coverageBadge(group.stock_coverage, liveStocks)}</td>
-                <td
-                  className={cn(
-                    positionsUi.td,
-                    'font-bold',
-                    optN > 0 ? pnlColorClass(group.options_unrealized_pnl) : 'text-muted-foreground',
-                  )}
-                >
-                  {optN > 0 ? fmtUsd(group.options_unrealized_pnl) : '—'}
-                </td>
-                <td className={positionsUi.td}>
-                  {rp && rl ? (
-                    <TradePayoffCell
-                      gainLabel={rl.gainLabel}
-                      lossLabel={rl.lossLabel}
-                      unlimited={rp.risk_type === 'unlimited'}
-                      prices={rp.breakeven_prices}
-                      spot={beSpot}
-                    />
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
-                </td>
-              </tr>
-            )
-
-            const detailRow = isExpanded ? (
-              <tr key={`inst-detail-${instKey}`}>
-                <td colSpan={colSpan} className="bg-[var(--sk-raised2)] px-2.5 pt-1 pb-2.5 pl-6.5 align-top">
-                  <div className={tradePanel.detailStack}>
-                    {openedMeta ? <div className="text-dense-caption text-muted-foreground">Opened {openedMeta}</div> : null}
-                    <TradeOptionSubTable
-                      group={group}
-                      options={group.options}
-                      quotesBySymbol={quotesBySymbol}
-                      quotesByCk={quotesByCk}
-                      perShareByTicker={perShareByTicker}
-                      executionsFinal={executionsFinal}
-                      executionsTws={executionsTws}
-                      finalMap={finalMap}
-                      twsMap={twsMap}
-                      detailViewMode={detailViewMode}
-                      onOpenOption={onOpenOption}
-                      onEditExec={onEditExec}
-                      onLinkExec={onLinkExec}
-                      onDeleteExec={onDeleteExec}
-                      onRefreshExecs={onRefreshExecs}
-                      onOpenStrategy={onOpenStrategy}
-                      canonicalOptContractKeys={canonicalOptContractKeys}
-                    />
-                    <TradeCoverageSubTable
-                      coverage={group.stock_coverage}
-                      liveStocks={liveStocks}
-                      quotesBySymbol={quotesBySymbol}
-                      benchBySymbol={benchBySymbol}
-                      onOpenStock={onOpenStock}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ) : null
-
-            return detailRow ? [mainRow, detailRow] : [mainRow]
-          })}
-        </tbody>
+        <tbody>{lines.flatMap((l) => (l.detailRow ? [l.mainRow, l.detailRow] : [l.mainRow]))}</tbody>
         <tfoot>
           <tr>
             <td className={cn(positionsUi.td, 'border-b-0 pl-2 text-left font-sans font-bold text-foreground')} colSpan={colSpan - 2}>
@@ -528,6 +590,13 @@ export function TradeTab({
           </tr>
         </tfoot>
       </table>
+      {phone ? (
+        <StrategyPhoneSheet
+          open={sheetState?.open === true}
+          onOpenChange={(open) => setSheet((s) => (s ? { ...s, open } : s))}
+          row={sheetRow}
+        />
+      ) : null}
     </div>
   )
 }

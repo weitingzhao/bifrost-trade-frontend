@@ -3,19 +3,22 @@
  * (the model's parts × weight share = points, summing to the composite),
  * what the three models say about it (each against its own bar), and why it
  * passed (every active stage, condition by condition).
+ *
+ * The desk and the iPad read it in the right-hand inspector; a phone reads it
+ * as a bottom sheet (`WhyPanel`), which takes the head and the way out
+ * (`Symbol →`) into its own pinned head and footer. Plan this and Pool build
+ * — a phone does not (`data-sr-build`, DESIGN_CONTRACTS §18.2).
  */
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { CloseButton, IconActionButton } from '@/components/data-display'
 import { AddToPoolButton } from '@/components/research/AddToPoolButton'
 import { PlanThisButton } from '@/components/research/PlanThisButton'
-import { SYMBOL_PATH } from '@/lib/analyzeHubs'
-import { withChartSignal, withSymbolParam } from '@/lib/symbolLink'
 import { momentumFactorReadings } from '@/lib/momentumFactors'
 import { compositeParts as volParts } from '@/lib/research/volRatingsModel'
 import { cn } from '@/lib/utils'
 import { MODEL_TINT } from './stockScreenView'
-import { pineChartSignal } from './stockScreenStages'
+import { screenSymbolHref } from './stockScreenStages'
 import { MomentumFactorsPanel } from './MomentumFactorsPanel'
 import {
   AGREE_BAR,
@@ -54,21 +57,40 @@ function Part({ p }: { p: ScorePart }) {
   )
 }
 
-export function WhyDrawer({
+/** The name, its company, ‹ › to walk the list and ✕ — the inspector's head, and the phone sheet's. */
+export function WhyHead({
   row,
-  model,
-  weights,
-  score,
-  pos,
   screen,
-  stages,
-  probe,
-  rankIn,
-  leadersSession,
   onPrev,
   onNext,
   onClose,
 }: {
+  row: NameRow
+  screen: ScreenState
+  onPrev: () => void
+  onNext: () => void
+  onClose: () => void
+}) {
+  return (
+    <header className="flex items-center gap-2 border-b border-foreground/[0.06] px-3 py-2.5">
+      <Link to={screenSymbolHref(row.sym, screen.on)} className="font-mono text-dense-body font-bold text-entity-symbol hover:underline">
+        {row.sym}
+      </Link>
+      <span className="min-w-0 truncate text-dense-label text-[var(--sk-mute2)]">{row.company ?? ''}</span>
+      <span className="ml-auto inline-flex gap-0.5">
+        <IconActionButton title="Previous (k)" ariaLabel="Previous" onClick={onPrev}>
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </IconActionButton>
+        <IconActionButton title="Next (j)" ariaLabel="Next" onClick={onNext}>
+          <ChevronRight className="h-3.5 w-3.5" />
+        </IconActionButton>
+        <CloseButton title="Close (esc)" onClick={onClose} className="self-center" />
+      </span>
+    </header>
+  )
+}
+
+export interface WhyDrawerProps {
   row: NameRow
   model: RankModel
   weights: { sepa: Record<string, number>; premium: Record<string, number> }
@@ -84,7 +106,26 @@ export function WhyDrawer({
   onPrev: () => void
   onNext: () => void
   onClose: () => void
-}) {
+  /** In the phone's bottom sheet: the sheet draws the head and the footer. */
+  sheet?: boolean
+}
+
+export function WhyDrawer({
+  row,
+  model,
+  weights,
+  score,
+  pos,
+  screen,
+  stages,
+  probe,
+  rankIn,
+  leadersSession,
+  onPrev,
+  onNext,
+  onClose,
+  sheet = false,
+}: WhyDrawerProps) {
   let parts: ScorePart[] = []
   let rankTitle = ''
   let rankNote = ''
@@ -140,21 +181,7 @@ export function WhyDrawer({
   const failed = verdicts.filter((v) => !v.ok).length
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center gap-2 border-b border-foreground/[0.06] px-3 py-2.5">
-        <Link to={withSymbolParam(withChartSignal(SYMBOL_PATH, pineChartSignal(screen.on)), row.sym)} className="font-mono text-dense-body font-bold text-entity-symbol hover:underline">
-          {row.sym}
-        </Link>
-        <span className="min-w-0 truncate text-dense-label text-[var(--sk-mute2)]">{row.company ?? ''}</span>
-        <span className="ml-auto inline-flex gap-0.5">
-          <IconActionButton title="Previous (k)" ariaLabel="Previous" onClick={onPrev}>
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </IconActionButton>
-          <IconActionButton title="Next (j)" ariaLabel="Next" onClick={onNext}>
-            <ChevronRight className="h-3.5 w-3.5" />
-          </IconActionButton>
-          <CloseButton title="Close (esc)" onClick={onClose} className="self-center" />
-        </span>
-      </header>
+      {sheet ? null : <WhyHead row={row} screen={screen} onPrev={onPrev} onNext={onNext} onClose={onClose} />}
       <div className="px-3 py-1.5 font-mono text-dense-meta text-muted-foreground">{pos}</div>
 
       <section className="flex flex-col gap-2 px-3 pb-3 pt-2">
@@ -251,13 +278,19 @@ export function WhyDrawer({
         ) : null}
       </section>
 
-      <div className="mt-auto flex flex-wrap gap-1.5 border-t border-foreground/[0.06] px-3 py-2.5">
-        <PlanThisButton symbol={row.sym} source="stock-screen" sourceLabel="Stock screen" note={`Ranked by ${MODEL_LABEL[model]}`} variant="primary" />
-        <Link to={withSymbolParam(withChartSignal(SYMBOL_PATH, pineChartSignal(screen.on)), row.sym)} className="mat-btn inline-flex h-7 items-center border px-2.5 text-dense-label">
-          Symbol →
-        </Link>
-        <AddToPoolButton symbol={row.sym} source="stock-screen" score={score} tags={['stock-screen', model]} label="Pool" />
-      </div>
+      {sheet ? null : (
+        <div className="mt-auto flex flex-wrap gap-1.5 border-t border-foreground/[0.06] px-3 py-2.5">
+          <span data-sr-build="" className="contents">
+            <PlanThisButton symbol={row.sym} source="stock-screen" sourceLabel="Stock screen" note={`Ranked by ${MODEL_LABEL[model]}`} variant="primary" />
+          </span>
+          <Link to={screenSymbolHref(row.sym, screen.on)} className="mat-btn inline-flex h-7 items-center border px-2.5 text-dense-label">
+            Symbol →
+          </Link>
+          <span data-sr-build="" className="contents">
+            <AddToPoolButton symbol={row.sym} source="stock-screen" score={score} tags={['stock-screen', model]} label="Pool" />
+          </span>
+        </div>
+      )}
     </div>
   )
 }

@@ -31,6 +31,19 @@
  *
  * `compact` is the 440 form (Rev .57): the same facts, re-ordered for a panel
  * — the page switches on its container's width, not a second component.
+ *
+ * Two device forms (design Rev .163, contract §18), neither of them in a
+ * surface — a panel or a float keeps the form it has:
+ * - **`phone`** (the 440 form as the whole page): no Follow / Lock row and no
+ *   Send — the held tag ends the subject line instead. Under the verdict, the
+ *   wide head's why readings (the decisive count, the list's chips) get a line
+ *   of their own, then `from …` on the next — §18.2's "判词 → why 读数". A
+ *   name with no reading yet and no list behind it draws no readings line.
+ * - **`pad`** (the wide form, §18.11 — four lines to three): the verdict joins
+ *   the subject line, Send ends the why line, and the controls line drops the
+ *   `snapshot` stand-in. `from …` moves down into the controls line rather
+ *   than leaving: the design's iPad sends it to Explain, which this side has
+ *   no store for, and it is the one way back to the list that ranked the name.
  */
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -85,6 +98,8 @@ export function SymbolIdentity({
   tab,
   compact = false,
   subjectControl,
+  phone = false,
+  pad = false,
 }: {
   symbol: string
   faces: SymbolFaces
@@ -94,6 +109,10 @@ export function SymbolIdentity({
   compact?: boolean
   /** The panel's Follow / Lock, when the page is a surface. */
   subjectControl?: ReactNode
+  /** The 440 form as a phone's whole page (Rev .163). */
+  phone?: boolean
+  /** The wide form on an iPad, three lines (Rev .163, §18.11). */
+  pad?: boolean
 }) {
   const sym = (symbol || '').trim().toUpperCase()
   const quotes = useQuotes(sym ? [sym] : [])
@@ -134,8 +153,22 @@ export function SymbolIdentity({
   const hyp = symbolHypothesisPrefill(sym, tab, faces.views, thesis)
   const lab = LAB_TAB[tab]
 
+  const verdictWords =
+    faces.loading && decisive.length === 0 ? (
+      <span className="font-normal text-muted-foreground">reading the lenses…</span>
+    ) : decisive.length === 0 ? (
+      <span className="text-muted-foreground">No decisive edge — every reading is in its middle band</span>
+    ) : (
+      decisive.map((r, i) => (
+        <span key={r.id} className={TONE_TEXT[r.tone] ?? TONE_TEXT.neutral}>
+          {i > 0 ? <span className="mx-1.5 text-muted-foreground/60">·</span> : null}
+          {r.verdict}
+        </span>
+      ))
+    )
+
   const subject = (
-    <div className={css.line}>
+    <div className={cn(css.line, phone && css.phoneLine)}>
       <span className={css.logo} aria-hidden title="Company logo — a monogram until the logo proxy is wired">
         {sym.charAt(0)}
       </span>
@@ -167,27 +200,18 @@ export function SymbolIdentity({
         </span>
       ) : null}
       {company && compact ? <span className={css.name}>{company}</span> : null}
+      {compact && phone ? <span className={cn(css.chip, 'ml-auto h-auto flex-none self-center py-px')}>{heldTag}</span> : null}
       {compact ? null : <span className={css.chip}>{heldTag}</span>}
+      {pad && !compact ? (
+        <span className={css.padVerdict} title={thesis}>
+          {verdictWords}
+        </span>
+      ) : null}
       {compact ? null : <PagePlaceButtons className="ml-auto" />}
     </div>
   )
 
-  const headline = (
-    <span className={css.headline}>
-      {faces.loading && decisive.length === 0 ? (
-        <span className="font-normal text-muted-foreground">reading the lenses…</span>
-      ) : decisive.length === 0 ? (
-        <span className="text-muted-foreground">No decisive edge — every reading is in its middle band</span>
-      ) : (
-        decisive.map((r, i) => (
-          <span key={r.id} className={TONE_TEXT[r.tone] ?? TONE_TEXT.neutral}>
-            {i > 0 ? <span className="mx-1.5 text-muted-foreground/60">·</span> : null}
-            {r.verdict}
-          </span>
-        ))
-      )}
-    </span>
-  )
+  const headline = <span className={css.headline}>{verdictWords}</span>
 
   const send = (
     <>
@@ -221,7 +245,7 @@ export function SymbolIdentity({
         defaultThesis={hyp.thesis}
         defaultSymbols={[sym]}
         defaultTags={hyp.tags}
-        label={compact ? 'Hyp' : 'Hypothesis'}
+        label={compact || pad ? 'Hyp' : 'Hypothesis'}
         originRef={hyp.originRef}
       />
       <PlanThisButton symbol={sym} source="symbol" sourceLabel="Symbol" note={thesis} variant="primary" />
@@ -266,20 +290,36 @@ export function SymbolIdentity({
   if (compact) {
     return (
       <header className={cn(css.head, css.compact)}>
-        <div className="flex items-center gap-2">
-          {subjectControl}
-          <span className={cn(css.chip, 'ml-auto h-auto py-px')}>{heldTag}</span>
-        </div>
+        {phone ? null : (
+          <div className="flex items-center gap-2">
+            {subjectControl}
+            <span className={cn(css.chip, 'ml-auto h-auto py-px')}>{heldTag}</span>
+          </div>
+        )}
         {subject}
         {headline}
-        <div className={css.why}>
-          {chips}
-          {from}
-        </div>
-        <div className="mt-0.5 flex items-center gap-1">
-          <span className={cn(css.cap, 'mr-0.5')}>Send</span>
-          {send}
-        </div>
+        {phone ? (
+          <>
+            {faces.decisive.of > 0 || chips.length > 0 ? (
+              <div className={css.why}>
+                {faces.decisive.of > 0 ? decisiveLine : null}
+                {chips}
+              </div>
+            ) : null}
+            <div className={css.why}>{from}</div>
+          </>
+        ) : (
+          <div className={css.why}>
+            {chips}
+            {from}
+          </div>
+        )}
+        {phone ? null : (
+          <div className="mt-0.5 flex items-center gap-1">
+            <span className={cn(css.cap, 'mr-0.5')}>Send</span>
+            {send}
+          </div>
+        )}
       </header>
     )
   }
@@ -287,21 +327,32 @@ export function SymbolIdentity({
   return (
     <header className={css.head}>
       {subject}
-      <div className={cn(css.line, 'items-center')}>
-        <span className={css.cap}>Verdict</span>
-        {headline}
-        <span className={css.send}>
-          <span className={cn(css.cap, 'mr-0.5')} title="Each goes through the Decision Inbox, not straight into the store it names.">
-            Send to
+      {pad ? null : (
+        <div className={cn(css.line, 'items-center')}>
+          <span className={css.cap}>Verdict</span>
+          {headline}
+          <span className={css.send}>
+            <span className={cn(css.cap, 'mr-0.5')} title="Each goes through the Decision Inbox, not straight into the store it names.">
+              Send to
+            </span>
+            {send}
           </span>
-          {send}
-        </span>
-      </div>
+        </div>
+      )}
       <div className={css.why}>
         {decisiveLine}
-        <span className={css.rule} aria-hidden />
-        {from}
+        {pad ? null : (
+          <>
+            <span className={css.rule} aria-hidden />
+            {from}
+          </>
+        )}
         {chips}
+        {pad ? (
+          <span className={css.send} title="Send to — each goes through the Decision Inbox, not straight into the store it names.">
+            {send}
+          </span>
+        ) : null}
       </div>
       <div className={css.controls}>
         <PageFaceSwitch
@@ -309,11 +360,15 @@ export function SymbolIdentity({
           methodTo={`/research/lab/symbol?tab=${lab.tab}&symbol=${encodeURIComponent(sym)}`}
           methodTitle={`The method face — ${lab.why}. Same subject, same endpoint, shown open. Analysis only; no order can be placed there.`}
         />
-        <span
-          title="The design lets you step the whole page back a day or a week. /research/exhibit takes no as_of parameter, so no prior reading can be requested; the Since-last-snapshot panel compares against the last reading this browser saw instead."
-        >
-          snapshot · today only
-        </span>
+        {pad ? (
+          from
+        ) : (
+          <span
+            title="The design lets you step the whole page back a day or a week. /research/exhibit takes no as_of parameter, so no prior reading can be requested; the Since-last-snapshot panel compares against the last reading this browser saw instead."
+          >
+            snapshot · today only
+          </span>
+        )}
         {asof}
         <span className={css.verbs}>
           <span

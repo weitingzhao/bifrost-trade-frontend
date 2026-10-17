@@ -6,6 +6,11 @@
  * strategy-side filters, which are hidden in the contract view because they
  * describe strategies, not contracts. Detail mode moved here from the page bar
  * for the same reason: it is about how rows expand, not what the page is about.
+ *
+ * On a phone (design Rev .163) the filters and Rows step out: the view switch,
+ * the count, a risk-map selection and Clear filters stay — a filter set on
+ * another screen can always be cleared here. Rows has nothing to choose
+ * there, where a strategy opens in a sheet and nothing expands in place.
  */
 import { cn } from '@/lib/utils'
 import { DenseTagButton, SegmentControl } from '@/components/data-display'
@@ -126,7 +131,7 @@ export function LinesToolbar({
             {shown} / {total}
           </span>
           <Select value={values.structureType} onValueChange={(v) => update({ structureType: v })}>
-            <SelectTrigger className={cn(trigger, 'w-38')} aria-label="Contract type">
+            <SelectTrigger data-sr-phone="hide" className={cn(trigger, 'w-38')} aria-label="Contract type">
               <SelectValue placeholder="All contract types" />
             </SelectTrigger>
             <SelectContent>
@@ -140,7 +145,7 @@ export function LinesToolbar({
           </Select>
 
           <Select value={values.oppName} onValueChange={(v) => update({ oppName: v })}>
-            <SelectTrigger className={cn(trigger, 'w-42')} aria-label="Opportunity">
+            <SelectTrigger data-sr-phone="hide" className={cn(trigger, 'w-42')} aria-label="Opportunity">
               <SelectValue placeholder="All opportunities" />
             </SelectTrigger>
             <SelectContent>
@@ -153,7 +158,7 @@ export function LinesToolbar({
             </SelectContent>
           </Select>
 
-          <span className="flex items-center gap-1.5">
+          <span data-sr-phone="hide" className="flex items-center gap-1.5">
             <span className={positionsUi.cap}>Scope</span>
             <SegmentControl
               size="xs"
@@ -163,7 +168,7 @@ export function LinesToolbar({
               onChange={(v) => update({ scopeType: v })}
             />
           </span>
-          <span className="flex items-center gap-1.5">
+          <span data-sr-phone="hide" className="flex items-center gap-1.5">
             <span className={positionsUi.cap}>Attribution</span>
             <SegmentControl
               size="xs"
@@ -182,7 +187,7 @@ export function LinesToolbar({
       ) : null}
 
       {view !== 'expiries' ? (
-        <span className="ml-auto flex shrink-0 items-center gap-1.5">
+        <span data-sr-phone="hide" className="ml-auto flex shrink-0 items-center gap-1.5">
           <span className={positionsUi.cap}>Rows</span>
           <SegmentControl
             size="xs"

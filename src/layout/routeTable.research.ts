@@ -168,7 +168,8 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Rev .158–.161 Pine stage, saved-screen v2 and the off-script ✕ built;
       // re-checked against Rev .162 (TD-188), waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-06.162',
+      // Rev .163 (2026-10-17, Package .64): the iPhone / iPad tiers, waiting for a look.
+      rev: '2026-10-17.163',
       note: DESIGN_NOTES['/research/stocks'],
     },
   },

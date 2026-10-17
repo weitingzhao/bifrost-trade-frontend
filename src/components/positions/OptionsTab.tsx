@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { usePageViewState } from '@/lib/pageView'
+import { useDevice } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import { patchExecutionAttribution } from '@/api/trading'
 import { notify } from '@/lib/shellNotify'
@@ -118,6 +119,11 @@ export function OptionsTab({
 }: Props) {
   // The open rows are the page's view (Rev .75 `openRow`), kept for the session.
   const [expandedKeys, setExpandedKeys] = usePageViewState<string[]>('openRows.options', [])
+  // A phone reads this view three columns wide, Contract · Expiry · UN PNL
+  // (Rev .163, the prototype's 1·2·6), and a tap opens the row's every column
+  // in the shell's sheet. The fills, their ledger writes and the contract slot
+  // are the desk's: no expand column, no Opp / Actions, the name is plain.
+  const phone = useDevice().device === 'phone'
   const [syncingExecId, setSyncingExecId] = useState<number | null>(null)
   const [openOptSort, setOpenOptSort] = useState<{ column: OpenOptSortCol; dir: 'asc' | 'desc' }>({
     column: 'expiry',
@@ -257,26 +263,28 @@ export function OptionsTab({
   }
 
   return (
-    <div className={denseTable.sectionBlock}>
-      <DenseDataTable>
-        <colgroup>
-          <col style={{ width: '2.25rem' }} />
-          <col style={{ width: '11.25rem' }} />
-          <col style={{ width: '7.75rem' }} />
-          <col style={{ width: '5.25rem' }} />
-          <col style={{ width: '6.25rem' }} />
-          <col style={{ width: '4.75rem' }} />
-          <col style={{ width: '5.25rem' }} />
-          <col style={{ width: '7rem' }} />
-          <col style={{ width: '4.75rem' }} />
-          <col style={{ width: '6.75rem' }} />
-          <col style={{ width: '8.5rem' }} />
-          <col style={{ width: '5.5rem' }} />
-          <col style={{ width: '5.5rem' }} />
-        </colgroup>
+    <div className={denseTable.sectionBlock} data-sr-keep="1,2,10">
+      <DenseDataTable tableClassName={phone ? 'table-auto' : undefined}>
+        {phone ? null : (
+          <colgroup>
+            <col style={{ width: '2.25rem' }} />
+            <col style={{ width: '11.25rem' }} />
+            <col style={{ width: '7.75rem' }} />
+            <col style={{ width: '5.25rem' }} />
+            <col style={{ width: '6.25rem' }} />
+            <col style={{ width: '4.75rem' }} />
+            <col style={{ width: '5.25rem' }} />
+            <col style={{ width: '7rem' }} />
+            <col style={{ width: '4.75rem' }} />
+            <col style={{ width: '6.75rem' }} />
+            <col style={{ width: '8.5rem' }} />
+            <col style={{ width: '5.5rem' }} />
+            <col style={{ width: '5.5rem' }} />
+          </colgroup>
+        )}
         <DenseTableHeader>
           <DenseTableHeadRow>
-            <DenseTableHead className="w-9" aria-label="Expand" />
+            {phone ? null : <DenseTableHead className="w-9" aria-label="Expand" />}
             {sortTh('Contract', 'contract')}
             {sortTh('Expiry', 'expiry')}
             {sortTh('Strike', 'strike')}
@@ -287,8 +295,8 @@ export function OptionsTab({
             <DenseTableHead title="Option live bid / mid / ask">Opt Quote</DenseTableHead>
             {sortTh('Time', 'time')}
             {sortTh('UN PNL', 'un_pnl')}
-            <DenseTableHead title="Executions">Opp</DenseTableHead>
-            <DenseTableHead>Actions</DenseTableHead>
+            {phone ? null : <DenseTableHead title="Executions">Opp</DenseTableHead>}
+            {phone ? null : <DenseTableHead>Actions</DenseTableHead>}
           </DenseTableHeadRow>
         </DenseTableHeader>
         <DenseTableBody>
@@ -307,7 +315,8 @@ export function OptionsTab({
             const value = avgPerShare != null ? avgPerShare * absQty * 100 : 0
             const ts = getPositionTime(pos)
             const execCount = execLists.final.length + execLists.tws.length
-            const hasExecutions = execCount > 0
+            // The fills open under the row on the desk; a phone does not expand rows.
+            const expandable = execCount > 0 && !phone
             const isExpanded = expandedKeys.includes(posKey)
 
             const last = getPositionUnderlyingLast(pos, quotesBySymbol)
@@ -329,19 +338,19 @@ export function OptionsTab({
             const posRow = (
               <DenseTableRow
                 key={posKey}
-                className={cn(hasExecutions && 'cursor-pointer')}
+                className={cn(expandable && 'cursor-pointer')}
                 onClick={
-                  hasExecutions
+                  expandable
                     ? e => {
                         e.stopPropagation()
                         toggleExpand(posKey)
                       }
                     : undefined
                 }
-                role={hasExecutions ? 'button' : undefined}
-                tabIndex={hasExecutions ? 0 : undefined}
+                role={expandable ? 'button' : undefined}
+                tabIndex={expandable ? 0 : undefined}
                 onKeyDown={
-                  hasExecutions
+                  expandable
                     ? e => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault()
@@ -351,16 +360,18 @@ export function OptionsTab({
                       }
                     : undefined
                 }
-                aria-expanded={hasExecutions ? isExpanded : undefined}
+                aria-expanded={expandable ? isExpanded : undefined}
               >
-                <DenseTableCell className="w-9">
-                  {hasExecutions ? (
-                    <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(posKey)} />
-                  ) : null}
-                </DenseTableCell>
+                {phone ? null : (
+                  <DenseTableCell className="w-9">
+                    {expandable ? (
+                      <ExpandToggleCell expanded={isExpanded} onToggle={() => toggleExpand(posKey)} />
+                    ) : null}
+                  </DenseTableCell>
+                )}
                 <DenseTableCell className={denseTableEntityCell}>
                   {iconFill !== 'empty' && <TradeIcon fill={iconFill} />}
-                  {onInspect ? (
+                  {onInspect && !phone ? (
                     <span onClick={e => e.stopPropagation()}>
                       <DenseLinkButton
                         variant="option"
@@ -453,47 +464,51 @@ export function OptionsTab({
                     )}
                   </div>
                 </DenseTableCell>
-                <DenseTableCell className={denseTable.mutedMeta}>
-                  {execCount === 0 ? (
-                    '—'
-                  ) : (
-                    <span title={`${execCount} execution${execCount > 1 ? 's' : ''} — expand row`}>
-                      {execCount} exec{execCount > 1 ? 's' : ''} ↓
-                    </span>
-                  )}
-                </DenseTableCell>
-                <DenseTableCell>
-                  {onInspect && (
-                    <span className="inline-flex items-center gap-0.5">
-                      <Link
-                        to={buildDiscoveryUrl(pos.symbol, pos.expiry)}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="Open in Discovery"
-                        aria-label={`Open ${pos.symbol} in Option Discovery`}
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <Compass className="h-3.5 w-3.5" />
-                      </Link>
-                      <button
-                        type="button"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="Inspect contract"
-                        aria-label="Inspect contract"
-                        onClick={e => {
-                          e.stopPropagation()
-                          onInspect(pos)
-                        }}
-                      >
-                        <ScanSearch className="h-3.5 w-3.5" />
-                      </button>
-                    </span>
-                  )}
-                </DenseTableCell>
+                {phone ? null : (
+                  <DenseTableCell className={denseTable.mutedMeta}>
+                    {execCount === 0 ? (
+                      '—'
+                    ) : (
+                      <span title={`${execCount} execution${execCount > 1 ? 's' : ''} — expand row`}>
+                        {execCount} exec{execCount > 1 ? 's' : ''} ↓
+                      </span>
+                    )}
+                  </DenseTableCell>
+                )}
+                {phone ? null : (
+                  <DenseTableCell>
+                    {onInspect && (
+                      <span className="inline-flex items-center gap-0.5">
+                        <Link
+                          to={buildDiscoveryUrl(pos.symbol, pos.expiry)}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="Open in Discovery"
+                          aria-label={`Open ${pos.symbol} in Option Discovery`}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <Compass className="h-3.5 w-3.5" />
+                        </Link>
+                        <button
+                          type="button"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="Inspect contract"
+                          aria-label="Inspect contract"
+                          onClick={e => {
+                            e.stopPropagation()
+                            onInspect(pos)
+                          }}
+                        >
+                          <ScanSearch className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    )}
+                  </DenseTableCell>
+                )}
               </DenseTableRow>
             )
 
             const execRows =
-              isExpanded && hasExecutions
+              isExpanded && expandable
                 ? [
                     ...execLists.final.map((ex, ei) =>
                       renderExecRow(pos, posKey, ex, ei, 'final', execLists),

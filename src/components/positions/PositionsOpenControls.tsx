@@ -42,6 +42,13 @@ interface Props {
   types?: { opt: boolean; sh: boolean }
   onTypesChange?: (t: { opt: boolean; sh: boolean }) => void
   onClearScope?: () => void
+  /**
+   * Positions on a phone (design Rev .163, §18.2): the typed expiry, TIGHT and
+   * Copy link step out — a phone scopes by tapping (accounts, type, the top
+   * bar's symbol, a date in the Expiries view), and the expiry in force still
+   * shows as its chip with its ×. Backing leaves it off and is unchanged.
+   */
+  trimOnPhone?: boolean
 }
 
 /**
@@ -70,7 +77,9 @@ export function PositionsOpenControls({
   onClearScope,
   types,
   onTypesChange,
+  trimOnPhone = false,
 }: Props) {
+  const phoneHide = trimOnPhone ? 'hide' : undefined
   const showAccountToggles = !!(hostAccountId || secondaryAccountId)
   const expiryChip = filterExpiry.trim()
   const [copied, setCopied] = useState(false)
@@ -134,6 +143,7 @@ export function PositionsOpenControls({
       {/* Rev .120: no Symbol box — the page reads the top bar's symbol. */}
       <SymbolScopeChip symbol={filterSymbol} onClear={() => onFilterSymbolChange('')} />
       <input
+        data-sr-phone={phoneHide}
         placeholder="YYYYMMDD"
         value={filterExpiry}
         onChange={(e) => onFilterExpiryChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
@@ -146,6 +156,7 @@ export function PositionsOpenControls({
       {/* A setting, not a filter: it changes what counts as tight everywhere
           cushion is drawn (cockpit, risk map, grid, ladder), never which rows exist. */}
       <label
+        data-sr-phone={phoneHide}
         className="inline-flex items-center gap-1.25 text-dense-meta text-muted-foreground"
         title="Short-leg cushion below this is shown as tight. In the money is always shown as breached, whatever this is set to."
       >
@@ -168,6 +179,7 @@ export function PositionsOpenControls({
 
       <button
         type="button"
+        data-sr-phone={phoneHide}
         className={positionsUi.link}
         onClick={() => {
           void navigator.clipboard?.writeText(window.location.href).then(() => setCopied(true))

@@ -122,7 +122,8 @@ export const ROUTES: readonly RouteEntry[] = [
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.82',
+      // Rev .163 (2026-10-17, Package .64): the iPhone / iPad tiers, waiting for a look.
+      rev: '2026-10-17.163',
       note: DESIGN_NOTES['/home'],
     },
   },
@@ -186,7 +187,8 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
       // Rev .151–.154 pilot (2026-10-04, batch 2): the frost shell and the list grammar, waiting for a look.
       // Rev .155 (2026-10-04, Package .56): the market strip retired, working orders in the Account control — the shell record lives here.
-      rev: '2026-10-04.155',
+      // Rev .163 (2026-10-17, Package .64): the iPhone / iPad tiers, waiting for a look.
+      rev: '2026-10-17.163',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },

@@ -16,6 +16,15 @@
  * its date — the wide face's charts are one ⇢ away rather than redrawn small.
  * The earnings marks those charts carry are said in words instead, in the
  * IV rank and term-structure sections (`compactVolEarnings.ts`).
+ *
+ * **`phone`** — the same face as a phone's whole page (design Rev .163,
+ * contract §18.2), in the design's phone order: subject · verdict · why →
+ * the in-hand bar (`SymbolHeldBar`, when a trade is open) → five tabs (Chain
+ * and Payoff are not on a phone; a link to either lands on Overview) → the
+ * small chart → trades → the six faces → `Moved` (band flips since your last
+ * look) → Narrative. Follow / Lock, Send and Your verdict are builders and
+ * stay off; so does ⇢, which on a phone would open the page already showing.
+ * In a surface — on any device — the face is exactly the panel's.
  */
 import { CollapsibleChevron } from '@/components/data-display'
 import { useState } from 'react'
@@ -28,11 +37,14 @@ import { withSymbolParam } from '@/lib/symbolLink'
 import type { LampColor } from '@/lib/researchFreshness'
 import { cn } from '@/lib/utils'
 import { PayoffBody } from '@/pages/research/analyze/payoff/PayoffBody'
+import { SymbolAdjustedOnlyNote } from './SymbolAdjustedOnlyNote'
 import { SymbolAsofTag } from './SymbolAsofTag'
 import { SymbolChainFace } from './SymbolChainFace'
 import { FACE_TAB_TRACK, faceTabClass } from './faceTabsUi'
 import { SymbolIdentity } from './SymbolIdentity'
+import { SymbolHeldBar } from './SymbolHeldBar'
 import { SymbolNarrativePanel } from './SymbolNarrativePanel'
+import { SymbolSinceSnapshot } from './SymbolSinceSnapshot'
 import { SymbolVerdictPanel } from './SymbolVerdictPanel'
 import { useVolFoldEarnings, type VolFoldEarnings } from './compactVolEarnings'
 import type { SymbolFaces } from './useSymbolFaces'
@@ -47,6 +59,9 @@ const FOLD_FACE: Partial<Record<SymbolTabId, DossierFaceId>> = {
   scenario: 'scenario',
   flow: 'flow',
 }
+
+/** The option faces are not on a phone (Rev .163) — contract-level reading wants the width. */
+const PHONE_OFF: ReadonlySet<SymbolTabId> = new Set<SymbolTabId>(['chain', 'payoff'])
 
 function FollowLock({ symbol }: { symbol: string }) {
   const subject = useSurfaceSubject()
@@ -141,7 +156,8 @@ function FoldSections({
   view: DossierFaceView
   open: string | null
   onToggle: (id: string) => void
-  onLift: () => void
+  /** ⇢ — open the face as the page; absent where the page is already this face. */
+  onLift?: () => void
   /** A section's earnings line, by lens id — the marks its wide chart carries. */
   earnings?: VolFoldEarnings
 }) {
@@ -180,17 +196,19 @@ function FoldSections({
                 <span className="font-mono text-dense-micro text-muted-foreground" title="hit rate · 5 sessions · 20 sessions">
                   {r.rates ?? '—'}
                 </span>
-                <button
-                  type="button"
-                  className="border-0 bg-transparent px-0.5 text-dense-label text-primary hover:underline"
-                  title="Open this face as the page"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onLift()
-                  }}
-                >
-                  ⇢
-                </button>
+                {onLift ? (
+                  <button
+                    type="button"
+                    className="border-0 bg-transparent px-0.5 text-dense-label text-primary hover:underline"
+                    title="Open this face as the page"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onLift()
+                    }}
+                  >
+                    ⇢
+                  </button>
+                ) : null}
               </span>
             </div>
             {on ? (
@@ -208,7 +226,7 @@ function FoldSections({
                 <p className="m-0 flex items-center gap-1.5 text-dense-caption text-muted-foreground">
                   <StatusLamp variant="dot" lamp={r.lamp} className="h-1.5 w-1.5" />
                   {r.asOf ? `as of ${r.asOf}` : 'no date on this reading'}
-                  <span className="ml-auto">⇢ for the charts</span>
+                  {onLift ? <span className="ml-auto">⇢ for the charts</span> : null}
                 </p>
               </div>
             ) : null}
@@ -226,6 +244,7 @@ export function SymbolCompact({
   setTab,
   lampFor,
   thesis,
+  phone = false,
 }: {
   symbol: string
   faces: SymbolFaces
@@ -234,36 +253,43 @@ export function SymbolCompact({
   active: SymbolTabId
   setTab: (id: SymbolTabId) => void
   lampFor: (id: SymbolTabId) => LampColor | null
+  /** The face as a phone's whole page, not a panel (Rev .163). */
+  phone?: boolean
 }) {
   const frameNavigate = useFrameNavigate()
   const navigate = useNavigate()
   const go = frameNavigate ?? navigate
   // Which section is open, per tab — one at a time, the first by default.
   const [openBy, setOpenBy] = useState<Partial<Record<SymbolTabId, string | null>>>({})
-  const liftTo = (tab: SymbolTabId) => go(withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=${tab}`, symbol))
+  const liftTo = (to: SymbolTabId) => go(withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=${to}`, symbol))
+  // On a phone the option faces are not offered, and a link to one reads Overview.
+  const tabs = phone ? SYMBOL_TABS.filter((t) => !PHONE_OFF.has(t.id)) : SYMBOL_TABS
+  const tab: SymbolTabId = phone && PHONE_OFF.has(active) ? 'overview' : active
 
-  const foldView = FOLD_FACE[active] ? faces.views.find((v) => v.face.id === FOLD_FACE[active]) : undefined
-  const volEarnings = useVolFoldEarnings(symbol, active === 'volatility')
-  const openRow = foldView ? (active in openBy ? (openBy[active] ?? null) : (foldView.rows[0]?.id ?? null)) : null
+  const foldView = FOLD_FACE[tab] ? faces.views.find((v) => v.face.id === FOLD_FACE[tab]) : undefined
+  const volEarnings = useVolFoldEarnings(symbol, tab === 'volatility')
+  const openRow = foldView ? (tab in openBy ? (openBy[tab] ?? null) : (foldView.rows[0]?.id ?? null)) : null
 
   return (
     <div className="flex flex-col gap-2.5 px-3 pt-2 pb-6">
       <SymbolIdentity
         symbol={symbol}
         faces={faces}
-        tab={active}
+        tab={tab}
         compact
+        phone={phone}
         subjectControl={<FollowLock symbol={symbol} />}
         asof={<SymbolAsofTag symbol={symbol} />}
       />
+      {phone ? <SymbolHeldBar symbol={symbol} /> : null}
 
       {/* Rev .142: capsule segments on a slab-free sticky bar (the scroll edge);
           the track scrolls sideways when the seven do not fit. */}
       <div data-sr-toolbar="" data-sticky="">
-        <div className={FACE_TAB_TRACK}>
-          {SYMBOL_TABS.map((t) => {
+        <div className={FACE_TAB_TRACK} data-sr-phone-scroll={phone ? '' : undefined}>
+          {tabs.map((t) => {
             const lamp = lampFor(t.id)
-            const on = t.id === active
+            const on = t.id === tab
             return (
               <button
                 key={t.id}
@@ -280,7 +306,10 @@ export function SymbolCompact({
         </div>
       </div>
 
-      {active === 'overview' ? (
+      {/* The panel leaves this to the wide page; on a phone this is the page. */}
+      {phone ? <SymbolAdjustedOnlyNote symbol={symbol} /> : null}
+
+      {tab === 'overview' ? (
         <>
           {/* Rev .103: the name's price and every instance on it, before the faces. */}
           <SymbolPriceChart symbol={symbol} variant="mini" />
@@ -294,18 +323,22 @@ export function SymbolCompact({
               else go(v.href)
             }}
           />
-          <SymbolVerdictPanel symbol={symbol} thesis={thesis} />
+          {phone ? (
+            <SymbolSinceSnapshot symbol={symbol} variant="moved" />
+          ) : (
+            <SymbolVerdictPanel symbol={symbol} thesis={thesis} />
+          )}
           <SymbolNarrativePanel symbol={symbol} />
         </>
       ) : foldView ? (
         <FoldSections
           view={foldView}
           open={openRow}
-          onToggle={(id) => setOpenBy((prev) => ({ ...prev, [active]: openRow === id ? null : id }))}
-          onLift={() => liftTo(active)}
-          earnings={active === 'volatility' ? volEarnings : undefined}
+          onToggle={(id) => setOpenBy((prev) => ({ ...prev, [tab]: openRow === id ? null : id }))}
+          onLift={phone ? undefined : () => liftTo(tab)}
+          earnings={tab === 'volatility' ? volEarnings : undefined}
         />
-      ) : active === 'chain' ? (
+      ) : tab === 'chain' ? (
         <SymbolChainFace symbol={symbol} />
       ) : (
         <PayoffBody />

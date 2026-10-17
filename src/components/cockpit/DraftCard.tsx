@@ -104,6 +104,16 @@ function payloadProse(payload: Record<string, unknown>): string | null {
   return null
 }
 
+/**
+ * How the card is drawn (design Rev .163, DESIGN_CONTRACTS §18.10 ④). `card`
+ * is the queue's own accordion card, everywhere but a phone. On a phone the
+ * queue is one `row` per question — its head wraps onto a second line instead
+ * of running off the screen — and a row opens the card as a `sheet`: the
+ * sheet's head carries the symbol and the title and its footer the verdicts,
+ * so the card draws neither, and keeps everything else.
+ */
+export type DraftCardFace = 'card' | 'row' | 'sheet'
+
 export function DraftCard({
   draft,
   approving,
@@ -127,8 +137,11 @@ export function DraftCard({
   cardKey,
   expanded = true,
   onToggle,
+  face = 'card',
 }: {
   draft: AiDraft
+  /** `card` unless the phone draws it (Rev .163): see `DraftCardFace`. */
+  face?: DraftCardFace
   /** The cut headline (Rev .143 #4); computed from the draft when not given. */
   headline?: DraftHeadline
   /** The meta line after the title: setup, objective, the drafts on a call, earlier runs. */
@@ -239,6 +252,7 @@ export function DraftCard({
   // Mark read (header) and Dismiss — leaving the queue is a server-side fact,
   // read state is not.
   const isDigest = draft.kind === 'daily_digest'
+  const inSheet = face === 'sheet'
 
   return (
     <div
@@ -247,14 +261,20 @@ export function DraftCard({
         // The card sets its own base size. Without it everything that does not
         // name a size inherits the app default 16px — which is how the kind tag
         // came to render larger than the title it labels.
-        'scroll-mt-24 rounded-md border border-l-4 px-2.5 py-2 space-y-2 text-dense-meta',
+        // In the phone's sheet the sheet is the frame: the card keeps one only
+        // for a state it reads by (dissent, warn), and gives its width to the body.
+        inSheet && !dissentActive && !warnActive
+          ? 'space-y-2 text-dense-meta'
+          : 'scroll-mt-24 rounded-md border border-l-4 px-2.5 py-2 space-y-2 text-dense-meta',
         dissentActive
           ? 'border-destructive/50 border-l-destructive bg-destructive/5'
           : warnActive
             ? 'border-warning/50 border-l-warning bg-warning/5'
-            : muted
-              ? ACCENT.muted
-              : ACCENT.normal,
+            : inSheet
+              ? ''
+              : muted
+                ? ACCENT.muted
+                : ACCENT.normal,
         lit ? ACCENT.lit : cursor ? ACCENT.cursor : '',
         read ? 'opacity-70' : '',
         className,
@@ -271,7 +291,7 @@ export function DraftCard({
           // Folded, the header is one line and the title gives way (Rev .143 #4:
           // the folded summary is a single line; opening it wraps).
           'flex items-baseline gap-x-2 gap-y-0.5',
-          expanded ? 'flex-wrap' : 'flex-nowrap',
+          expanded || face === 'row' ? 'flex-wrap' : 'flex-nowrap',
           onToggle ? 'cursor-pointer' : '',
         )}
         // The whole row folds and opens on a click, as in the design; a link or
@@ -315,12 +335,12 @@ export function DraftCard({
               → {proposed}
             </DenseTag>
           ) : null}
-          {head.sym ? (
+          {head.sym && !inSheet ? (
             <span data-ctx-sym={head.sym} className="shrink-0 font-mono text-dense-label font-bold text-entity-symbol">
               {head.sym}
             </span>
           ) : null}
-          <span className="min-w-0 truncate text-dense-label font-medium">{head.title}</span>
+          {inSheet ? null : <span className="min-w-0 truncate text-dense-label font-medium">{head.title}</span>}
           {meta ? <span className="min-w-0 truncate font-mono text-dense-micro text-muted-foreground">{meta}</span> : null}
         </span>
         {!expanded && quick ? <span className="ml-auto shrink-0">{quick}</span> : null}
@@ -337,7 +357,7 @@ export function DraftCard({
               </Link>
             </>
           ) : null}
-          {onToggle ? <CollapsibleChevron expanded={expanded} className="ml-1 inline size-3 align-[-2px]" /> : null}
+          {onToggle && face === 'card' ? <CollapsibleChevron expanded={expanded} className="ml-1 inline size-3 align-[-2px]" /> : null}
         </span>
         {onToggleRead ? (
           <button
@@ -466,14 +486,15 @@ export function DraftCard({
         </p>
       ) : null}
 
-      <div className="flex items-center gap-1.5">
+      {/* In the phone's sheet the verdicts are its footer; the rest of the row wraps. */}
+      <div className={inSheet ? 'flex flex-wrap items-center gap-x-1.5 gap-y-1' : 'flex items-center gap-1.5'}>
         {/*
           On a muted draft Approve writes nothing, so it stops being the primary
           button. A full-strength green control was the loudest thing on a card
           whose own footer says approving it changes no field — exactly the
           mismatch that teaches you to clear the queue without reading.
         */}
-        {isDigest ? null : (
+        {isDigest || inSheet ? null : (
           <Button
             type="button"
             size="sm"
@@ -494,17 +515,19 @@ export function DraftCard({
                   : 'Approve'}
           </Button>
         )}
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1 text-dense-meta"
-          disabled={busy}
-          onClick={onDismiss}
-        >
-          <X className="size-3.5" />
-          {dismissing ? 'Dismissing…' : 'Dismiss'}
-        </Button>
+        {inSheet ? null : (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 text-dense-meta"
+            disabled={busy}
+            onClick={onDismiss}
+          >
+            <X className="size-3.5" />
+            {dismissing ? 'Dismissing…' : 'Dismiss'}
+          </Button>
+        )}
         {onDiscuss ? (
           <Button
             type="button"

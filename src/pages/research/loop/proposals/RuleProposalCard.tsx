@@ -22,6 +22,7 @@ import { openArtifactDiscussion } from '@/lib/harness/loopCopilotPrefill'
 import { DenseTag, CollapsibleChevron } from '@/components/data-display'
 import { ArtifactVerbs } from '@/components/research/ArtifactVerbs'
 import type { VerbKey } from '@/lib/harness/artifactVerbs'
+import type { DraftCardFace } from '@/components/cockpit/DraftCard'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtUsd } from '@/utils/positions'
 import type { Proposal } from './proposalsModel'
@@ -37,6 +38,8 @@ const DIFF_GLYPH = 'text-muted-foreground/50'
 const RULE_VERBS_OFF: ReadonlySet<VerbKey> = new Set(['distill', 'settle'])
 
 export const NO_RULES_STORE = 'no rules store on this side, so neither verdict can be recorded'
+/** The verdict a rule card draws (disabled) — on the card, and in the phone sheet's footer. */
+export const RULE_APPROVE_LABEL = 'Approve → edit Rules'
 const NO_STORE = NO_RULES_STORE
 
 export function RuleProposalCard({
@@ -46,10 +49,17 @@ export function RuleProposalCard({
   quick,
   cursor,
   cardKey,
+  face = 'card',
 }: {
   proposal: Proposal
   expanded: boolean
   onToggle: () => void
+  /**
+   * As the Inbox's other cards (Rev .163, `DraftCardFace`): a phone lists it
+   * as a `row` and reads it in a `sheet`, whose head carries the title and
+   * whose footer carries the two verdicts — drawn there, disabled, as here.
+   */
+  face?: DraftCardFace
   /** The folded row's quick actions (Rev .144), shown only while folded. */
   quick?: ReactNode
   /** Under the keyboard cursor while folded. */
@@ -57,6 +67,7 @@ export function RuleProposalCard({
   cardKey?: string
 }) {
   const p = proposal
+  const inSheet = face === 'sheet'
   return (
     <div
       data-card={cardKey}
@@ -71,29 +82,37 @@ export function RuleProposalCard({
           handle is the span inside, which holds no buttons — the folded row
           carries buttons of its own (Rev .144). */}
       <div
-        onClick={(e) => {
-          if ((e.target as Element).closest('a, button')) return
-          onToggle()
-        }}
-        className="flex w-full cursor-pointer flex-wrap items-baseline gap-x-2 gap-y-0.5 text-left"
+        onClick={
+          inSheet
+            ? undefined
+            : (e) => {
+                if ((e.target as Element).closest('a, button')) return
+                onToggle()
+              }
+        }
+        className={cn('flex w-full flex-wrap items-baseline gap-x-2 gap-y-0.5 text-left', inSheet ? '' : 'cursor-pointer')}
       >
         <span
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              onToggle()
-            }
-          }}
-          aria-expanded={expanded}
-          title={expanded ? 'Fold' : 'Open this card'}
+          role={inSheet ? undefined : 'button'}
+          tabIndex={inSheet ? undefined : 0}
+          onKeyDown={
+            inSheet
+              ? undefined
+              : (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onToggle()
+                  }
+                }
+          }
+          aria-expanded={inSheet ? undefined : expanded}
+          title={inSheet ? undefined : expanded ? 'Fold' : 'Open this card'}
           className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5"
         >
           <DenseTag variant="warning" size="cell">
             rule
           </DenseTag>
-          <span className="min-w-0 truncate text-dense-label font-medium">{p.title}</span>
+          {inSheet ? null : <span className="min-w-0 truncate text-dense-label font-medium">{p.title}</span>}
           <span className={cn(positionsUi.mono, 'text-dense-micro text-muted-foreground')}>
             review · habits · {p.target}
           </span>
@@ -101,7 +120,8 @@ export function RuleProposalCard({
         {!expanded && quick ? <span className="ml-auto shrink-0">{quick}</span> : null}
         <span className={cn('shrink-0 text-dense-micro text-muted-foreground', !expanded && quick ? '' : 'ml-auto')}>
           {p.n == null ? 'n —' : `n ${p.n}`}
-          {p.effect == null ? '' : ` · ${fmtUsd(p.effect, true)}`} <CollapsibleChevron expanded={expanded} className="inline size-3 align-[-2px]" />
+          {p.effect == null ? '' : ` · ${fmtUsd(p.effect, true)}`}{' '}
+          {face === 'card' ? <CollapsibleChevron expanded={expanded} className="inline size-3 align-[-2px]" /> : null}
         </span>
       </div>
 
@@ -175,28 +195,32 @@ export function RuleProposalCard({
           <ArtifactVerbs artifact={`proposal ${p.key}`} off={RULE_VERBS_OFF} onVerb={() => {}} />
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-dense-meta"
-              disabled
-              title={NO_STORE}
-            >
-              <Check className="size-3.5" />
-              Approve → edit Rules
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-dense-meta"
-              disabled
-              title={NO_STORE}
-            >
-              <X className="size-3.5" />
-              Dismiss
-            </Button>
+            {inSheet ? null : (
+              <>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-dense-meta"
+                  disabled
+                  title={NO_STORE}
+                >
+                  <Check className="size-3.5" />
+                  {RULE_APPROVE_LABEL}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-dense-meta"
+                  disabled
+                  title={NO_STORE}
+                >
+                  <X className="size-3.5" />
+                  Dismiss
+                </Button>
+              </>
+            )}
             <Button
               type="button"
               size="sm"

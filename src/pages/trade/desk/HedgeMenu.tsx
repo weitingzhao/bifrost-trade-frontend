@@ -22,13 +22,110 @@
 import { useEffect, useRef, useState } from 'react'
 import { postFlatten, postResume, postSuspend } from '@/api/monitor'
 import { StatusLamp } from '@/components/StatusLamp'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useCtrlAction } from './useCtrlAction'
 import { hedgeFacts, hedgeReading } from './hedgeModel'
 import { positionsUi } from '@/components/positions/positionsUi'
+import { useDevice } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import { opsConsoleHref } from '@/lib/opsConsole'
 import type { StatusResponse } from '@/types/monitor'
+
+type CtrlRun = ReturnType<typeof useCtrlAction>['run']
+
+/**
+ * What the menu holds: the daemon's reading and the three controls. The same
+ * rows in the desk's popover and in the phone's sheet (design Rev .163,
+ * §18.5): a self-drawn popover anchored to the card's right edge falls off a
+ * phone's left edge, and a phone's floats are bottom sheets.
+ */
+function HedgeControls({
+  status,
+  run,
+  onFlatten,
+  readOnly = false,
+}: {
+  status: StatusResponse | undefined
+  run: CtrlRun
+  onFlatten: () => void
+  /**
+   * The phone (Rev .163): the reading and the way to Ops, no write. Flatten is
+   * the one button that asks the daemon to trade, and D10 does not extend it
+   * to a new device; suspend / resume go with it — a phone that can arm
+   * hedging but not stop a flatten is the wrong half of the control.
+   */
+  readOnly?: boolean
+}) {
+  const r = hedgeReading(status)
+  return (
+    <>
+      <dl
+        aria-label="Hedge daemon reading"
+        className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 border-b border-border px-3 py-2 text-dense-caption"
+      >
+        {hedgeFacts(status).map((f) => (
+          <div key={f.label} className="contents">
+            <dt className="text-muted-foreground">{f.label}</dt>
+            <dd className={cn('m-0 text-right', positionsUi.mono)}>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+      {readOnly ? (
+        <p className="m-0 border-b border-border px-3 py-2 text-dense-caption leading-normal text-muted-foreground text-pretty">
+          Suspend, resume and emergency flatten are on the iPad and the desk. D10: the phone reads the daemon, it does not
+          write to it.
+        </p>
+      ) : (
+      <button
+        type="button"
+        role="menuitem"
+        className="flex h-8 w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 text-left text-dense-meta text-secondary-foreground hover:bg-[var(--sk-surface)] hover:text-foreground disabled:cursor-not-allowed disabled:text-muted-foreground/60"
+        disabled={!r.alive}
+        onClick={() =>
+          void run(r.suspended ? postResume : postSuspend, {
+            loading: r.suspended ? 'Setting resume…' : 'Setting suspend…',
+            success: r.suspended
+              ? 'Resume set — the daemon resumes hedging on its next heartbeat.'
+              : 'Suspend set — the daemon pauses hedging on its next heartbeat.',
+          })
+        }
+      >
+        {r.suspended ? 'Resume hedging' : 'Suspend hedging'}
+        <span className="ml-auto text-dense-caption text-muted-foreground">
+          {r.alive ? 'takes effect next heartbeat' : 'daemon is not running'}
+        </span>
+      </button>
+      )}
+      {/* Rev .48 Q3: the daemon's detail is Ops' Bus Status — the same page
+          System › Status's daemon row links to, so the two doors agree. */}
+      <a
+        href={opsConsoleHref('satellite-bus')}
+        target="_blank"
+        rel="noreferrer"
+        role="menuitem"
+        title="Opens Bifröst Ops › Bus Status in a new tab"
+        className="flex h-8 w-full items-center gap-2 px-3 text-dense-meta text-secondary-foreground no-underline hover:bg-[var(--sk-surface)] hover:text-foreground"
+      >
+        Daemon detail ↗<span className="ml-auto text-dense-caption text-muted-foreground">Ops · Bus Status</span>
+      </a>
+      {readOnly ? null : (
+        <>
+          <div className="border-t border-border" />
+          <button
+            type="button"
+            role="menuitem"
+            className="flex h-9 w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 text-left text-dense-meta text-danger hover:bg-[var(--sk-surface)]"
+            onClick={onFlatten}
+          >
+            Emergency flatten…
+            <span className="ml-auto font-mono text-dense-caption text-muted-foreground">POST /control/flatten</span>
+          </button>
+        </>
+      )}
+    </>
+  )
+}
 
 export function HedgeMenu({
   status,
@@ -44,12 +141,14 @@ export function HedgeMenu({
   const [busy, setBusy] = useState(false)
   const ctrl = useCtrlAction(onChanged)
   const wrap = useRef<HTMLDivElement>(null)
+  const phone = useDevice().device === 'phone'
 
   useEffect(() => {
     // The confirm renders in a portal, so a click inside it is "outside" this
     // menu. Closing on it would leave the reader with the dialog they opened
     // and no trace of where it came from, and on cancel, nothing at all.
-    if (!open || flattenOpen) return
+    // A phone's sheet is a portal too, and closes itself (scrim, grip, Esc).
+    if (!open || flattenOpen || phone) return
     const away = (e: MouseEvent) => {
       if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false)
     }
@@ -62,7 +161,7 @@ export function HedgeMenu({
       document.removeEventListener('mousedown', away)
       document.removeEventListener('keydown', esc)
     }
-  }, [open, flattenOpen])
+  }, [open, flattenOpen, phone])
 
   // §11.3.1: no reading is grey, never red. A daemon that is not running is
   // not a fault of the hedge — it is the absence of one.
@@ -78,7 +177,9 @@ export function HedgeMenu({
       })
       setFlattenOpen(false)
       setAck(false)
-      setOpen(false)
+      // The desk's note floats under the button once the menu shuts; a
+      // phone's is read in the sheet, so the sheet stays.
+      if (!phone) setOpen(false)
     } finally {
       setBusy(false)
     }
@@ -99,7 +200,7 @@ export function HedgeMenu({
         <span className="text-muted-foreground">▾</span>
       </button>
 
-      {open ? (
+      {open && !phone ? (
         <div
           role="menu"
           aria-label="Hedging"
@@ -111,62 +212,11 @@ export function HedgeMenu({
             <span className="font-semibold text-foreground">Hedging</span>{' '}
             <span className="text-muted-foreground">· daemon control channel · D10 governs</span>
           </div>
-          <dl
-            aria-label="Hedge daemon reading"
-            className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 border-b border-border px-3 py-2 text-dense-caption"
-          >
-            {hedgeFacts(status).map((f) => (
-              <div key={f.label} className="contents">
-                <dt className="text-muted-foreground">{f.label}</dt>
-                <dd className={cn('m-0 text-right', positionsUi.mono)}>{f.value}</dd>
-              </div>
-            ))}
-          </dl>
-          <button
-            type="button"
-            role="menuitem"
-            className="flex h-8 w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 text-left text-dense-meta text-secondary-foreground hover:bg-[var(--sk-surface)] hover:text-foreground disabled:cursor-not-allowed disabled:text-muted-foreground/60"
-            disabled={!r.alive}
-            onClick={() =>
-              void ctrl.run(r.suspended ? postResume : postSuspend, {
-                loading: r.suspended ? 'Setting resume…' : 'Setting suspend…',
-                success: r.suspended
-                  ? 'Resume set — the daemon resumes hedging on its next heartbeat.'
-                  : 'Suspend set — the daemon pauses hedging on its next heartbeat.',
-              })
-            }
-          >
-            {r.suspended ? 'Resume hedging' : 'Suspend hedging'}
-            <span className="ml-auto text-dense-caption text-muted-foreground">
-              {r.alive ? 'takes effect next heartbeat' : 'daemon is not running'}
-            </span>
-          </button>
-          {/* Rev .48 Q3: the daemon's detail is Ops' Bus Status — the same page
-              System › Status's daemon row links to, so the two doors agree. */}
-          <a
-            href={opsConsoleHref('satellite-bus')}
-            target="_blank"
-            rel="noreferrer"
-            role="menuitem"
-            title="Opens Bifröst Ops › Bus Status in a new tab"
-            className="flex h-8 w-full items-center gap-2 px-3 text-dense-meta text-secondary-foreground no-underline hover:bg-[var(--sk-surface)] hover:text-foreground"
-          >
-            Daemon detail ↗<span className="ml-auto text-dense-caption text-muted-foreground">Ops · Bus Status</span>
-          </a>
-          <div className="border-t border-border" />
-          <button
-            type="button"
-            role="menuitem"
-            className="flex h-9 w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 text-left text-dense-meta text-danger hover:bg-[var(--sk-surface)]"
-            onClick={() => setFlattenOpen(true)}
-          >
-            Emergency flatten…
-            <span className="ml-auto font-mono text-dense-caption text-muted-foreground">POST /control/flatten</span>
-          </button>
+          <HedgeControls status={status} run={ctrl.run} onFlatten={() => setFlattenOpen(true)} />
         </div>
       ) : null}
 
-      {ctrl.msg.text ? (
+      {ctrl.msg.text && !phone ? (
         <p
           role="status"
           data-glass-surface={ctrl.msg.isErr ? undefined : 'raised'}
@@ -178,6 +228,34 @@ export function HedgeMenu({
         >
           {ctrl.msg.text}
         </p>
+      ) : null}
+
+      {phone ? (
+        // The flatten confirm is a sheet of its own, so this one steps aside
+        // while it is up and comes back when it closes, either way.
+        <BottomSheet
+          open={open && !flattenOpen}
+          onOpenChange={setOpen}
+          title="Hedging"
+          meta="D10 governs"
+          label="Hedging"
+          flush
+        >
+          {ctrl.msg.text ? (
+            <p
+              role="status"
+              className={cn(
+                'm-0 border-b border-border px-3 py-2 text-dense-meta leading-normal text-pretty',
+                ctrl.msg.isErr ? 'text-danger' : 'text-secondary-foreground',
+              )}
+            >
+              {ctrl.msg.text}
+            </p>
+          ) : null}
+          <div role="menu" aria-label="Hedging">
+            <HedgeControls status={status} run={ctrl.run} onFlatten={() => setFlattenOpen(true)} readOnly />
+          </div>
+        </BottomSheet>
       ) : null}
 
       <ConfirmDialog

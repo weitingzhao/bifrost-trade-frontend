@@ -5,6 +5,7 @@
  */
 import type { MouseEvent, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import type { AiDraft } from '@/api/researchDrafts'
 import type { DraftWriteFailure } from '@/lib/harness/draftWriteFailures'
 import { WRITES_TO_LABEL, WRITES_TO_NOTE, type WritesTo } from '@/lib/harness/writesTo'
@@ -162,10 +163,21 @@ export function InboxWriteFailures({
 }
 
 /** `Writes to · Rules · 3 pending · what Approve does there` (Rev .143 #6). */
-export function InboxSectionHead({ dest, pending, children }: { dest: WritesTo; pending: number; children?: ReactNode }) {
+export function InboxSectionHead({
+  dest,
+  pending,
+  children,
+  wrap = false,
+}: {
+  dest: WritesTo
+  pending: number
+  children?: ReactNode
+  /** A phone: the note takes a second line instead of squeezing the label (Rev .163). */
+  wrap?: boolean
+}) {
   return (
     <div
-      className="flex min-w-0 items-baseline gap-2 px-0.5 pt-1.5"
+      className={cn('flex min-w-0 items-baseline gap-2 px-0.5 pt-1.5', wrap && 'flex-wrap gap-y-0')}
       title="Grouped by where Approve writes — the same axis as the Writes to filter and the tag colour."
     >
       <span className="text-dense-micro font-semibold text-muted-foreground">Writes to</span>

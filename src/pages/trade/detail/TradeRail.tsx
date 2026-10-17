@@ -20,6 +20,7 @@ import { d3 } from '@/utils/tradeRecord/tradeRecordModel'
 import type { RanUnder } from '@/utils/tradeRecord/ranUnder'
 import type { Trade } from '@/types/positions'
 import { TradeBlock } from './TradeBlock'
+import { useLineageFold } from './lineageFold'
 import { useTradeOrigins } from '@/hooks/useTradeOrigins'
 import { ORIGIN_UNRECORDED, planPath, planTermsText, planToken } from '@/utils/tradeOrigin'
 
@@ -52,6 +53,8 @@ export function TradeLineage({
   const sibIds = sibs.map((x) => x.trade_id)
   const openedIso = trade.opened_at ? trade.opened_at.slice(0, 10) : null
   const origin = useTradeOrigins().byTrade.get(id)
+  // Rev .163 §18.11: provenance is reference, so an iPad starts it folded.
+  const fold = useLineageFold()
 
   const chain: {
     kind: string
@@ -126,6 +129,7 @@ export function TradeLineage({
     <TradeBlock
       cap="Lineage"
       title="Came from, ran under"
+      fold={fold}
       action={
         <button type="button" className={positionsUi.link} onClick={() => navigate(`/trade/rules?pick=instance:${id}`)}>
           Trading › Rules →

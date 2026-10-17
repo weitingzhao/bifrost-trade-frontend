@@ -18,6 +18,8 @@ import { tradeTracksFor } from '@/components/symbolChart/symbolPriceModel'
 import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
 import { useTradeRecord } from '@/hooks/useTradeRecord'
 import { useSymbolGo } from '@/layout/symbolGo'
+import { useDevice } from '@/lib/device'
+import { useInSurface } from '@/lib/surfaceScope'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { fmtPctSigned, fmtUsd, fmtUsdRound } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -34,6 +36,13 @@ const UNREALIZED = 'text-[var(--color-unrealized)]'
 const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+${fmtUsdRound(v)}` : fmtUsdRound(v))
 const px = (v: number | null) => (v == null ? '—' : `$${v.toFixed(2)}`)
 
+/**
+ * The columns a phone keeps (design Rev .163, §18.6) — the first, which names
+ * the row, and what says whether it made money and whether it is still open.
+ * A tap on a row opens the rest in the shell's row sheet.
+ */
+const PHONE_KEEP_FILLS = '1,3,8' // Date · Contract · Cash
+const PHONE_KEEP_LEGS = '1,9,10' // Leg · Net · State
 
 export function TradeWide({
   trade,
@@ -54,6 +63,10 @@ export function TradeWide({
 }) {
   const navigate = useNavigate()
   const symbolGo = useSymbolGo()
+  const { device } = useDevice()
+  const inSurface = useInSurface()
+  // The phone's page, not a surface drawn on a phone: a surface keeps its face.
+  const phonePage = device === 'phone' && !inSurface
   const id = trade.trade_id
   const today = etTodayIso()
   const r = useTradeRecord(trade, { withShares: true })
@@ -90,22 +103,31 @@ export function TradeWide({
   return (
     <>
       <PageHead
-        title={`Trade #${id}${sym ? ` · ${sym}` : ''}`}
+        // A phone names the trade and leaves its ticker to the toolbar under
+        // the head, where it is the first word: the head keeps its title whole.
+        title={`Trade #${id}${sym && !phonePage ? ` · ${sym}` : ''}`}
         info="One trade, whole: its price path, every leg and roll, every fill booked to it, the ledger by leg and the notes written about it. Reached from any #NNN token; beside any page it opens as the 440 panel."
         meta={`${trade.strategy_opportunity_name ?? '—'} · ${closed ? 'closed' : 'open'}`}
         actions={
           <>
+            {/* Rev .163: a phone keeps Positions — where an open leg is rolled
+                or closed — and drops two doors it has nearer: the ticker in the
+                toolbar opens Symbol, and the Ledger block has its own Ledger →. */}
             {sym ? (
-              <PageHeadAction title={`Research › Symbol on ${sym} — the full detail page`} onClick={() => navigate(withSymbolParam('/research/symbol', sym))}>
-                {sym} · Symbol page →
-              </PageHeadAction>
+              <span data-sr-phone="hide" className="contents">
+                <PageHeadAction title={`Research › Symbol on ${sym} — the full detail page`} onClick={() => navigate(withSymbolParam('/research/symbol', sym))}>
+                  {sym} · Symbol page →
+                </PageHeadAction>
+              </span>
             ) : null}
             <PageHeadAction title="Portfolio › Positions — where its open legs are marked" onClick={() => navigate(`/portfolio/positions?inst=${id}`)}>
               Positions →
             </PageHeadAction>
-            <PageHeadAction title={`Portfolio › Ledger — every fill booked to #${id}`} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
-              Ledger →
-            </PageHeadAction>
+            <span data-sr-phone="hide" className="contents">
+              <PageHeadAction title={`Portfolio › Ledger — every fill booked to #${id}`} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
+                Ledger →
+              </PageHeadAction>
+            </span>
           </>
         }
       />
@@ -245,7 +267,7 @@ export function TradeWide({
               </button>
             }
           >
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-sr-keep={PHONE_KEEP_FILLS}>
               <table data-sr-table="" className="w-full">
                 <thead>
                   <tr>
@@ -280,21 +302,35 @@ export function TradeWide({
                       <td className="text-dense-micro text-[var(--sk-mute2)]">{f.source}</td>
                     </tr>
                   ))}
-                  <tr>
-                    <td colSpan={6} className="font-semibold">
-                      Net cash
-                    </td>
-                    <td data-sr-col="num" className="text-[var(--sk-mute2)]">
-                      {fmtUsd(fills.comm)}
-                    </td>
-                    <td data-sr-col="num" className={cn('font-semibold', pnlColorClass(fills.cash))}>
-                      {fmtUsd(fills.cash)}
-                    </td>
-                    <td />
-                  </tr>
+                  {/* The total spans the columns a phone folds away, so on a
+                      phone it is the line under the table instead (§18.6). */}
+                  {device === 'phone' ? null : (
+                    <tr>
+                      <td colSpan={6} className="font-semibold">
+                        Net cash
+                      </td>
+                      <td data-sr-col="num" className="text-[var(--sk-mute2)]">
+                        {fmtUsd(fills.comm)}
+                      </td>
+                      <td data-sr-col="num" className={cn('font-semibold', pnlColorClass(fills.cash))}>
+                        {fmtUsd(fills.cash)}
+                      </td>
+                      <td />
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
+            {device === 'phone' ? (
+              <div className="flex flex-wrap justify-end gap-x-4.5 gap-y-1 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3 pt-2 pb-2.5 font-mono text-dense-label text-[var(--sk-mute2)]">
+                <span>
+                  Commission <span className="font-semibold">{fmtUsd(fills.comm)}</span>
+                </span>
+                <span>
+                  Net cash <span className={cn('font-semibold', pnlColorClass(fills.cash))}>{fmtUsd(fills.cash)}</span>
+                </span>
+              </div>
+            ) : null}
           </TradeBlock>
 
           <TradeBlock
@@ -307,7 +343,7 @@ export function TradeWide({
               </button>
             }
           >
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto" data-sr-keep={PHONE_KEEP_LEGS}>
               <table data-sr-table="" className="w-full">
                 <thead>
                   <tr>

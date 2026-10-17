@@ -12,19 +12,28 @@
  * (§14.2) — the exposure numbers come from the same hook Portfolio Exposure
  * draws from, not from a second derivation. Nothing here writes: not a limit,
  * not an acknowledgement.
+ *
+ * On a phone (Rev .163, an `act` page: a glance at the headroom) the book
+ * keeps three columns — the limit, its reading, the headroom — and a tap on a
+ * row opens the shell's row sheet with the rest (§18.6); the history table
+ * keeps When · Limit · Open for. The account switch scrolls on one line, and
+ * the door to the rules editor is a builder (`data-sr-build`). On an iPad the
+ * two reference panels at the foot start folded (§18.11).
  */
-import { useState, type CSSProperties } from 'react'
+import { useState, type CSSProperties, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadLink, PageShell } from '@/components/layout'
-import { DenseTag, SegmentControl } from '@/components/data-display'
+import { CollapsibleChevron, DenseTag, SegmentControl } from '@/components/data-display'
 import { StatusLamp } from '@/components/StatusLamp'
 import { positionsUi } from '@/components/positions/positionsUi'
 import { fmtPct0 } from '@/utils/positions'
 
 import { useLimitBook } from '@/hooks/useLimitBook'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { usePersistedChoice } from '@/hooks/usePersistedChoice'
+import { useDevice } from '@/lib/device'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import {
@@ -93,8 +102,57 @@ const ESCALATION: { kind: string; tone: string; what: string }[] = [
   },
 ]
 
+/** The phone's columns (§18.6): the limit, its reading, the headroom — and When · Limit · Open for. */
+const BOOK_PHONE_KEEP = '1,3,5'
+const HISTORY_PHONE_KEEP = '1,2,4'
+
+type LimitsFold = 'open' | 'shut'
+const LIMITS_FOLDS: readonly LimitsFold[] = ['open', 'shut']
+
+/**
+ * A reference panel at the foot, on an iPad (§18.11): shut by default, its
+ * fold remembered for the iPad alone. The desk and the phone draw it open with
+ * no control, as before.
+ */
+function useLimitsPadFold(panel: 'escalation' | 'history', pad: boolean) {
+  const [fold, setFold] = usePersistedChoice<LimitsFold>(`bifrost.risk.limits.${panel}@pad`, 'shut', LIMITS_FOLDS)
+  const open = !pad || fold === 'open'
+  return { pad, open, toggle: () => setFold(open ? 'shut' : 'open') }
+}
+
+/** The fold's handle at the end of the panel head; the whole head toggles (the click bubbles to it). */
+function LimitsFoldToggle({ open, label }: { open: boolean; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      aria-label={open ? `Fold ${label}` : `Open ${label}`}
+      className="ml-auto inline-flex items-center text-muted-foreground hover:text-foreground"
+    >
+      <CollapsibleChevron expanded={open} className="size-3.5" />
+    </button>
+  )
+}
+
+/** The head's props while it folds its panel (iPad only); nothing on the desk or the phone. */
+function foldHead(fold: ReturnType<typeof useLimitsPadFold>) {
+  return fold.pad
+    ? {
+        onClick: (e: MouseEvent) => {
+          if ((e.target as Element).closest('a')) return
+          fold.toggle()
+        },
+        className: cn(positionsUi.panelHead, 'cursor-pointer', !fold.open && 'border-b-0'),
+      }
+    : { className: positionsUi.panelHead }
+}
+
 export default function RiskLimitsPage() {
   const [accountFilter, setAccountFilter] = useState('all')
+  const { device } = useDevice()
+  const phone = device === 'phone'
+  const escalationFold = useLimitsPadFold('escalation', device === 'pad')
+  const historyFold = useLimitsPadFold('history', device === 'pad')
   // The book is assembled once, in `useLimitBook`, because Risk (the layer
   // page) and Today read the same one. This page draws it in full.
   const { rows, accountIds, modelQueries, error, gateReadings } = useLimitBook(accountFilter)
@@ -128,14 +186,17 @@ export default function RiskLimitsPage() {
           meta={`${rows.length} rules · ${withLine} with a line`}
           actions={
             // Straight to the destination: /strategy/gates is a redirect here
-            // since the Strategy pages retired (2026-09-18).
-            <PageHeadLink to="/trade/rules" title="Trading › Rules — where gates are defined">
-              Rules engine →
-            </PageHeadLink>
+            // since the Strategy pages retired (2026-09-18). The rules editor
+            // is a builder, which a phone does not open (§18.2).
+            <span data-sr-build="" className="contents">
+              <PageHeadLink to="/trade/rules" title="Trading › Rules — where gates are defined">
+                Rules engine →
+              </PageHeadLink>
+            </span>
           }
         />
         {accountIds.length > 1 ? (
-          <div data-sr-toolbar="">
+          <div data-sr-toolbar="" data-sr-phone-scroll="">
             <span data-sr-tb="label">Account</span>
             <SegmentControl
               size="xs"
@@ -291,18 +352,22 @@ export default function RiskLimitsPage() {
                   — this page reads, never writes
                 </span>
               </header>
-              <div className="overflow-x-auto">
-                {/* §14.6: seven columns, the design's 1040 floor. */}
+              <div className="overflow-x-auto" data-sr-keep={BOOK_PHONE_KEEP}>
+                {/* §14.6: seven columns, the design's 1040 floor. A phone lays
+                    out the three it keeps by their content: the shares would
+                    hand them the first three columns' widths. */}
                 <table data-sr-table="" className="min-w-[1040px]">
-                  <colgroup>
-                    <col style={{ width: '21%' }} />
-                    <col style={{ width: '6%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '18%' }} />
-                    <col style={{ width: '21%' }} />
-                    <col style={{ width: '16%' }} />
-                  </colgroup>
+                  {phone ? null : (
+                    <colgroup>
+                      <col style={{ width: '21%' }} />
+                      <col style={{ width: '6%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '21%' }} />
+                      <col style={{ width: '16%' }} />
+                    </colgroup>
+                  )}
                   <thead>
                     <tr>
                       <th data-sr-col="entity">Limit</th>
@@ -341,7 +406,8 @@ export default function RiskLimitsPage() {
                         </tr>,
                         ...inGroup.map((r) => (
                           <tr key={r.key}>
-                            <td data-sr-col="entity" className="text-dense-label text-foreground">
+                            {/* A phone's three columns share 360px: the name wraps there. */}
+                            <td data-sr-col={phone ? undefined : 'entity'} className="text-dense-label text-foreground">
                               {r.name}
                               {r.breached ? (
                                 <span className={cn('ml-2 font-mono text-dense-caption font-bold', breachInk(r.kind))}>
@@ -379,12 +445,19 @@ export default function RiskLimitsPage() {
                             <td>
                               {r.use == null || r.headroom == null ? (
                                 // One line per rule, as drawn: the reason rides in the hover.
+                                // A phone has no hover, so its reason takes two lines —
+                                // at a width the row sheet's label can still sit beside.
                                 <span
-                                  className="flex max-w-[16rem] items-center gap-1.5 text-dense-caption text-muted-foreground"
+                                  className={cn(
+                                    'flex items-center gap-1.5 text-dense-caption text-muted-foreground',
+                                    phone ? 'min-w-0' : 'max-w-[16rem]',
+                                  )}
                                   title={r.noReading ?? 'No line is written for this rule'}
                                 >
                                   <StatusLamp lamp="gray" variant="dot" title={r.current == null ? 'No reading' : 'No line'} />
-                                  <span className="truncate">{r.noReading ?? 'no line written'}</span>
+                                  <span className={phone ? 'line-clamp-2 max-w-52 text-pretty' : 'truncate'}>
+                                    {r.noReading ?? 'no line written'}
+                                  </span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-2">
@@ -415,7 +488,9 @@ export default function RiskLimitsPage() {
                               )}
                             </td>
                             <td data-sr-col="text" title={r.onBreach} className="text-dense-meta text-muted-foreground">
-                              {r.onBreach}
+                              {/* Only the phone's row sheet shows this column: there it wraps
+                                  rather than pushing its label out of the line. */}
+                              {phone ? <span className="inline-block max-w-52 text-pretty">{r.onBreach}</span> : r.onBreach}
                             </td>
                             <td data-sr-col="tag" className="text-dense-meta text-muted-foreground">
                               {r.scope}
@@ -439,68 +514,80 @@ export default function RiskLimitsPage() {
 
             <div className={positionsUi.bandGrid}>
               <section className={positionsUi.panel} aria-label="Escalation">
-                <header className={positionsUi.panelHead}>
+                <header {...foldHead(escalationFold)}>
                   <span className={positionsUi.cap}>Escalation</span>
                   <span className={positionsUi.panelTitle}>what a breach does</span>
+                  {escalationFold.pad ? <LimitsFoldToggle open={escalationFold.open} label="Escalation" /> : null}
                 </header>
-                {ESCALATION.map((e) => (
-                  <div
-                    key={e.kind}
-                    className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-2.5 border-b border-border/55 px-3 py-2 last:border-b-0"
-                  >
-                    <span className={cn(positionsUi.mono, 'text-dense-caption font-bold tracking-[0.08em]', e.tone)}>
-                      {e.kind}
-                    </span>
-                    <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">{e.what}</span>
-                  </div>
-                ))}
-                <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.rules}</p>
+                {escalationFold.open ? (
+                  <>
+                    {ESCALATION.map((e) => (
+                      <div
+                        key={e.kind}
+                        className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-2.5 border-b border-border/55 px-3 py-2 last:border-b-0"
+                      >
+                        <span className={cn(positionsUi.mono, 'text-dense-caption font-bold tracking-[0.08em]', e.tone)}>
+                          {e.kind}
+                        </span>
+                        <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">{e.what}</span>
+                      </div>
+                    ))}
+                    <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.rules}</p>
+                  </>
+                ) : null}
               </section>
 
               <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Recent history">
-                <header className={positionsUi.panelHead}>
+                <header {...foldHead(historyFold)}>
                   <span className={positionsUi.cap}>Recent history</span>
                   <span className={positionsUi.panelTitle}>when a line was crossed</span>
                   <DenseTag variant="warning" size="cell">
                     ⚠ nothing records it
                   </DenseTag>
+                  {historyFold.pad ? <LimitsFoldToggle open={historyFold.open} label="Recent history" /> : null}
                 </header>
-                <p className="m-0 px-3 pt-2.5 pb-1.5 text-xs leading-normal text-secondary-foreground text-pretty">
-                  The useful question is not whether a line is crossed now — the table above answers that — but how long
-                  it stayed crossed and what ended it. That needs a row written every time a reading passes a line.
-                </p>
-                {/* The design's four columns, kept: a band that drops its shape
-                    stops teaching what the store would have to hold. */}
-                <div className="overflow-x-auto">
-                  <table data-sr-table="" className="min-w-[26rem]">
-                    <colgroup>
-                      <col style={{ width: '22%' }} />
-                      <col style={{ width: '34%' }} />
-                      <col style={{ width: '28%' }} />
-                      <col style={{ width: '16%' }} />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th data-sr-col="num">When</th>
-                        <th data-sr-col="entity">Limit</th>
-                        <th data-sr-col="wrap">Resolution</th>
-                        <th data-sr-col="num">Open for</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="whitespace-normal" colSpan={4}>
-                          <span className="inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground">
-                            <StatusLamp lamp="gray" variant="dot" title="No row" className="mt-1 shrink-0" />
-                            No row, for the last fourteen days or any other window — an empty table here would read as a
-                            clean record rather than as no record.
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-                <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.history}</p>
+                {historyFold.open ? (
+                  <>
+                    <p className="m-0 px-3 pt-2.5 pb-1.5 text-xs leading-normal text-secondary-foreground text-pretty">
+                      The useful question is not whether a line is crossed now — the table above answers that — but how long
+                      it stayed crossed and what ended it. That needs a row written every time a reading passes a line.
+                    </p>
+                    {/* The design's four columns, kept: a band that drops its shape
+                        stops teaching what the store would have to hold. */}
+                    <div className="overflow-x-auto" data-sr-keep={HISTORY_PHONE_KEEP}>
+                      <table data-sr-table="" className="min-w-[26rem]">
+                        {phone ? null : (
+                          <colgroup>
+                            <col style={{ width: '22%' }} />
+                            <col style={{ width: '34%' }} />
+                            <col style={{ width: '28%' }} />
+                            <col style={{ width: '16%' }} />
+                          </colgroup>
+                        )}
+                        <thead>
+                          <tr>
+                            <th data-sr-col="num">When</th>
+                            <th data-sr-col="entity">Limit</th>
+                            <th data-sr-col="wrap">Resolution</th>
+                            <th data-sr-col="num">Open for</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td className="whitespace-normal" colSpan={4}>
+                              <span className="inline-flex items-start gap-1.5 text-dense-meta leading-normal text-muted-foreground">
+                                <StatusLamp lamp="gray" variant="dot" title="No row" className="mt-1 shrink-0" />
+                                No row, for the last fourteen days or any other window — an empty table here would read as a
+                                clean record rather than as no record.
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className={cn(FOOT, 'm-0')}>{LIMITS_UNRECORDED.history}</p>
+                  </>
+                ) : null}
               </section>
             </div>
 

@@ -2,10 +2,11 @@
 /**
  * The one write on the desk. These tests are about what it takes to fire it.
  */
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { refreshDevice } from '@/lib/device'
 
 vi.mock('@/api/monitor', () => ({
   postSuspend: vi.fn(async () => ({ ok: true })),
@@ -128,6 +129,36 @@ describe('HedgeMenu · flatten', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }))
     await userEvent.click(screen.getByRole('menuitem', { name: /Emergency flatten/ }))
     expect(screen.getByRole('button', { name: 'Send flatten' }).hasAttribute('disabled')).toBe(true)
+  })
+})
+
+describe('HedgeMenu · on a phone (Rev .163 §18.5)', () => {
+  // `?device=` keeps the forced tier in the tab's session (lib/device).
+  function asPhone() {
+    act(() => {
+      sessionStorage.setItem('bifrost.device', 'phone')
+      refreshDevice()
+    })
+  }
+
+  afterEach(() => {
+    sessionStorage.clear()
+    act(() => refreshDevice())
+  })
+
+  it('opens the reading as a bottom sheet, with no control in it, and posts nothing', async () => {
+    asPhone()
+    renderMenu()
+    await userEvent.click(screen.getByRole('button', { name: /Hedge/ }))
+    const sheet = screen.getByRole('dialog', { name: 'Hedging' })
+    expect(within(sheet).getByLabelText('Hedge daemon reading')).toBeTruthy()
+    // D10: the phone reads the daemon; suspend, resume and flatten stay on the iPad and the desk.
+    expect(within(sheet).queryByRole('menuitem', { name: /Suspend hedging|Resume hedging/ })).toBeNull()
+    expect(within(sheet).queryByRole('menuitem', { name: /Emergency flatten/ })).toBeNull()
+    expect(within(sheet).getByText(/D10: the phone reads the daemon/)).toBeTruthy()
+    expect(suspend).not.toHaveBeenCalled()
+    expect(resume).not.toHaveBeenCalled()
+    expect(flatten).not.toHaveBeenCalled()
   })
 })
 

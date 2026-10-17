@@ -18,6 +18,12 @@
  * draws: `approveEffect` reads the branches of `apply_draft_approval`, so a
  * kind whose approval writes nothing says that instead of naming a
  * destination the design imagined for it.
+ *
+ * On a phone (Rev .163, an `act` page: batching the Inbox is one of the
+ * phone's jobs) the queue is one row per question and a row opens its card in
+ * a bottom sheet, Approve and Dismiss in its footer. New Draft is a builder
+ * (`data-sr-build`); the key hints hide under a finger, on the iPad too. A
+ * surfaced Inbox keeps its 440 face on every device.
  */
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -57,6 +63,7 @@ import {
 import { useDraftWriteFailures } from '@/lib/harness/draftWriteFailures'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { useInSurface } from '@/lib/surfaceScope'
+import { useDevice } from '@/lib/device'
 import { notify } from '@/lib/shellNotify'
 import {
   InboxDecisionList,
@@ -105,6 +112,7 @@ export default function DecisionInboxPage() {
   // id>` lands on that draft's card — first, ringed, open, its provenance out.
   const { pathname, search } = useLocation()
   const inSurface = useInSurface()
+  const phone = useDevice().device === 'phone' && !inSurface
   const cardParam = useMemo(() => new URLSearchParams(search).get('card'), [search])
   const [view, setViewState] = useState<View>('decisions')
   const [dest, setDestState] = useState<Dest>(pathname === PROPOSALS_PATH ? 'rules' : 'any')
@@ -373,8 +381,9 @@ export default function DecisionInboxPage() {
       dismissCard(target.card)
     }
   }
+  // A phone reads in the sheet, and Enter there runs its verdict.
   useInboxKeys({
-    enabled: !inSurface && showDecisions,
+    enabled: !inSurface && showDecisions && !phone,
     order,
     cur,
     openId: openKey,
@@ -394,9 +403,21 @@ export default function DecisionInboxPage() {
     counts.folded > 0 ? ` · ${counts.folded} earlier runs folded in` : ''
   }`
 
+  const destSegment = (
+    <SegmentControl size="xs" value={dest} onChange={(v) => setDest(v as Dest)} options={destOptions} ariaLabel="Writes to" />
+  )
+
   return (
     <PageShell padding="compact" className="space-y-3">
-      <PageHead title="Decision Inbox" info={INBOX_LEDE} actions={<NewDraftDialog />} />
+      <PageHead
+        title="Decision Inbox"
+        info={INBOX_LEDE}
+        actions={
+          <span data-sr-build="" className="contents">
+            <NewDraftDialog />
+          </span>
+        }
+      />
 
       <div data-sr-toolbar="">
         {/* Which operator wrote the queue you are looking at; the level is soft ink (Rev .85). */}
@@ -413,7 +434,15 @@ export default function DecisionInboxPage() {
             <span data-sr-tb="label" title="Kind, read as where Approve writes. The tag colour on each card says the same thing.">
               Writes to
             </span>
-            <SegmentControl size="xs" value={dest} onChange={(v) => setDest(v as Dest)} options={destOptions} ariaLabel="Writes to" />
+            {phone ? (
+              // Six places with their counts outgrow a phone's line: the
+              // segment scrolls on its own row instead of the page (§18.7).
+              <span data-sr-phone-scroll="" className="flex min-w-0 max-w-full">
+                {destSegment}
+              </span>
+            ) : (
+              destSegment
+            )}
           </>
         )}
         {dest !== 'any' || queue.unaccounted > 0 || counts.hiddenHere > 0 ? (
@@ -519,6 +548,7 @@ export default function DecisionInboxPage() {
                 litKey={litKey}
                 headlineOf={headlineOf}
                 failures={failures}
+                phone={phone}
                 handlers={{
                   toggle,
                   approve: approveCard,
@@ -542,6 +572,7 @@ export default function DecisionInboxPage() {
               litId={cardParam}
               onDismiss={(id) => dismiss(id)}
               onApprove={(id) => approve(id, 'Approved', { onLanded: land })}
+              phone={phone}
             />
           )}
         </div>

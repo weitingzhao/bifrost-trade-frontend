@@ -44,6 +44,12 @@ export interface DeskAction {
   ref?: string
   /** An instance token: opens its face over the desk, stepping `list`. */
   trade?: { id: number; list: number[]; from: string }
+  /**
+   * A builder's step rather than an act (design Rev .163, §18.2): drawn on the
+   * desk and the iPad, hidden on a phone, which watches and acts but does not
+   * write rules or carry payloads.
+   */
+  build?: boolean
 }
 
 export interface DeskItem {
@@ -183,8 +189,10 @@ export function decideItems(
         { label: 'D10 blocked', tone: 'warning' },
       ],
       actions: [
-        { label: 'Create opportunity', kind: 'createOpportunity', ref: d.id },
-        { label: 'Copy JSON', kind: 'copyIntent', ref: d.id },
+        // Both write elsewhere: an opportunity into the rulebook (Rules is a
+        // desk page on a phone), the payload into the clipboard for a builder.
+        { label: 'Create opportunity', kind: 'createOpportunity', ref: d.id, build: true },
+        { label: 'Copy JSON', kind: 'copyIntent', ref: d.id, build: true },
         { label: 'Decisions →', to: '/research/loop/decisions' },
       ],
     })

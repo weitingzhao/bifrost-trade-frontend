@@ -43,6 +43,7 @@ import { usePositionAttribution } from '@/hooks/usePositionAttribution'
 import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
+import { useDevice } from '@/lib/device'
 import { createStrategyPlan } from '@/api/strategyPlans'
 import {
   DECISION_OPTIONS,
@@ -61,6 +62,18 @@ const PAGE_LEAD =
 
 const FOOT =
   'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
+
+/**
+ * What a phone keeps of each table (design Rev .163, §18.6); a tap on a row
+ * opens the rest in the shell's sheet. Legs keeps Leg · Decision: Roll / Close
+ * are this page's act on a phone (§18.2), and the four-way control alone takes
+ * 218 of the 355 a 393 screen's row has, so a third column would push the row
+ * off it. What closing costs is the head's total and the settle band beneath;
+ * the rest of a leg is its sheet. The ladder keeps Expiry · ITM · Cost to
+ * close — how many legs need deciding there, and what deciding them all costs.
+ */
+const LEGS_PHONE_KEEP = '1,7'
+const LADDER_PHONE_KEEP = '1,3,5'
 
 function ImpactRow({ k, v, tone, note }: { k: string; v: string; tone: 'up' | 'down' | 'warn' | 'muted'; note: string | null }) {
   return (
@@ -85,6 +98,23 @@ function ImpactRow({ k, v, tone, note }: { k: string; v: string; tone: 'up' | 'd
   )
 }
 
+/**
+ * The contract token (§14.4), in two unbreakable halves: where a phone has to
+ * wrap it, it breaks between the name and the contract, never inside either.
+ * On the desk the cell does not wrap and the token reads as one.
+ */
+function ExpiryLegToken({ contractKey }: { contractKey: string }) {
+  const token = shortOptContractKey(contractKey)
+  const cut = token.indexOf(' ')
+  if (cut < 0) return <>{token}</>
+  return (
+    <>
+      <span className="whitespace-nowrap">{token.slice(0, cut)}</span>{' '}
+      <span className="whitespace-nowrap">{token.slice(cut + 1)}</span>
+    </>
+  )
+}
+
 function isoDay(expiry: string): string {
   return `${expiry.slice(0, 4)}-${expiry.slice(4, 6)}-${expiry.slice(6, 8)}`
 }
@@ -93,6 +123,7 @@ export default function ExpirationPage() {
   const { data: status, isLoading: statusLoading } = useMonitorStatus()
   const attrQuery = usePositionAttribution()
   const preview = usePreviewState()
+  const phone = useDevice().device === 'phone'
   /**
    * `?fri=YYYY-MM-DD` — the Calendar's Expiries layer (and any other link)
    * opens the desk on that expiry. A pick in the ladder is kept against the
@@ -103,7 +134,12 @@ export default function ExpirationPage() {
   const fri = friParam && /^\d{4}-\d{2}-\d{2}$/.test(friParam) ? friParam : null
   const [picked, setPicked] = useState<{ fri: string | null; expiry: string } | null>(null)
   const pickedExpiry = picked != null && picked.fri === fri ? picked.expiry : null
-  const setPickedExpiry = (expiry: string) => setPicked({ fri, expiry })
+  const setPickedExpiry = (expiry: string) => {
+    setPicked({ fri, expiry })
+    // A phone stacks the ladder a screen below the legs it picks (Rev .163):
+    // carry the eye up to them, as a `?fri=` link lands on them.
+    if (phone) scrollWhenPresent('[aria-label="Legs expiring"]', 1_000, flashFound)
+  }
 
   // New York's day: expiries are dated there, whatever the browser's zone.
   const today = etTodayIso()
@@ -381,7 +417,9 @@ export default function ExpirationPage() {
                     {fmtSignedUsd0(-selected.closeCost)} to close
                   </span>
                 ) : null}
-                <span className="text-dense-meta text-muted-foreground">
+                {/* A pointer to the panels below; a phone drops it so the count,
+                    the cost and Create plans hold one line above the table (Rev .163). */}
+                <span data-sr-phone="hide" className="text-dense-meta text-muted-foreground">
                   pin / flip have no source — see the notes; early assignment is read below
                 </span>
                 <button
@@ -410,20 +448,24 @@ export default function ExpirationPage() {
                   {createError}
                 </p>
               ) : null}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" data-sr-keep={LEGS_PHONE_KEEP}>
                 {/* §14.6: eight columns since Decision and If chosen joined —
-                    the design's own pair — at a 1180 floor. */}
-                <table className="w-full min-w-[1180px] table-fixed border-collapse">
-                  <colgroup>
-                    <col style={{ width: '17%' }} />
-                    <col style={{ width: '5%' }} />
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '7%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '23%' }} />
-                  </colgroup>
+                    the design's own pair — at a 1180 floor. A phone lays out the
+                    two it keeps by their content: fixed widths would hand them
+                    the first two columns' shares. */}
+                <table className={cn('w-full min-w-[1180px] border-collapse', !phone && 'table-fixed')}>
+                  {phone ? null : (
+                    <colgroup>
+                      <col style={{ width: '17%' }} />
+                      <col style={{ width: '5%' }} />
+                      <col style={{ width: '7%' }} />
+                      <col style={{ width: '7%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '22%' }} />
+                      <col style={{ width: '23%' }} />
+                    </colgroup>
+                  )}
                   <thead>
                     <tr>
                       <th className={cn(positionsUi.th, 'text-left')}>Leg</th>
@@ -439,10 +481,18 @@ export default function ExpirationPage() {
                   <tbody>
                     {(selected?.legs ?? []).map((l) => (
                       <tr key={l.contractKey}>
-                        <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>
-                          {shortOptContractKey(l.contractKey)}
+                        {/* A phone lets the leg wrap rather than push Decision off the
+                            screen: the two kept columns need 356px, a 393 screen's row has 355. */}
+                        <td
+                          className={cn(
+                            positionsUi.td,
+                            'pl-2 text-left font-bold text-[var(--color-entity-option)]',
+                            phone && 'whitespace-normal',
+                          )}
+                        >
+                          <ExpiryLegToken contractKey={l.contractKey} />
                           {l.accounts.length > 1 ? (
-                            <span className="ml-1.5 font-normal text-dense-meta text-muted-foreground">
+                            <span className="ml-1.5 whitespace-nowrap font-normal text-dense-meta text-muted-foreground">
                               · {l.accounts.length} accounts
                             </span>
                           ) : null}
@@ -619,16 +669,20 @@ export default function ExpirationPage() {
                 <span className={positionsUi.panelTitle}>
                   {groups.length} {groups.length === 1 ? 'expiry' : 'expiries'} · {legs.length} legs
                 </span>
-                <SegmentControl
-                  size="xs"
-                  ariaLabel="Expiry"
-                  value={selected?.expiry ?? ''}
-                  onChange={setPickedExpiry}
-                  options={groups.map((g) => ({
-                    value: g.expiry,
-                    label: `${fmtIsoDateToken(isoDay(g.expiry))} · ${g.dte}d`,
-                  }))}
-                />
+                {/* One row that scrolls on a phone (Rev .163): a book with more
+                    expiries than fit would push the pills past the screen's edge. */}
+                <div data-sr-phone-scroll="" className="flex">
+                  <SegmentControl
+                    size="xs"
+                    ariaLabel="Expiry"
+                    value={selected?.expiry ?? ''}
+                    onChange={setPickedExpiry}
+                    options={groups.map((g) => ({
+                      value: g.expiry,
+                      label: `${fmtIsoDateToken(isoDay(g.expiry))} · ${g.dte}d`,
+                    }))}
+                  />
+                </div>
                 {greeks.unmatched > 0 ? (
                   <span className="ml-auto inline-flex items-center gap-1.5 text-dense-meta text-muted-foreground">
                     <StatusLamp lamp="gray" variant="dot" title="No vendor row — not a fault" />
@@ -636,17 +690,19 @@ export default function ExpirationPage() {
                   </span>
                 ) : null}
               </header>
-              <div className="overflow-x-auto">
-                {/* §14.6: six columns, the design's 720 floor. */}
-                <table className="w-full min-w-[720px] table-fixed border-collapse">
-                  <colgroup>
-                    <col style={{ width: '18%' }} />
-                    <col style={{ width: '10%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '16%' }} />
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '22%' }} />
-                  </colgroup>
+              <div className="overflow-x-auto" data-sr-keep={LADDER_PHONE_KEEP}>
+                {/* §14.6: six columns, the design's 720 floor; a phone lays out its three by content. */}
+                <table className={cn('w-full min-w-[720px] border-collapse', !phone && 'table-fixed')}>
+                  {phone ? null : (
+                    <colgroup>
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '16%' }} />
+                      <col style={{ width: '22%' }} />
+                      <col style={{ width: '22%' }} />
+                    </colgroup>
+                  )}
                   <thead>
                     <tr>
                       <th className={cn(positionsUi.th, 'text-left')}>Expiry</th>
@@ -668,6 +724,8 @@ export default function ExpirationPage() {
                           // the list scope's selection capsule and hover, not cell fills.
                           data-selected={on ? 'true' : undefined}
                           className="cursor-pointer"
+                          // A phone's tap opens the row's sheet; its Open picks the expiry.
+                          data-sr-open={phone ? 'Show its legs' : undefined}
                           onClick={() => setPickedExpiry(g.expiry)}
                         >
                           <td className={cn(positionsUi.td, 'pl-2 text-left font-bold text-[var(--color-entity-option)]')}>

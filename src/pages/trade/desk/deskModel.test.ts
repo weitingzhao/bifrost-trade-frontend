@@ -52,6 +52,24 @@ describe('decide lane', () => {
     expect(item.actions.map((a) => a.kind)).toContain('createOpportunity')
   })
 
+  it('marks the builder steps a phone hides, and keeps every way to act (Rev .163)', () => {
+    const [item] = decideItems([intent()], [leg({ symbol: 'MU', strike: 205 })], TIGHT, TODAY)
+    expect(item.actions.filter((a) => a.build).map((a) => a.label)).toEqual(['Create opportunity', 'Copy JSON'])
+    expect(item.actions.filter((a) => !a.build).map((a) => a.label)).toEqual(['Decisions →'])
+    // A pressed leg is all acts: where it is rolled or closed, and what backs it.
+    const lanes = buildLanes({
+      intents: [],
+      legs: [leg({ symbol: 'MU', strike: 205, expiry: '20260922' })],
+      tightPct: TIGHT,
+      plans: [plan()],
+      orders: [],
+      fills: [exec()],
+      outsideRules: () => null,
+      today: TODAY,
+    })
+    expect(lanes.flatMap((l) => l.items.flatMap((i) => i.actions)).some((a) => a.build)).toBe(false)
+  })
+
   it('cuts a long rationale at its first sentence rather than printing the essay', () => {
     const [item] = decideItems([intent()], [], TIGHT, TODAY)
     expect(item.sub).toBe('First.')

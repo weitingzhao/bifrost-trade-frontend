@@ -95,11 +95,14 @@ function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: Desk
           {t.label}
         </DenseTag>
       ))}
-      {item.actions.map((a, i) =>
-        a.trade ? (
+      {item.actions.map((a, i) => {
+        // Rev .163: a phone hides a builder's step and keeps every way to act.
+        const build = a.build ? '' : undefined
+        return a.trade ? (
           <button
             key={a.label}
             type="button"
+            data-sr-build={build}
             className={cn(positionsUi.btn, 'font-mono text-[var(--color-trade-multi)]')}
             title={`Open #${a.trade.id} — its record, over the desk`}
             onClick={(e) => openTrade(a.trade!.id, { list: a.trade!.list, from: a.trade!.from, ...tradeHowFrom(e) })}
@@ -107,15 +110,21 @@ function ItemActions({ item, onAction }: { item: DeskItem; onAction: (item: Desk
             {a.label}
           </button>
         ) : a.to ? (
-          <Link key={a.label} to={a.to} className={cn(positionsUi.btn, 'no-underline')}>
+          <Link key={a.label} to={a.to} data-sr-build={build} className={cn(positionsUi.btn, 'no-underline')}>
             {a.label}
           </Link>
         ) : (
-          <button key={a.label} type="button" className={positionsUi.btn} onClick={() => onAction(item, i)}>
+          <button
+            key={a.label}
+            type="button"
+            data-sr-build={build}
+            className={positionsUi.btn}
+            onClick={() => onAction(item, i)}
+          >
             {a.label}
           </button>
-        ),
-      )}
+        )
+      })}
     </div>
   )
 }

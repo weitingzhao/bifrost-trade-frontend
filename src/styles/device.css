@@ -59,10 +59,16 @@ html[data-device='phone'] [data-sr-phone-scroll] > * {
   flex-shrink: 0;
 }
 
-/* A page head wraps its title and its controls rather than squeezing either. */
-html[data-device='phone'] [data-sr-pagehead] > div:first-child {
+/* A page head wraps its title and its controls rather than squeezing either:
+   the registry's hook, and the DS PageHead's own (`data-pagehead`) — without
+   the wrap a head with actions pressed its h1 to a pixel at 393. */
+html[data-device='phone'] :is([data-sr-pagehead], [data-pagehead]) > div:first-child {
   flex-wrap: wrap;
   row-gap: 4px;
+}
+
+html[data-device='phone'] [data-pagehead] > div:first-child > h1 {
+  max-width: 100%;
 }
 
 /* Wide tables keep 2–3 columns (§18.6): `layout/phoneKeep.ts` writes the
@@ -124,6 +130,13 @@ html[data-device='phone'] [data-sr-kpi='hero'] [data-sr-kpi-s] {
   overflow: hidden;
 }
 
+/* A reading in words rather than a count (the Desk's session, allocation and
+   pressure — index.css holds it at the panel step, 20, on the desk) keeps the
+   same proportion to a 22 count: 15 on a phone's half card, 17 on an iPad. */
+html[data-device='phone'] [data-sr-kpi='hero'] [data-sr-kpi-v='panel'] {
+  font-size: 15px;
+}
+
 /* Pad: four in a row as on the desk, the reading at 22, the sub line at most two. */
 html[data-device='pad'] [data-sr-kpi='hero'] {
   padding: 9px 11px 10px;
@@ -132,6 +145,10 @@ html[data-device='pad'] [data-sr-kpi='hero'] {
 
 html[data-device='pad'] [data-sr-kpi='hero'] [data-sr-kpi-v] {
   font-size: 22px;
+}
+
+html[data-device='pad'] [data-sr-kpi='hero'] [data-sr-kpi-v='panel'] {
+  font-size: 17px;
 }
 
 html[data-device='pad'] [data-sr-kpi='hero'] [data-sr-kpi-s] {

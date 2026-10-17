@@ -25,35 +25,43 @@ export function TouchCell({ td }: { td: Element }) {
   useLayoutEffect(() => {
     const host = ref.current
     if (!host) return
-    host.replaceChildren(...[...td.childNodes].map((n) => n.cloneNode(true)))
-    host.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'))
-    // A clone carries the markup, not a field's current value: copy it over.
-    const fields = 'select, input, textarea'
-    const live = [...td.querySelectorAll<HTMLInputElement>(fields)]
-    host.querySelectorAll<HTMLInputElement>(fields).forEach((c, i) => {
-      const o = live[i]
-      if (!o) return
-      if (c.type === 'checkbox' || c.type === 'radio') c.checked = o.checked
-      else c.value = o.value
-    })
-    const originals = [...td.querySelectorAll<HTMLElement>(CTL)]
-    host.querySelectorAll<HTMLElement>(CTL).forEach((n, i) => {
-      const o = originals[i]
-      // A field is edited in place and its value written back to the original,
-      // the way a person typing there would (React reads the native setter).
-      if (n instanceof HTMLSelectElement || n instanceof HTMLInputElement || n instanceof HTMLTextAreaElement) {
-        n.addEventListener('change', () => {
-          if (!o || !o.isConnected) return
-          writeBack(o, n)
-        })
-        return
-      }
-      n.addEventListener('click', (ev) => {
-        ev.preventDefault()
-        ev.stopPropagation()
-        if (o && o.isConnected) pass(o)
+    // The original can change while the sheet is open (a Decision picked in
+    // the row, a reading that ticks): clone again whenever it does.
+    const draw = () => {
+      host.replaceChildren(...[...td.childNodes].map((n) => n.cloneNode(true)))
+      host.querySelectorAll('[id]').forEach((n) => n.removeAttribute('id'))
+      // A clone carries the markup, not a field's current value: copy it over.
+      const fields = 'select, input, textarea'
+      const live = [...td.querySelectorAll<HTMLInputElement>(fields)]
+      host.querySelectorAll<HTMLInputElement>(fields).forEach((c, i) => {
+        const o = live[i]
+        if (!o) return
+        if (c.type === 'checkbox' || c.type === 'radio') c.checked = o.checked
+        else c.value = o.value
       })
-    })
+      const originals = [...td.querySelectorAll<HTMLElement>(CTL)]
+      host.querySelectorAll<HTMLElement>(CTL).forEach((n, i) => {
+        const o = originals[i]
+        // A field is edited in place and its value written back to the original,
+        // the way a person typing there would (React reads the native setter).
+        if (n instanceof HTMLSelectElement || n instanceof HTMLInputElement || n instanceof HTMLTextAreaElement) {
+          n.addEventListener('change', () => {
+            if (!o || !o.isConnected) return
+            writeBack(o, n)
+          })
+          return
+        }
+        n.addEventListener('click', (ev) => {
+          ev.preventDefault()
+          ev.stopPropagation()
+          if (o && o.isConnected) pass(o)
+        })
+      })
+    }
+    draw()
+    const mo = new MutationObserver(draw)
+    mo.observe(td, { subtree: true, childList: true, characterData: true, attributes: true })
+    return () => mo.disconnect()
   }, [td])
   return <div ref={ref} className={css.cell} />
 }

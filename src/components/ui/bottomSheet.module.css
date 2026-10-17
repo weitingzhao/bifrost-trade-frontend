@@ -220,6 +220,10 @@
   background: color-mix(in srgb, var(--sk-ink) 8%, transparent);
   color: var(--sk-ink);
   font: 600 13px var(--font-sans);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
   cursor: pointer;
 }
 

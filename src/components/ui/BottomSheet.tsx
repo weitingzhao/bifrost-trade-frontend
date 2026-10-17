@@ -32,6 +32,8 @@ export interface BottomSheetAction {
   /** Drawn as the primary (accent) — the rightmost action is what Enter runs. */
   primary?: boolean
   disabled?: boolean
+  /** Says why, when it is disabled — the button's own title, as on the desk. */
+  title?: string
   /** Runs after the sheet starts closing. */
   onRun?: () => void
   /** Keep the sheet open after running (a toggle, a step). */
@@ -139,6 +141,7 @@ export function BottomSheet({
                   className={css.btn}
                   data-primary={a.primary ? '1' : undefined}
                   disabled={a.disabled}
+                  title={a.title}
                   onClick={() => run(a)}
                 >
                   {a.label}

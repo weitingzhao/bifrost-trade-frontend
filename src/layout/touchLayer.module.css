@@ -5,9 +5,11 @@
   flex-direction: column;
 }
 
+/* The caption keeps its words (up to 45% of the row); a long reading wraps
+   in the rest instead of pressing the caption to nothing. */
 .kvRow {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: fit-content(45%) minmax(0, 1fr);
   align-items: center;
   border-bottom: 1px solid color-mix(in srgb, var(--sk-ink) 6%, transparent);
 }
@@ -25,7 +27,9 @@
 }
 
 .kvRow > dd {
+  min-width: 0;
   text-align: right;
+  overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
 

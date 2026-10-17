@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { PagePlaceButtons } from '@/layout/PagePlaceButtons'
+import { useDevice } from '@/lib/device'
 
 export { PageHeadAction, type PageHeadActionProps, type PageHeadTab } from '@bifrost/ui'
 
@@ -66,12 +67,15 @@ function HeadOverflow() {
 export function PageHead(props: PageHeadProps) {
   useEffect(() => () => broadcast(null), [])
   const onTitleVisible = useCallback((visible: boolean) => broadcast(visible ? 'in' : 'out'), [])
+  // Rev .163 (契约 §18.4): a phone has no side panel to send the page to and
+  // no second window to open it in, so neither shell verb rides its head.
+  const phone = useDevice().device === 'phone'
   const actions = (
     <>
       {props.actions}
       {/* Rev .103: a page that can be a surface can go back to being one. */}
-      <PagePlaceButtons />
-      <HeadOverflow />
+      {phone ? null : <PagePlaceButtons />}
+      {phone ? null : <HeadOverflow />}
     </>
   )
   return <UiPageHead {...props} actions={actions} onTitleVisible={onTitleVisible} />

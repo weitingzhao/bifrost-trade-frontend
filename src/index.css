@@ -1220,32 +1220,37 @@ tbody tr:hover > td:not([data-sr-list] *) {
 /* Page transitions (design Rev .71 §1; lib/pageTransition): only the page
    lane moves — the old page out in 180ms, the new one in over 240ms rising
    6px. The chrome is named into its own groups and held still, and the root
-   shows the new state at once rather than cross-fading the whole window. */
-#main-content {
+   shows the new state at once rather than cross-fading the whole window.
+   The names exist only while a transition runs (`:active-view-transition`):
+   a named element is a backdrop root, so glass inside it — the Rules
+   inspector, sticky toolbars and heads in the lane, fields in the sidebar —
+   blurred nothing and showed the page through it sharp (2026-10-18). A
+   browser without the pseudo-class switches pages without the fade. */
+html:active-view-transition #main-content {
   view-transition-name: page-lane;
 }
 
-[data-slot='sidebar-container'] {
+html:active-view-transition [data-slot='sidebar-container'] {
   view-transition-name: shell-sidebar;
 }
 
-header[data-menubar] {
+html:active-view-transition header[data-menubar] {
   view-transition-name: shell-bar;
 }
 
-[data-vt='rail'] {
+html:active-view-transition [data-vt='rail'] {
   view-transition-name: shell-rail;
 }
 
-[data-vt='panel'] {
+html:active-view-transition [data-vt='panel'] {
   view-transition-name: shell-panel;
 }
 
-[data-vt='float'] {
+html:active-view-transition [data-vt='float'] {
   view-transition-name: shell-float;
 }
 
-[data-vt='dock'] {
+html:active-view-transition [data-vt='dock'] {
   view-transition-name: shell-dock;
 }
 

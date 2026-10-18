@@ -528,7 +528,10 @@ export default function ReviewQueuePage() {
                       className="block h-1.5 rounded-sm"
                       style={{ background: EXIT_BAR[e.key], outline: on ? '1px solid var(--sk-accent)' : 'none', outlineOffset: 2 }}
                     />
-                    <span className="flex min-w-0 items-baseline gap-1.5">
+                    {/* Rev .175: the segment's width is its share, so it does not
+                        grow with its words — when name · count · amount do not fit,
+                        the amount wraps to a second line, kept right (`ml-auto`). */}
+                    <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5">
                       <span className={cn('text-dense-meta font-semibold', !exitFilter || on ? 'text-foreground' : 'text-muted-foreground')}>
                         {EXIT_LABEL[e.key]}
                       </span>

@@ -177,6 +177,7 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     symbolScope: true,
     accountScope: true,
+    // Package .70 (2026-10-18): Rev .176 D2 — the package's DetailPane / BottomSheet — re-walked, waiting for a look.
     design: {
       // Package 2026-09-22.3 changed one thing here: Ask Copilot has a single
       // destination, the shell's Thread. Landed with the Ask bus. Rev
@@ -190,7 +191,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // Rev .151–.154 pilot (2026-10-04, batch 2): the frost shell and the list grammar, waiting for a look.
       // Rev .155 (2026-10-04, Package .56): the market strip retired, working orders in the Account control — the shell record lives here.
       // Rev .163 (2026-10-17, Package .64): the iPhone / iPad tiers, waiting for a look.
-      rev: '2026-10-17.163',
+      rev: '2026-10-18.176',
       note: DESIGN_NOTES['/portfolio/positions'],
     },
   },
@@ -211,11 +212,11 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Backing & Model',
     crumbs: PORTFOLIO,
     symbolScope: true,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .176 D2 — the package's DetailPane / BottomSheet — re-walked, waiting for a look.
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.165',
+      rev: '2026-10-18.176',
       note: DESIGN_NOTES['/portfolio/backing'],
     },
   },
@@ -243,8 +244,8 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: [],
     // Rev .110: instances, review lamps, rows open Trade review in the queue's order.
     // Rev .112: How they ended, the Gaps chips and the Source column (from Outcome).
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
-    design: { state: 'reviewing', rev: '2026-10-17.168', note: DESIGN_NOTES['/review'] },
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-10-17.175', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/trade',
@@ -347,11 +348,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/risk/margin',
     label: 'Margin',
     crumbs: RISK,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.166',
+      rev: '2026-10-17.175',
       note: DESIGN_NOTES['/risk/margin'],
     },
   },
@@ -359,11 +360,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio/accounts',
     label: 'Accounts',
     crumbs: PORTFOLIO,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .176 D2 — the package's DetailPane / BottomSheet — re-walked, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.165',
+      rev: '2026-10-18.176',
       note: DESIGN_NOTES['/portfolio/accounts'],
     },
   },
@@ -372,12 +373,12 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Ledger',
     crumbs: PORTFOLIO,
     symbolScope: true,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .176 D2 — the package's DetailPane / BottomSheet — re-walked, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-10-17.165',
+      rev: '2026-10-18.176',
       note: DESIGN_NOTES['/portfolio/ledger'],
     },
   },
@@ -401,12 +402,12 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: TRADE_DESK,
     // Reads ?symbol= and narrows the executions (Owner plan #21, 2026-10-04).
     symbolScope: true,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .176 D2 — the package's DetailPane / BottomSheet — re-walked, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-10-17.166',
+      rev: '2026-10-18.176',
       note: DESIGN_NOTES['/trade/fills'],
     },
   },
@@ -490,11 +491,11 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: TRADE_DESK,
     symbolScope: true,
     accountScope: true,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.166',
+      rev: '2026-10-17.175',
       note: DESIGN_NOTES['/trade/plans'],
     },
   },

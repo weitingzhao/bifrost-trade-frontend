@@ -2,11 +2,16 @@
  * One trade (design Rev .103, `Trade.dc.html` since Rev .111): `/trade/:id`,
  * top level and outside every menu — reached only from a `#NNN`.
  *
- * The same component is the Instance surface. In the 440 panel (or any
- * surface ≤ 640 wide) it is the shared record's compact face; wider, it is the
- * page. The surface hands it the id and the rows it came from; the page reads
- * them from its address (`?list=&from=`). ‹ › and [ ] step that list — in
- * place on the surface, by address on the page.
+ * The same component is the Instance surface. Inside a surface (the panel or
+ * the float — `useInSurface()`, the context behind `data-sr-embed`) it is the
+ * shared record's compact face; as the route it is the page. The verdict is
+ * the embed, not a width (design Rev .175, DESIGN_CONTRACTS §18.2): a surface
+ * has no page shell for the whole page to sit in, so a panel dragged to its
+ * 600–640 maximum is still the compact face. (It used to read "surface ≤ 640
+ * wide", which the panel's 640 cap made the same thing.) The surface hands it
+ * the id and the rows it came from; the page reads them from its address
+ * (`?list=&from=`). ‹ › and [ ] step that list — in place on the surface, by
+ * address on the page.
  */
 import { useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -14,13 +19,10 @@ import { PageShell } from '@/components/layout'
 import { PageHead } from '@/components/layout/PageHead'
 import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
 import { useAllocations, useGateSets, useTrade } from '@/hooks/useStrategies'
-import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { useInSurface } from '@/lib/surfaceScope'
 import { tradePath, setSurfaceTrade, type Surface } from '@/layout/equipSurface'
 import { ranUnderOf } from '@/utils/tradeRecord/ranUnder'
 import { TradeWide } from './TradeWide'
-
-const COMPACT_MAX_PX = 640
 
 const editable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)
@@ -36,8 +38,6 @@ export function TradeView({ surface }: { surface?: Surface }) {
   const [search] = useSearchParams()
   const navigate = useNavigate()
   const inSurface = useInSurface()
-  const rootRef = useRef<HTMLDivElement>(null)
-  const width = useContainerWidth(rootRef, 1200)
 
   const id = surface?.trade ?? (Number(params.id) || null)
   const list =
@@ -64,7 +64,8 @@ export function TradeView({ surface }: { surface?: Surface }) {
   const allocations = useAllocations()
   const gates = useGateSets()
   const inst = q.data ?? null
-  const compact = inSurface && width <= COMPACT_MAX_PX
+  // The embed decides (§18.2 Rev .175), not the surface's width.
+  const compact = inSurface
 
   // The page steps on [ ] anywhere; a surface only while focus is inside it,
   // so the page behind keeps its own keys.
@@ -87,7 +88,6 @@ export function TradeView({ surface }: { surface?: Surface }) {
   if (compact) {
     return (
       <div
-        ref={rootRef}
         className="min-h-0"
         onKeyDown={(e) => {
           if (editable(e.target) || e.metaKey || e.ctrlKey || e.altKey) return
@@ -124,7 +124,7 @@ export function TradeView({ surface }: { surface?: Surface }) {
   }
 
   return (
-    <div ref={rootRef} className="min-w-0">
+    <div className="min-w-0">
       <PageShell padding="compact" className="space-y-3">
         {inst ? (
           <TradeWide

@@ -357,7 +357,7 @@ export default function PerformancePage() {
       />
       {derivation && (
         <div id="performance-derivation">
-          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" trimOnCompact />
+          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
         </div>
       )}
       {view === 'loading' || view === 'failed' ? null : (

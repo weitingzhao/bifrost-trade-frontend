@@ -1,7 +1,15 @@
 /*
- * The layout axes' page hooks (design Rev .163 → .174, DESIGN_CONTRACTS §18).
+ * The package's layout layer first (D2, design Rev .176 · §18.14): the §18.7
+ * hooks, the sheets, the detail pane, the tab bar, the row detail, touch hit
+ * areas. This file keeps what is the app's own and, being later, wins where the
+ * two meet.
+ */
+@import "@bifrost/ui/styles/layout";
+
+/*
+ * The layout axes' page hooks (design Rev .163 → .176, DESIGN_CONTRACTS §18).
  *
- * `lib/device.ts` writes the three axes on <html>: `data-w` (compact · medium ·
+ * The package's `LayoutProvider` (layout/LayoutHost) writes the axes on <html>: `data-w` (compact · medium ·
  * expanded · wide), `data-h` (short · tall), `data-input` (touch · pointer),
  * plus `data-keys`, `data-dock`, `data-safe`, `data-orient`, `data-pwa`.
  * Pages only add the §18.7 attributes; nothing here, and nothing in a page,
@@ -207,72 +215,9 @@ html[data-input='touch'] :is(tbody tr, [data-sr-row], button, [role='button'], a
 
 /* ── Floats on compact (§18.5) ──────────────────────────────────────────── */
 
-@keyframes sr-sheet-in {
-  from {
-    translate: 0 100%;
-  }
-}
-
-@keyframes sr-sheet-out {
-  to {
-    translate: 0 100%;
-  }
-}
-
-/* A DS dialog is a bottom sheet: half the screen, or the whole of it for an
-   edit / create sheet (md, lg — opaque, DS 0.11.0's material rule). The
-   grip is drawn by `components/ui/dialog.tsx` while the class is compact. */
-html[data-w='compact'] [data-slot='dialog-content']:not([data-spotlight]) {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: auto;
-  bottom: 0;
-  width: auto;
-  max-width: none;
-  height: var(--sr-sheet-half);
-  max-height: var(--sr-sheet-full);
-  margin: 0;
-  translate: none;
-  transform: none;
-  border-radius: 16px 16px 0 0;
-  padding-top: 22px;
-  padding-left: calc(16px + var(--sr-safe-l));
-  padding-right: calc(16px + var(--sr-safe-r));
-  padding-bottom: calc(12px + var(--sr-safe-b));
-  box-sizing: border-box;
-  align-content: start;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-html[data-w='compact'] [data-slot='dialog-content']:not([data-spotlight])[data-state='open'] {
-  animation: sr-sheet-in var(--mo-in, 0.24s) var(--mo-ease-out, cubic-bezier(0.2, 0.8, 0.2, 1)) both;
-}
-
-html[data-w='compact'] [data-slot='dialog-content']:not([data-spotlight])[data-state='closed'] {
-  animation: sr-sheet-out 0.18s var(--mo-ease-in, ease-in) both;
-}
-
-html[data-w='compact'] [data-slot='dialog-content']:not([data-spotlight]):is([data-sr-detent='full'], [data-size='md'], [data-size='lg']) {
-  height: var(--sr-sheet-full);
-}
-
-html[data-w='compact'] [data-slot='dialog-overlay'] {
-  background: rgb(0 0 0 / 0.34);
-}
-
-/* The footer is a row of equal buttons, the primary on the right. */
-html[data-w='compact'] [data-slot='dialog-content']:not([data-spotlight]) [data-slot='dialog-footer'] {
-  flex-direction: row;
-  justify-content: stretch;
-  gap: 8px;
-}
-
-html[data-w='compact'] [data-slot='dialog-content']:not([data-spotlight]) [data-slot='dialog-footer'] > * {
-  flex: 1;
-}
-
+/* A DS dialog on compact is the package's bottom sheet since D2 (0.15.x B2:
+   `data-place="bottom"`, its grip, the md / lg full detent, the footer row —
+   styles/layout). Spotlight keeps its own place (`compact="keep"`): */
 /* Spotlight hangs from the top, full width, above the keyboard. */
 html[data-w='compact'] [data-slot='dialog-content'][data-spotlight] {
   top: calc(8px + var(--sr-safe-t));
@@ -428,17 +373,12 @@ html[data-w='compact'] [data-sr-grid2] {
   flex-shrink: 0;
 }
 
-/* ── The icon rail (Rev .165): a layer's picture, not its numeral ──────────
-   `LifecycleMark` draws both; the folded sidebar (the DS sets
-   `data-collapsible="icon"` on it) shows the picture, open shows the numeral. */
-[data-lc-glyph] {
-  display: none;
-}
-
-[data-collapsible='icon'] [data-lc-glyph] {
-  display: inline-flex;
-}
-
-[data-collapsible='icon'] [data-lc-num] {
-  display: none;
+/* ── A wide table's pinned first column, scrolled (Rev .175) ───────────────
+   Once the box scrolls sideways (`data-sx`) the pinned column is opaque — the
+   same tone mixed onto the ground, no blur. The package's 78% glass let the
+   words of the column passing under it show through. */
+[data-sr-list] [data-sr-hscroll][data-sx] > table > * > tr > :first-child {
+  background: color-mix(in srgb, var(--glass-base, var(--background)) 78%, var(--background));
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

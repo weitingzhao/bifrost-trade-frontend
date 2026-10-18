@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { QuoteItem } from '@/types/market'
 import { formatExpiryIbGroupLabel } from '@/utils/marketStreamsSort'
 import { cn } from '@/lib/utils'
@@ -41,6 +42,8 @@ interface Props {
   optPremiumUnit?: OptPremiumUnit
   dragEnabled: boolean
   onOptRowReorder?: (fromBasisKey: string, toBasisKey: string) => void
+  /** Right-click / long-press on the row (Rev .175): the table's reorder menu, named by the contract. */
+  onRowMenu?: (e: MouseEvent<HTMLTableRowElement>, label: string) => void
 }
 
 function optQtyLabel(qty: number): string {
@@ -60,6 +63,7 @@ export function MarketStreamOptRow({
   optPremiumUnit = 'contract',
   dragEnabled,
   onOptRowReorder,
+  onRowMenu,
 }: Props) {
   const basisKey = optBasisKey(row)
   const { mid, livePnl } = computeOptMidAndLivePnl(row, quote, basis)
@@ -145,6 +149,7 @@ export function MarketStreamOptRow({
 
   return (
     <tr
+      onContextMenu={onRowMenu ? e => onRowMenu(e, contractLabel) : undefined}
       onDragOver={dragEnabled ? e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } : undefined}
       onDrop={
         dragEnabled && onOptRowReorder
@@ -164,8 +169,10 @@ export function MarketStreamOptRow({
     >
       <DenseTableCell className={denseTableEntityCell} title={contractLabel}>
         <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+          {/* Hidden on touch (Rev .175, §18.3); the long-press menu moves the row. */}
           {dragEnabled && (
             <span
+              data-sr-hide="touch"
               className={styles.dragHandle}
               draggable
               onDragStart={e => {

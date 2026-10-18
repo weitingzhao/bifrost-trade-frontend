@@ -109,8 +109,12 @@ function BackingCell({
   )
 }
 
-/** Compact (§18.6, Rev .166): a leg keeps Right · Strike · Expiry; its sheet carries the rest. */
-const LEGS_COMPACT_KEEP = '2,3,4'
+/**
+ * Compact (§18.6, Rev .175): a leg keeps Side · Right · Strike — buy or sell is
+ * what the leg is; Expiry and the rest are in its sheet. (Rev .166 kept
+ * Right · Strike · Expiry.)
+ */
+const LEGS_COMPACT_KEEP = '1,2,3'
 
 function LegsTable({ plan }: { plan: StrategyPlan }) {
   if (plan.legs_json.length === 0) {

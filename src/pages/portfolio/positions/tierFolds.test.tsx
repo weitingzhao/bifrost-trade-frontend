@@ -1,34 +1,46 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
-import { refreshDevice } from '@/lib/device'
+import { LayoutProvider, type Layout } from '@bifrost/ui'
 import { useBookFold, usePressureFold } from './tierFolds'
 
 const TALL = 1000
 const SHORT = 820
-const innerHeight0 = window.innerHeight
 
 /**
- * A layout class for the hook: `?layout=` keeps the width class for the tab's
- * session (lib/device); the height class is the window's own.
+ * A layout class for the hook, pinned on the package's provider (D2): the
+ * width class as given, the height class from the height in px.
  */
+let cls: Pick<Layout, 'w' | 'h'> = { w: 'wide', h: 'tall' }
+const subs = new Set<() => void>()
 function setClass(w: 'compact' | 'expanded' | 'wide', h: number) {
   act(() => {
-    sessionStorage.setItem('bifrost.layout', w)
-    Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: h })
-    refreshDevice()
+    cls = { w, h: h < 900 ? 'short' : 'tall' }
+    subs.forEach((f) => f())
   })
 }
 
+function Pinned({ children }: { children: ReactNode }) {
+  const override = useSyncExternalStore(
+    (f) => {
+      subs.add(f)
+      return () => subs.delete(f)
+    },
+    () => cls,
+  )
+  return <LayoutProvider override={override}>{children}</LayoutProvider>
+}
+
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <MemoryRouter initialEntries={['/portfolio/positions']}>{children}</MemoryRouter>
+  <MemoryRouter initialEntries={['/portfolio/positions']}>
+    <Pinned>{children}</Pinned>
+  </MemoryRouter>
 )
 
 afterEach(() => {
   sessionStorage.clear()
-  Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: innerHeight0 })
-  act(() => refreshDevice())
+  cls = { w: 'wide', h: 'tall' }
 })
 
 describe('usePressureFold (Rev .164 §18.7 · §18.11)', () => {

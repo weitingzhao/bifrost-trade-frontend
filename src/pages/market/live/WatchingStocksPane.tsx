@@ -36,6 +36,20 @@ import {
   livePaneTitleRowClass,
 } from './liveUi'
 
+/**
+ * Compact (§18.6, Rev .175 — the Market Streams reading): the symbol, its last
+ * and its daily move. Source / Since open in the row's sheet.
+ */
+const OBSERVE_COMPACT_KEEP = '1,2,3'
+
+/**
+ * Compact (Rev .175): the contract and its price. The table has no Daily %
+ * column — an option has no daily reference here (the Market Streams note) —
+ * so the design's third column has nothing to map to; Expiry · Right · Strike
+ * are in the contract's own label and the row's sheet, Category in the sheet.
+ */
+const WATCHING_OPTIONS_COMPACT_KEEP = '1,2'
+
 interface Props {
   watchingRows: MarketStreamsRow[]
   subscribedRows?: MarketStreamsRow[]
@@ -62,7 +76,7 @@ function ObserveStkTable({
   showSourceBadge: boolean
 }) {
   return (
-    <div className={liveTable.shell}>
+    <div className={liveTable.shell} data-sr-keep={OBSERVE_COMPACT_KEEP}>
       <table className={liveTable.table} aria-label={ariaLabel}>
         <DenseTableHeader className={liveTable.stickyThead}>
           <DenseTableHeadRow>
@@ -186,7 +200,7 @@ export function WatchingOptionsPane({ items, quotesByContractKey, streamsLamp }:
       {items.length === 0 ? (
         <p className={liveEmptyHintClass}>No option contracts on Watchlist</p>
       ) : (
-        <div className={liveTable.shell}>
+        <div className={liveTable.shell} data-sr-keep={WATCHING_OPTIONS_COMPACT_KEEP}>
           <table className={liveTable.table} aria-label="Watching option quotes">
             <DenseTableHeader className={liveTable.stickyThead}>
               <DenseTableHeadRow>

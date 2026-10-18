@@ -3,7 +3,7 @@ import { detectDevice, dockOf, heightClass, widthClass } from './device'
 import { phoneTier } from '@/layout/phoneTier'
 import { phoneTabOf } from '@/layout/phone/phoneTabs'
 import { dockStep, keepRule } from '@/layout/deviceRules'
-import { sheetRelease } from '@/components/ui/sheetGesture'
+import { sheetRelease } from '@bifrost/ui'
 
 // Design Rev .163 → .164, DESIGN_CONTRACTS §18 — the numbers are the contract's.
 describe('the width class is the window, not the device (§18.1)', () => {
@@ -89,7 +89,8 @@ describe('kept columns (§18.6)', () => {
     const rule = keepRule('1,4,8')
     expect(rule).toContain(`[data-sr-keep="1,4,8"] tr:not([data-sr-keep="1,4,8"] td tr)`)
     expect(rule).toContain(':not(:nth-child(1)):not(:nth-child(4)):not(:nth-child(8)):not([colspan])')
-    expect(rule.startsWith("html[data-w='compact']")).toBe(true)
+    // The package's rule since D2 (@bifrost/ui ensureKeepRule).
+    expect(rule.startsWith('html[data-w="compact"]')).toBe(true)
   })
 
   it('writes nothing for a list with no column in it', () => {

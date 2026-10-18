@@ -182,6 +182,10 @@ export default defineConfig(({ mode }) => {
           replacement: resolve(uiRoot, 'dist/styles/materials.css'),
         },
         {
+          find: '@bifrost/ui/styles/layout',
+          replacement: resolve(uiRoot, 'dist/styles/layout.css'),
+        },
+        {
           find: '@bifrost/ui/styles',
           replacement: resolve(uiRoot, 'dist/styles/bifrost-ui.css'),
         },

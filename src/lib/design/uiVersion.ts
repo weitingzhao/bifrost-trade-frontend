@@ -53,4 +53,8 @@
 // §18.7 hooks, BottomSheet, DetailPane, TabBar, compact routing for Dialog · Sheet ·
 // Popover · ContextMenu, the sidebar's compact / icon rail with per-class memory,
 // DenseDataTable compactKeep, SectionBand foldAt. All of it acts only under a provider.
-export const UI_VERSION_NOW = '0.15.0'
+// 0.15.1 (Rev .175 · .176, §18.14): data-sr-hide="touch"; a kept table's colgroup hides on
+// compact; the row detail titles a wordless first cell with the first cell that has words;
+// SectionBand's title wraps and its meta truncates (compact: under the title); DetailPane docks
+// by its own width (main ≥ column + 760, useDocksAt). The app runs on the layout layer (D2).
+export const UI_VERSION_NOW = '0.15.1'

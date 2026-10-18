@@ -99,36 +99,42 @@ export function TradePicker({
       <div data-sr-toolbar="" className="flex-wrap">
         {leading}
         <span data-sr-tb="label">Trade</span>
-        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(-1)} title="Previous trade ( [ )" aria-label="Previous trade">
-          ‹
-        </button>
-        <button
-          type="button"
-          className={cn(positionsUi.btn, 'min-w-0 gap-2', open && 'bg-[color-mix(in_srgb,var(--sk-accent)_16%,transparent)]')}
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-        >
-          {current ? (
-            <>
-              <TradeName t={current} />
-              <span className="min-w-0 truncate text-[var(--sk-mute2)]">
-                {current.label} ·{' '}
-                {current.exitKind === 'open'
-                  ? `opened ${current.openedOn ? fmtIsoDateToken(current.openedOn) : '—'}`
-                  : `closed ${current.closedOn ? fmtIsoDateToken(current.closedOn) : '—'}`}
-              </span>
-              <span className={cn('font-mono', current.exitKind === 'open' ? 'text-[var(--color-unrealized)]' : pnlColorClass(current.realised))}>
-                {current.exitKind === 'open' ? 'open' : fmtSignedUsd0(current.realised)}
-              </span>
-            </>
-          ) : (
-            'Pick a trade'
-          )}
-          <span className="text-muted-foreground">▾</span>
-        </button>
-        <button type="button" className={cn(positionsUi.btn, 'w-6.5 justify-center px-0')} onClick={() => step(1)} title="Next trade ( ] )" aria-label="Next trade">
-          ›
-        </button>
+        {/* Rev .175: ‹ the trade › stay on one line at any width (393 too). The
+            group may shrink to its line; the middle button gives up its words
+            first — the structure · date truncates, then the button clips —
+            rather than the arrows wrapping away from it. */}
+        <span className="inline-flex min-w-0 max-w-full flex-[0_1_auto] items-center gap-3">
+          <button type="button" className={cn(positionsUi.btn, 'w-6.5 shrink-0 justify-center px-0')} onClick={() => step(-1)} title="Previous trade ( [ )" aria-label="Previous trade">
+            ‹
+          </button>
+          <button
+            type="button"
+            className={cn(positionsUi.btn, 'min-w-0 gap-2 overflow-hidden', open && 'bg-[color-mix(in_srgb,var(--sk-accent)_16%,transparent)]')}
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+          >
+            {current ? (
+              <>
+                <TradeName t={current} />
+                <span className="min-w-0 truncate text-[var(--sk-mute2)]">
+                  {current.label} ·{' '}
+                  {current.exitKind === 'open'
+                    ? `opened ${current.openedOn ? fmtIsoDateToken(current.openedOn) : '—'}`
+                    : `closed ${current.closedOn ? fmtIsoDateToken(current.closedOn) : '—'}`}
+                </span>
+                <span className={cn('font-mono', current.exitKind === 'open' ? 'text-[var(--color-unrealized)]' : pnlColorClass(current.realised))}>
+                  {current.exitKind === 'open' ? 'open' : fmtSignedUsd0(current.realised)}
+                </span>
+              </>
+            ) : (
+              'Pick a trade'
+            )}
+            <span className="text-muted-foreground">▾</span>
+          </button>
+          <button type="button" className={cn(positionsUi.btn, 'w-6.5 shrink-0 justify-center px-0')} onClick={() => step(1)} title="Next trade ( ] )" aria-label="Next trade">
+            ›
+          </button>
+        </span>
         <span data-sr-tb="meta" className="font-mono">
           {idx >= 0 ? `${idx + 1} of ${stepSet.length}` : `${stepSet.length}`}
           {walkLabel ? ` · ${walkLabel}` : ''}

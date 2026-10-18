@@ -1,49 +1,39 @@
-/* DetailPane (DESIGN_CONTRACTS §18.12): the column, the overlay, the sheet slot. */
-.host {
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.pane {
-  display: flex;
-  flex-direction: column;
-  width: var(--detail-w, 440px);
-  max-width: calc(100vw - 16px);
-  min-height: 0;
-  box-sizing: border-box;
-}
-
-/* Docked: in the flow beside the table, under the top of the lane while the
-   table scrolls; no shadow — it is part of the page. Its height leaves the
-   lane's bottom padding (the floating toolbar's 72, `--lane-pb`) and the
-   page's: a sticky box taller than what is left of its row is pushed up at
-   the end of the page, and Accounts lost its head 23px above the lane. */
-.dock {
+/* DetailPane's frame (DESIGN_CONTRACTS §18.12): the package's pane, kept in
+   view in a lane that scrolls as a whole. Attribute selectors stay global. */
+/* z-index: the frame is its own layer above the page, so a sticky table head
+   (which paints over later content) cannot show through a floating pane. */
+.frame {
   position: sticky;
   top: 8px;
+  z-index: 40;
   align-self: flex-start;
+  display: flex;
   flex: none;
+}
+
+/* In a column of panels: the column's width (see DetailPane `stretch`). */
+.stretch {
+  align-self: stretch;
+}
+
+/* Docked or floating, the pane is at most the lane less its padding, so its
+   head stays in view at the end of the page; its body scrolls inside. */
+.frame > [data-slot='detail-pane'] {
   max-height: calc(100dvh - 42px - 24px - var(--lane-pb, 0px) - 16px);
+}
+
+/* Docked: part of the page — the group fill, no shadow. */
+.frame > [data-slot='detail-pane'][data-place='dock'] {
   border-radius: 12px;
   background: var(--mat-card-fill, color-mix(in srgb, var(--sk-ink) 4%, transparent));
 }
 
-/* Not docked: over the content's right edge, opaque, pinned to the viewport. */
-.overlay {
-  position: fixed;
-  z-index: 50;
-  bottom: 8px;
+/* Floating: hangs from the frame's top at its content's height, not the
+   parent's full height (the package's overlay is top 0 · bottom 0), and is as
+   wide as it says — the frame itself has no width, and the package's
+   `max-width: 100%` would read that as 0. */
+.frame > [data-slot='detail-pane'][data-place='overlay'] {
+  bottom: auto;
+  max-width: calc(100vw - 16px);
   border-radius: 14px;
-  border: 1px solid transparent;
-  background:
-    linear-gradient(var(--background), var(--background)) padding-box,
-    var(--glass-rim, color-mix(in srgb, var(--sk-ink) 12%, transparent)) border-box;
-  box-shadow: var(--glass-drop, 0 18px 50px -12px rgb(0 0 0 / 0.55));
-}
-
-.sheetSlot {
-  height: 100%;
-  min-height: 0;
 }

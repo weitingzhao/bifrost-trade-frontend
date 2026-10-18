@@ -6,7 +6,7 @@ import {
 } from '@bifrost/ui'
 import { NavSubItemIcon } from '@/components/layout/SystemNavIcon'
 import { STORAGE_KEYS } from '@/constants/storage'
-import { LAYER_RAIL_GLYPH, lifecycleMark } from './LifecycleMark'
+import { LAYER_RAIL_GLYPH, lifecycleMark, railMark } from './LifecycleMark'
 import { NAV_GROUPS, SYSTEM_NAV_GROUPS } from './navConfig'
 import { LIFECYCLE, orderGroups, useNavOrder } from './navOrder'
 import { LAYER_OF_GROUP, layerForPath } from '@/lib/design/layers'
@@ -92,7 +92,9 @@ export function AppSidebar() {
       const n = LIFECYCLE[g.label]
       const here = LAYER_OF_GROUP[g.label] === hereLayer
       if (n == null) {
-        return g.label === 'Home' ? { ...g, icon: lifecycleMark('·', { here, rail: LAYER_RAIL_GLYPH.Home }) } : g
+        return g.label === 'Home'
+          ? { ...g, icon: lifecycleMark('·', { here }), railIcon: railMark(LAYER_RAIL_GLYPH.Home, here) }
+          : g
       }
       const i = chain.indexOf(g)
       return {
@@ -102,8 +104,9 @@ export function AppSidebar() {
           first: i === 0,
           last: i === chain.length - 1,
           here,
-          rail: LAYER_RAIL_GLYPH[g.label],
         }),
+        // The folded rail shows the layer's picture (Rev .165), via the DS's railIcon (D2).
+        railIcon: LAYER_RAIL_GLYPH[g.label] ? railMark(LAYER_RAIL_GLYPH[g.label], here) : undefined,
       }
     })
     // The shelf goes last, on purpose. Frequency argues for the top; honesty

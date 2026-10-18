@@ -573,6 +573,7 @@ export default function FillsPage() {
                 onClose={clearSelection}
                 width={place === 'dock' ? RAIL_PX : 440}
                 label={BELONG}
+                stretch
                 className="border border-transparent"
               >
                 {selectedRow == null ? null : (

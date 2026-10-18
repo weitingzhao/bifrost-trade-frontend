@@ -1,74 +1,38 @@
 /**
- * The sidebar's open / folded memory, kept per width class (design Rev .164,
- * DESIGN_CONTRACTS §18.4).
+ * The sidebar's open / folded memory (design Rev .164, DESIGN_CONTRACTS §18.4).
  *
- * - **wide** keeps the desktop memory it always had: the DS's `sidebar_state`
- *   cookie, the viewport default for someone who never chose (`shellChrome`).
- * - **medium** and **expanded** start as the icon rail and remember their own
- *   choice (`bifrost.sidebar@medium` · `@expanded`), so a sidebar opened on the
- *   desk is not carried to an iPad or a Duo's inner screen — nor back.
- * - **compact** has no sidebar.
- *
- * The DS provider writes the cookie on every toggle, whatever the class, so a
- * toggle below wide puts the cookie back as it was. App-level until
- * `@bifrost/ui` keys the memory itself (Rev .174 B5).
+ * Since D2 (Rev .176) the DS `SidebarProvider` keeps it under the
+ * `LayoutProvider`: wide keeps the `sidebar_state` cookie; medium and expanded
+ * open on the icon rail and remember their own choice (`sidebar_state@medium`
+ * · `@expanded`); compact has no sidebar. What stays here is wide's starting
+ * point for someone who never chose (`shellChrome`) and a one-time move of the
+ * app-era keys (`bifrost.sidebar@medium` · `@expanded`, Rev .164–.175) so
+ * nobody's choice is lost in the switch.
  */
-import { useCallback, useState } from 'react'
-import type { WidthClass } from '@/lib/device'
 import { initialSidebarOpen } from './shellChrome'
 
-const COOKIE = 'sidebar_state'
-
-export function sidebarKeyFor(w: WidthClass): string | null {
-  return w === 'medium' || w === 'expanded' ? `bifrost.sidebar@${w}` : null
+/** Wide's start: the cookie when there is one, else the viewport default. */
+export function sidebarDefaultOpen(): boolean {
+  return initialSidebarOpen(document.cookie, window.innerWidth)
 }
 
-function cookieValue(cookie: string): string | null {
-  const m = cookie.match(/(?:^|;\s*)sidebar_state=([^;]*)/)
-  return m ? m[1] : null
+/** Move the app-era per-class keys to the DS's, once; the DS key wins if both exist. */
+export function migrateSidebarMemory(store: Storage | null = safeLocalStorage()): void {
+  if (!store) return
+  for (const w of ['medium', 'expanded'] as const) {
+    const old = `bifrost.sidebar@${w}`
+    const v = store.getItem(old)
+    if (v == null) continue
+    const key = `sidebar_state@${w}`
+    if (store.getItem(key) == null) store.setItem(key, v === '1' ? 'true' : 'false')
+    store.removeItem(old)
+  }
 }
 
-/** Where the sidebar starts in this class. */
-export function sidebarOpenFor(w: WidthClass, cookie: string, viewportWidth: number): boolean {
-  if (w === 'compact') return false
-  const key = sidebarKeyFor(w)
-  if (key == null) return initialSidebarOpen(cookie, viewportWidth)
+function safeLocalStorage(): Storage | null {
   try {
-    return window.localStorage.getItem(key) === '1'
+    return window.localStorage
   } catch {
-    return false
+    return null
   }
-}
-
-/** The controlled open state for the DS provider: per class, and the cookie stays wide's. */
-export function useSidebarMemory(w: WidthClass): [boolean, (open: boolean) => void] {
-  const [open, setOpenState] = useState(() => sidebarOpenFor(w, document.cookie, window.innerWidth))
-  // A new class reads its own memory — on the render it is seen, not in an effect.
-  const [seen, setSeen] = useState(w)
-  if (w !== seen) {
-    setSeen(w)
-    setOpenState(sidebarOpenFor(w, document.cookie, window.innerWidth))
-  }
-  const setOpen = useCallback(
-    (next: boolean) => {
-      setOpenState(next)
-      const key = sidebarKeyFor(w)
-      if (key == null) return
-      try {
-        window.localStorage.setItem(key, next ? '1' : '0')
-      } catch {
-        // Storage refused: the choice lasts the visit.
-      }
-      // The provider writes `sidebar_state` right after this call; put wide's value back.
-      const kept = cookieValue(document.cookie)
-      queueMicrotask(() => {
-        document.cookie =
-          kept == null
-            ? `${COOKIE}=; path=/; max-age=0`
-            : `${COOKIE}=${kept}; path=/; max-age=${60 * 60 * 24 * 7}`
-      })
-    },
-    [w],
-  )
-  return [open, setOpen]
 }

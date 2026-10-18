@@ -38,6 +38,9 @@ import { MarketStreamOptRow } from './MarketStreamOptRow'
 import { liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 import { liveEmptyHintClass } from './liveUi'
+import { rowMoves } from './liveMoves'
+import { LiveMoveMenu } from './LiveMoveMenu'
+import { useLiveMoveMenu } from './useLiveMoveMenu'
 
 /** Compact (§18.6, Rev .166): the symbol, its last and its daily % — the row's sheet carries the rest. */
 const STREAMS_COMPACT_KEEP = '1,4,6'
@@ -145,7 +148,10 @@ function SortLine({ mode }: { mode: MarketStreamsSortMode }) {
       <span>Sort</span>
       <span className={cn('font-semibold', SORT_ACCENT[marketStreamsSortFamily(mode)])}>{line.name}</span>
       <span>· {line.order}</span>
-      <span className="ml-auto">{line.hint}</span>
+      {/* "drag ⋮⋮ to reorder…" means nothing under a finger (Rev .175, §18.3). */}
+      <span data-sr-hide="touch" className="ml-auto">
+        {line.hint}
+      </span>
     </div>
   )
 }
@@ -198,6 +204,11 @@ export function MarketStreamsTable({
   onOptRowReorder,
 }: Props) {
   const msColSpan = marketStreamsColSpan(hasStreamAccounts)
+  // Rev .175 (§18.3): the drag's moves, from a right-click or a long-press.
+  // Only the user's own order (Default sort, the one that can be dragged) has
+  // moves; each item calls the drop handler a drag would.
+  const move = useLiveMoveMenu()
+  const optOrder = sortedOptRows.map(optBasisKey)
   // The Options group's own Since $, from the same live-basis math its rows
   // print — one source, so the header cannot disagree with the rows.
   const optGroupStats = (() => {
@@ -370,7 +381,7 @@ export function MarketStreamsTable({
                     variant="category"
                     trailing={<SinceSubtotalCells totalPnl={stats.totalPnl} unpriced={stats.unpriced} />}
                   />
-                  {(sortedRowsByCategory[cat] ?? []).map(row => (
+                  {(sortedRowsByCategory[cat] ?? []).map((row, _i, rows) => (
                     <MarketStreamStkRow
                       key={row.symbol}
                       row={row}
@@ -380,6 +391,19 @@ export function MarketStreamsTable({
                       accountViewMode={accountViewMode}
                       benchmarks={benchmarks}
                       onSymbolReorder={onSymbolReorder}
+                      onRowMenu={
+                        dragEnabled
+                          ? (e, label) =>
+                              move.onMenu(e, {
+                                label: `${label} · ${cat}`,
+                                items: rowMoves(
+                                  rows.map((r) => r.symbol),
+                                  row.symbol,
+                                ),
+                                onMove: (from, to) => onSymbolReorder(cat, from, to),
+                              })
+                          : undefined
+                      }
                     />
                   ))}
                 </Fragment>
@@ -406,6 +430,16 @@ export function MarketStreamsTable({
                       optPremiumUnit={optPremiumUnit}
                       dragEnabled={dragEnabled}
                       onOptRowReorder={onOptRowReorder}
+                      onRowMenu={
+                        dragEnabled
+                          ? (e, label) =>
+                              move.onMenu(e, {
+                                label,
+                                items: rowMoves(optOrder, optBasisKey(row)),
+                                onMove: onOptRowReorder,
+                              })
+                          : undefined
+                      }
                     />
                   ))}
                 </>
@@ -450,6 +484,7 @@ export function MarketStreamsTable({
           )}
         </DenseTableBody>
       </table>
+      <LiveMoveMenu at={move.at} onClose={move.close} />
     </div>
   )
 }

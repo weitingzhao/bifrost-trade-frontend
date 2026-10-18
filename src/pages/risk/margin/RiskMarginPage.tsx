@@ -239,10 +239,13 @@ export default function RiskMarginPage() {
               </Link>
             </div>
 
-            {/* The two columns stack on compact (Rev .166, `data-sr-stack`). */}
+            {/* The two columns stack on compact and medium (Rev .175,
+                `data-sr-stack="medium"`, §18.7): the page reads the width
+                class on <html>, not a viewport query of its own — the old
+                `max-[1100px]` rule is gone. */}
             <div
-              data-sr-stack=""
-              className="grid grid-cols-[minmax(0,1.6fr)_minmax(min(100%,21.25rem),1fr)] items-start gap-3 max-[1100px]:grid-cols-1"
+              data-sr-stack="medium"
+              className="grid grid-cols-[minmax(0,1.6fr)_minmax(min(100%,21.25rem),1fr)] items-start gap-3"
             >
               <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Margin users">
                 <header className={positionsUi.panelHead}>

@@ -100,16 +100,33 @@ function rowSheet(tr: HTMLTableRowElement): void {
   const heads = table ? [...table.querySelectorAll('thead tr:first-child > th')] : []
   const cells = [...tr.children]
   if (cells.length === 0) return
-  const rows = cells.slice(1).flatMap((td, i) => {
-    const k = caption(heads[i + 1])
+  // The title is the first cell; when it holds no words (a lamp, a mark), the
+  // first cell with words joins it and leaves the lines (§18.6, Rev .175 —
+  // Overview's Trust rows read by their Source, not by a dot).
+  const hasText = (el: Element) => (el.textContent ?? '').trim() !== ''
+  const named = hasText(cells[0]) ? -1 : cells.findIndex((td, i) => i > 0 && hasText(td))
+  const titled = named > 0 ? [cells[0], cells[named]] : [cells[0]]
+  const rows = cells.slice(1).flatMap((td, j) => {
+    const i = j + 1
+    if (i === named) return []
+    const k = caption(heads[i])
     const txt = (td.textContent ?? '').trim()
     return !k && !txt ? [] : [{ k: k || '—', td }]
   })
   const opens =
     tr.getAttribute('data-sr-open') || (getComputedStyle(tr).cursor === 'pointer' ? 'Open' : '')
   openShellSheet({
-    title: <Cell td={cells[0]} />,
-    label: (cells[0].textContent ?? '').trim() || 'Row',
+    title:
+      titled.length === 1 ? (
+        <Cell td={titled[0]} />
+      ) : (
+        <span className={css.rowTitle}>
+          {titled.map((td, i) => (
+            <Cell key={i} td={td} />
+          ))}
+        </span>
+      ),
+    label: (titled[titled.length - 1].textContent ?? '').trim() || 'Row',
     body: (
       <dl className={css.kv}>
         {rows.map((r, i) => (

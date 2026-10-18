@@ -155,7 +155,12 @@ describe('the design walk, by revision', () => {
     // Market, .167 Home / Book, .168 Review, .169–.170 the desk tools, .172 the
     // act pages, .173 Expiry and Limits) and P67 re-walked all of them the same
     // day, so none reads stale; .174 itself is the @bifrost/ui 0.14.0 table.
-    expect(DESIGN_REV).toBe('2026-10-17.174')
+    // Package .70 @ Rev .176 (2026-10-18, increment: Rev .175 + .176): the
+    // answers to the P67 receipt (.175 — eight pages' own revs) and D1, the
+    // design's own move onto @bifrost/ui 0.15.0 (.176 — six pages, Accounts in
+    // both); the app re-walked all thirteen the same day with D2 and 0.15.1, so
+    // none reads stale.
+    expect(DESIGN_REV).toBe('2026-10-18.176')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

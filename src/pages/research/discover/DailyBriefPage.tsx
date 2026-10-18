@@ -121,19 +121,26 @@ export default function DailyBriefPage() {
                 thread or session id — `generated_by: digest_agent` is all it
                 says about where it came from — so this opens the Console, where
                 the digest and the conversations now live, rather than a
-                conversation it cannot name. */}
-            <PageHeadLink
-              to="/research/loop/harness"
-              title="The digest carries no thread id, so this opens the Pilot Console — its digest and conversations — rather than a conversation it cannot name."
-            >
-              Pilot Console →
-            </PageHeadLink>
-            {/* Compact keeps the Console alone (design Rev .167): the re-run
-                mark does not come out, and neither do the other two doors. */}
+                conversation it cannot name.
+                Compact drops it (design Rev .175, contract §18.2): the Console
+                is desk-tier there, so the link would land on the
+                larger-screen card. An embedded panel still shows it — the
+                hide hook does not apply under `data-embed`. */}
             <span data-sr-hide="compact" className="contents">
-              <PageHeadLink to="/research/loop/decisions" title="Approve or leave the digest">
-                Inbox →
+              <PageHeadLink
+                to="/research/loop/harness"
+                title="The digest carries no thread id, so this opens the Pilot Console — its digest and conversations — rather than a conversation it cannot name."
+              >
+                Pilot Console →
               </PageHeadLink>
+            </span>
+            {/* Compact keeps the Inbox alone (Rev .175): it is an act page on
+                compact, and it is where the digest is approved or left. */}
+            <PageHeadLink to="/research/loop/decisions" title="Approve or leave the digest">
+              Inbox →
+            </PageHeadLink>
+            {/* The re-run mark and Ask Copilot stay off compact (Rev .167). */}
+            <span data-sr-hide="compact" className="contents">
               {/* The design's `⟳ Re-run` queues the Morning Prep run. Nothing on
                   this side triggers a digest: the agent runs on its own schedule
                   and there is no route that asks for another. Marked rather than

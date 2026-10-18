@@ -2,11 +2,11 @@
 /**
  * The one write on the desk. These tests are about what it takes to fire it.
  */
-import { act, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { refreshDevice } from '@/lib/device'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LayoutProvider } from '@bifrost/ui'
 
 vi.mock('@/api/monitor', () => ({
   postSuspend: vi.fn(async () => ({ ok: true })),
@@ -35,10 +35,11 @@ function status(p: { alive?: boolean; suspended?: boolean } = {}): StatusRespons
   } as unknown as StatusResponse
 }
 
-function renderMenu(s: StatusResponse = status()) {
+function renderMenu(s: StatusResponse = status(), phone = false) {
+  const menu = <HedgeMenu status={s} onChanged={() => undefined} />
   render(
     <MemoryRouter>
-      <HedgeMenu status={s} onChanged={() => undefined} />
+      {phone ? <LayoutProvider override={{ w: 'compact', input: 'touch' }}>{menu}</LayoutProvider> : menu}
     </MemoryRouter>,
   )
 }
@@ -133,22 +134,9 @@ describe('HedgeMenu · flatten', () => {
 })
 
 describe('HedgeMenu · on a phone (Rev .163 §18.5)', () => {
-  // `?device=` keeps the forced tier in the tab's session (lib/device).
-  function asPhone() {
-    act(() => {
-      sessionStorage.setItem('bifrost.device', 'phone')
-      refreshDevice()
-    })
-  }
-
-  afterEach(() => {
-    sessionStorage.clear()
-    act(() => refreshDevice())
-  })
-
+  // A phone: the package's provider pinned to compact and touch (D2).
   it('opens the reading as a bottom sheet, with no control in it, and posts nothing', async () => {
-    asPhone()
-    renderMenu()
+    renderMenu(status(), true)
     await userEvent.click(screen.getByRole('button', { name: /Hedge/ }))
     const sheet = screen.getByRole('dialog', { name: 'Hedging' })
     expect(within(sheet).getByLabelText('Hedge daemon reading')).toBeTruthy()

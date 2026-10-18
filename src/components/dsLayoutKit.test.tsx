@@ -1,8 +1,7 @@
 /**
- * The layout layer as this app receives it (@bifrost/ui 0.15.0, design Rev .174
- * A–C, DESIGN_CONTRACTS §18). The app still runs its own device layer
- * (`lib/device.ts`) until the Rev .174 D migration, so this pins what it will
- * rely on: the class boundaries, `dock` measured on `main`, the input axis,
+ * The layout layer as this app receives it (@bifrost/ui 0.15.0 → 0.15.1, design
+ * Rev .174 A–C · Rev .175, DESIGN_CONTRACTS §18). Since D2 the app runs on it
+ * (`layout/LayoutHost`), so this pins what it relies on: the class boundaries, `dock` measured on `main`, the input axis,
  * the three places of a detail, the sheet's grip, the band's per-class memory —
  * and that without a `LayoutProvider` every DS component behaves as in 0.14.0.
  */
@@ -28,6 +27,7 @@ import {
   SidebarProvider,
   TooltipProvider,
   dockOf,
+  docksAt,
   heightTier,
   sheetRelease,
   useLayout,
@@ -497,5 +497,93 @@ describe('DenseDataTable compactKeep', () => {
     expect(document.querySelector('[data-slot="dense-table-frame"]')?.hasAttribute('data-sr-keep')).toBe(false)
     fireEvent.click(screen.getByText('6'))
     expect(document.querySelector('[data-slot="bottom-sheet"]')).toBeNull()
+  })
+})
+
+// ── 0.15.1 (Rev .175) ──────────────────────────────────────────────────
+
+describe('DetailPane docks by its own width (§18.12 general form)', () => {
+  it('a 440 column docks from 1200 of main; a 560 one needs 1320', () => {
+    expect(docksAt('wide', 1200, 440)).toBe(true)
+    expect(docksAt('wide', 1199, 440)).toBe(false)
+    expect(docksAt('wide', 1319, 560)).toBe(false)
+    expect(docksAt('wide', 1320, 560)).toBe(true)
+    expect(docksAt('expanded', 2000, 440)).toBe(false)
+
+    mainWidth = 1250
+    render(
+      <Shell>
+        <DetailPane open onClose={() => {}} width={560}>
+          <span>inspector</span>
+        </DetailPane>
+      </Shell>,
+    )
+    const pane = document.querySelector('[data-slot="detail-pane"]')!
+    // The layout docks a 440 here (1250 ≥ 1200), but not this 560.
+    expect(probe()).toContain('dock')
+    expect(pane.getAttribute('data-place')).toBe('overlay')
+    setMain(1320)
+    expect(pane.getAttribute('data-place')).toBe('dock')
+  })
+})
+
+describe('the row detail (0.15.1)', () => {
+  function LampTable({ rowLink = false }: { rowLink?: boolean }) {
+    return (
+      <DenseDataTable compactKeep={[1, 2]}>
+        <thead>
+          <tr>
+            <th aria-label="State" />
+            <th>Source</th>
+            <th>Age</th>
+          </tr>
+        </thead>
+        <DenseTableBody>
+          <DenseTableRow role={rowLink ? 'button' : undefined} onClick={rowLink ? () => {} : undefined}>
+            <DenseTableCell>
+              <span data-lamp="" />
+            </DenseTableCell>
+            <DenseTableCell>Positions</DenseTableCell>
+            <DenseTableCell>2m</DenseTableCell>
+          </DenseTableRow>
+        </DenseTableBody>
+      </DenseDataTable>
+    )
+  }
+
+  it('titles a row whose first cell has no words with that cell and the first with words', () => {
+    setViewport(400, 800)
+    render(
+      <LayoutProvider>
+        <LampTable />
+      </LayoutProvider>,
+    )
+    fireEvent.click(screen.getByText('2m'))
+    const sheet = document.querySelector('[data-slot="bottom-sheet"]')!
+    const title = sheet.querySelector('[data-slot="row-detail-title"]')!
+    expect(title.textContent).toBe('Positions')
+    // The title's cell is not repeated as a line.
+    expect([...sheet.querySelectorAll('[data-slot="row-detail-line"] dt')].map((d) => d.textContent)).toEqual(['Age'])
+  })
+
+  it('opens the sheet for a row that is itself a button, rather than skipping it', () => {
+    setViewport(400, 800)
+    render(
+      <LayoutProvider>
+        <LampTable rowLink />
+      </LayoutProvider>,
+    )
+    fireEvent.click(screen.getByText('2m'))
+    expect(document.querySelector('[data-slot="bottom-sheet"]')).not.toBeNull()
+  })
+})
+
+describe('SectionBand (0.15.1)', () => {
+  it('marks its meta so compact can drop it under the title, and lets the title wrap', () => {
+    render(<SectionBand id="trust" title="Where it came from" meta="ASOF 2026-10-17" persistKey="/p" />)
+    const meta = document.querySelector('[data-sr-band-meta]')!
+    expect(meta.textContent).toBe('ASOF 2026-10-17')
+    expect(meta.className).toContain('truncate')
+    expect(screen.getByRole('heading', { name: 'Where it came from' }).className).not.toContain('whitespace-nowrap')
   })
 })

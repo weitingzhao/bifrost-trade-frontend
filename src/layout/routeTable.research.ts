@@ -101,11 +101,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // A module home carries no trail (§5a.8): there is nothing above it now —
     // the equipment is not inside a layer, it is worn while working in one.
     crumbs: [],
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.167',
+      rev: '2026-10-17.175',
       note: DESIGN_NOTES['/research/book'],
     },
   },
@@ -167,12 +167,13 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/stocks',
     label: 'Stock screen',
     crumbs: DISCOVER,
+    // Package .70 (2026-10-18): Rev .176 D2 — the package's DetailPane / BottomSheet — re-walked, waiting for a look.
     design: {
       // Rev .158–.161 Pine stage, saved-screen v2 and the off-script ✕ built;
       // re-checked against Rev .162 (TD-188), waiting for a look.
       state: 'reviewing',
       // Rev .163 (2026-10-17, Package .64): the iPhone / iPad tiers, waiting for a look.
-      rev: '2026-10-17.163',
+      rev: '2026-10-18.176',
       note: DESIGN_NOTES['/research/stocks'],
     },
   },
@@ -200,11 +201,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // It stopped reading a symbol on 2026-09-22: the design's brief is the
     // morning's reading of the book, and the per-symbol dashboard it used to
     // be is the Symbol page's six faces.
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.167',
+      rev: '2026-10-17.175',
       note: DESIGN_NOTES['/research/daily-brief'],
     },
   },
@@ -596,11 +597,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/market/live',
     label: 'Live',
     crumbs: MARKET_RAIL,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.166',
+      rev: '2026-10-17.175',
       note: DESIGN_NOTES['/market/live'],
     },
   },
@@ -612,13 +613,13 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/events',
     label: 'Events',
     crumbs: MARKET,
-    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
       // Signed by the Owner 2026-09-24, after the fed rounds (macro lane,
       // themes stack, forward calendar).
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-17.167',
+      rev: '2026-10-17.175',
       note: DESIGN_NOTES['/research/events'],
     },
   },

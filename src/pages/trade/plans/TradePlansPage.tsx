@@ -452,7 +452,11 @@ export default function TradePlansPage() {
             Remove list
           </Button>
         ) : resets.length > 0 ? (
+          // A builder (Rev .175, §18.2): it makes a new object in the sidebar,
+          // so compact — a read page here — leaves it out. Remove list stays,
+          // as in the prototype.
           <Button
+            data-sr-build=""
             type="button"
             size="sm"
             variant="ghost"

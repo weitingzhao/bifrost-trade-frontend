@@ -1,3 +1,4 @@
+import type { MouseEvent } from 'react'
 import type { DailyBenchmark } from '@/types/market'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,8 @@ interface Props {
   accountViewMode?: StreamAccountViewMode
   benchmarks: Record<string, DailyBenchmark>
   onSymbolReorder?: (category: string, fromSymbol: string, toSymbol: string) => void
+  /** Right-click / long-press on the row (Rev .175): the table's reorder menu, named by the symbol. */
+  onRowMenu?: (e: MouseEvent<HTMLTableRowElement>, label: string) => void
 }
 
 export function MarketStreamStkRow({
@@ -52,6 +55,7 @@ export function MarketStreamStkRow({
   accountViewMode = 'combine',
   benchmarks,
   onSymbolReorder,
+  onRowMenu,
 }: Props) {
   const {
     symbol,
@@ -76,6 +80,7 @@ export function MarketStreamStkRow({
 
   return (
     <tr
+      onContextMenu={onRowMenu ? e => onRowMenu(e, symbol) : undefined}
       onDragOver={dragEnabled ? e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move' } : undefined}
       onDrop={
         dragEnabled && onSymbolReorder
@@ -105,8 +110,11 @@ export function MarketStreamStkRow({
           .join('\n') || undefined}
       >
         <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+          {/* A finger cannot drag it (Rev .175, §18.3): hidden on touch, where
+              the row's long-press menu carries the same moves. */}
           {dragEnabled && (
             <span
+              data-sr-hide="touch"
               className={styles.dragHandle}
               draggable
               onDragStart={e => {

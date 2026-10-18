@@ -47,14 +47,14 @@ import { useRecentPagesTrail } from '@/lib/omnibar'
 import { Omnibar } from './Omnibar'
 import { InspectorSlotContext } from '@/components/layout/inspectorSlot'
 import { layerForPath } from '@/lib/design/layers'
-import { useLayout, watchMain } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { compactTier } from './phoneTier'
 import { PhoneTabBar } from './phone/PhoneTabBar'
 import { PhoneMoreSheet } from './phone/PhoneMoreSheet'
 import { DeskGate } from './phone/DeskGate'
 import { useTouchLayer } from './touchLayer'
 import { useCompactKeepRules, useShortDockAutoHide } from './deviceRules'
-import { useSidebarMemory } from './sidebarMemory'
+import { migrateSidebarMemory, sidebarDefaultOpen } from './sidebarMemory'
 import { ShellSheetHost } from './ShellSheetHost'
 
 /** Stable ErrorBoundary key — keep Instances mounted when opening/closing detail. */
@@ -134,21 +134,22 @@ export function AppLayout() {
   // you read. Crossing a class re-lays the shell in place: nothing remounts.
   const { w } = useLayout()
   const compact = w === 'compact'
-  const [sidebarOpen, setSidebarOpen] = useSidebarMemory(w)
+  // The DS SidebarProvider keeps the per-class memory under the LayoutProvider
+  // (D2); wide starts from the cookie or the viewport default.
+  const [sidebarDefault] = useState(() => {
+    migrateSidebarMemory()
+    return sidebarDefaultOpen()
+  })
   const [moreOpen, setMoreOpen] = useState(false)
   useTouchLayer()
   useCompactKeepRules()
   useShortDockAutoHide()
-  // §18.12: the dock is measured on the content area right of the sidebar,
-  // a docked inspector's column included.
-  useEffect(() => watchMain(lane.current, inspectorSlot), [inspectorSlot])
   const gated = compact && compactTier(pathname) === 'desk'
 
   return (
     <InspectorSlotContext.Provider value={inspectorSlot}>
       <SidebarProvider
-        open={sidebarOpen}
-        onOpenChange={setSidebarOpen}
+        defaultOpen={sidebarDefault}
         style={{ '--sidebar-width': SHELL_SIDEBAR_WIDTH } as CSSProperties}
       >
         {/* Before the sidebar, not after: the ~40 nav links are exactly what
@@ -173,51 +174,61 @@ export function AppLayout() {
           floating sidebar, the top bar and the page share the body's. With the
           frost on (Rev .152 r2, index.css) it is the page's glass sheet, top
           bar included: 8px off the edges over the colour fields. */}
-        <SidebarInset className="h-svh overflow-hidden bg-transparent">
-          {/* The menu bar (Rev .60): the status pill retired into the top
+        {/* The area the package measures for `dock` (LayoutHost, §18.12): the
+            content and the inspector slot beside it. A docked inspector is the
+            content's sibling, so measuring `#main-content` alone made it undock
+            the moment it docked (Plans: 61 flips in 3 s at 1680). */}
+        <div data-sr-main="" className="flex min-w-0 flex-1">
+          <SidebarInset className="h-svh overflow-hidden bg-transparent">
+            {/* The menu bar (Rev .60): the status pill retired into the top
               bar's right end, and the Alerts panel hangs off its clock. */}
-          {/* Rev .155: no market strip under it. Its four readings each had a
+            {/* Rev .155: no market strip under it. Its four readings each had a
               home already — working orders in the Account control, the
               stream in the Control Center's Market data row, the symbols'
               quotes on Market › Live; the subscribed set's Daily % / $ is
               gone (Shell Spec §4). */}
-          <AppHeader alertGroups={groups} alerts={summary} onDismissAllAlerts={stream.dismissAll} />
-          {/* `@container/page`: the width a page is given, queried by name. A
+            <AppHeader
+              alertGroups={groups}
+              alerts={summary}
+              onDismissAllAlerts={stream.dismissAll}
+            />
+            {/* `@container/page`: the width a page is given, queried by name. A
             float or panel body declares the same container, so a page that
             lays out with `@…/page:` reads its own width in both places — the
             design's surfaces are iframes, where the viewport *is* that width. */}
-          <main
-            ref={lane}
-            id="main-content"
-            // The page-material scope (Rev .62): index.css reads it.
-            data-mat=""
-            // The list grammar (Rev .153–.154 §17.2, @bifrost/ui 0.10.0): every
-            // table and data-sr-row line in a page reads as a macOS list on glass.
-            // Site-wide since batch 3 (the Positions / Loop Run pilots passed).
-            data-sr-list=""
-            tabIndex={-1}
-            // The last row scrolls clear of the floating toolbar (Rev .73 §3):
-            // its height plus the gap, while the toolbar is shown. `--lane-pb`
-            // carries it to a docked DetailPane, whose height has to leave it.
-            className={cn(
-              '@container/page flex-1 overflow-auto min-w-0 outline-none',
-              // Compact's lane clears the tab bar, the home indicator and 20;
-              // its sides keep a landscape notch's insets.
-              compact
-                ? 'pb-[calc(var(--sr-tab-h)+var(--sr-safe-b)+20px)] pl-[var(--sr-safe-l)] pr-[var(--sr-safe-r)]'
-                : toolbarShown && 'pb-[var(--lane-pb)]',
-            )}
-            style={{ '--lane-pb': !compact && toolbarShown ? '72px' : '0px' } as CSSProperties}
-          >
-            {gated ? <DeskGate /> : <BoundedOutlet />}
-          </main>
-        </SidebarInset>
-        {/* A docked inspector portals in here — a page opens it, but a panel that
+            <main
+              ref={lane}
+              id="main-content"
+              // The page-material scope (Rev .62): index.css reads it.
+              data-mat=""
+              // The list grammar (Rev .153–.154 §17.2, @bifrost/ui 0.10.0): every
+              // table and data-sr-row line in a page reads as a macOS list on glass.
+              // Site-wide since batch 3 (the Positions / Loop Run pilots passed).
+              data-sr-list=""
+              tabIndex={-1}
+              // The last row scrolls clear of the floating toolbar (Rev .73 §3):
+              // its height plus the gap, while the toolbar is shown. `--lane-pb`
+              // carries it to a docked DetailPane, whose height has to leave it.
+              className={cn(
+                '@container/page flex-1 overflow-auto min-w-0 outline-none',
+                // Compact's lane clears the tab bar, the home indicator and 20;
+                // its sides keep a landscape notch's insets.
+                compact
+                  ? 'pb-[calc(var(--sr-tab-h)+var(--sr-safe-b)+20px)] pl-[var(--sr-safe-l)] pr-[var(--sr-safe-r)]'
+                  : toolbarShown && 'pb-[var(--lane-pb)]'
+              )}
+              style={{ '--lane-pb': !compact && toolbarShown ? '72px' : '0px' } as CSSProperties}
+            >
+              {gated ? <DeskGate /> : <BoundedOutlet />}
+            </main>
+          </SidebarInset>
+          {/* A docked inspector portals in here — a page opens it, but a panel that
           takes width from the content has to be the content's sibling, not its
           child. It sits between the page it explains and the Copilot, which is
           about the whole desk rather than one row. `display: contents` so an
           empty slot costs the row nothing. */}
-        <div ref={setInspectorSlot} className="contents" />
+          <div ref={setInspectorSlot} className="contents" />
+        </div>
         {/* Every page's Ask, listening from the shell rather than from the
           conversation — it has to be awake while the conversation is closed. */}
         <AskCopilotIntentHost />

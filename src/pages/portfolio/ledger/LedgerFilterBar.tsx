@@ -117,19 +117,22 @@ export function LedgerFilterBar({
     <div className={ledgerFilterPanelClass} aria-label="Trade ledger quick filters">
       <div className="flex flex-col gap-1.5">
         <div className={ledgerFilterRowClass}>
-          <div className="inline-flex flex-wrap items-center gap-x-2 gap-y-1" role="group" aria-label="Since (rolling trade date window)">
+          <div className="inline-flex min-w-0 max-w-full flex-wrap items-center gap-x-2 gap-y-1" role="group" aria-label="Since (rolling trade date window)">
             <span className={ledgerFilterLabelClass}>Since</span>
             <InfoTooltip text={SINCE_TOOLTIP} />
-            {/* A trade date or an expiry year replaces the window, so no segment is picked then. */}
-            <SegmentControl
-              ariaLabel="Since"
-              value={tradeDay || expiryFilterYear ? '' : sincePreset}
-              onChange={(v) => {
-                onSincePreset(v as LedgerSincePreset)
-                clearExpiryFilters()
-              }}
-              options={[{ value: 'all', label: 'All' }, ...SINCE_PRESET_TABS.map((t) => ({ value: t.id, label: t.label }))]}
-            />
+            {/* A trade date or an expiry year replaces the window, so no segment is picked then.
+                Seven windows outrun a phone's width: on compact the row scrolls sideways (§18.7). */}
+            <span className="flex min-w-0 max-w-full" data-sr-scroll="">
+              <SegmentControl
+                ariaLabel="Since"
+                value={tradeDay || expiryFilterYear ? '' : sincePreset}
+                onChange={(v) => {
+                  onSincePreset(v as LedgerSincePreset)
+                  clearExpiryFilters()
+                }}
+                options={[{ value: 'all', label: 'All' }, ...SINCE_PRESET_TABS.map((t) => ({ value: t.id, label: t.label }))]}
+              />
+            </span>
           </div>
 
           {accountTabs.length > 0 && (

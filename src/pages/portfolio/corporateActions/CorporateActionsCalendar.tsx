@@ -133,7 +133,8 @@ export function CorporateActionsCalendar({
             : `${reach.rows} rows reached ${reach.covered} of the ${reach.asked} names this book touches or watches; ${reach.ahead} ${reach.ahead === 1 ? 'is' : 'are'} dated after today, all past the ${CALENDAR_DAYS}-day window and listed under the line below. Nothing inside the window has been declared yet — which is not the same as nothing coming.`}
         </p>
       ) : null}
-      <div className={cn('overflow-x-auto', empty && 'border-t border-border')}>
+      {/* Compact (Rev .165): Symbol · Event · Ex / effective; a row opens the rest in its sheet. */}
+      <div className={cn('overflow-x-auto', empty && 'border-t border-border')} data-sr-keep="1,2,3">
         {/* §14.6: seven columns, held at 980 — above the design's 900 floor. The shape stays drawn
             when no event is dated ahead, the way the other marked bands keep theirs. */}
         <table className="w-full min-w-[980px] table-fixed border-collapse">

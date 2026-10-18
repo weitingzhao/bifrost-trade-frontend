@@ -1,9 +1,10 @@
 /**
- * An Inbox card on a phone (design Rev .163, DESIGN_CONTRACTS §18.6 · §18.10
- * ④): the queue is one row per question, and a row opens its card here — the
- * evidence in the body, the verdicts in the footer, so Approve and Dismiss sit
- * under the thumb however long the card runs. Enter runs the rightmost, the
- * verdict (`BottomSheet`). The desk and the iPad keep the accordion.
+ * An Inbox card on compact (design Rev .163 → .173, DESIGN_CONTRACTS §18.6 ·
+ * §18.10 ④): the queue is one row per question, and a row opens its card here
+ * — the evidence in the body, the verdicts in the footer, so Approve and
+ * Dismiss sit under the thumb however long the card runs. Enter runs the
+ * rightmost, the verdict (`BottomSheet`). Every class above compact keeps the
+ * accordion.
  *
  * The footer's Approve names the section it writes to — the same word as the
  * tag colour, the section head and the Writes to filter — and the body keeps
@@ -109,7 +110,7 @@ export function InboxDecisionSheet({
             defaultVerb={lit ? 'explain' : null}
             onApprove={() => (isCall ? handlers.record(card) : handlers.approve(card))}
             onDismiss={() => handlers.dismiss(card)}
-            // The Copilot is a sheet of its own on a phone: this one steps aside.
+            // The Copilot is a sheet of its own on compact: this one steps aside.
             onDiscuss={() => {
               onOpenChange(false)
               handlers.discuss(card)
@@ -132,7 +133,7 @@ export function InboxDecisionSheet({
 }
 
 /**
- * A briefing on a phone: read in the sheet, Mark read on its sub-head as on
+ * A briefing on compact: read in the sheet, Mark read on its sub-head as on
  * the card, Dismiss and — for the kinds whose Approve can write — Approve in
  * the footer. A digest is read, never approved (Design 2026-09-13 ③).
  */

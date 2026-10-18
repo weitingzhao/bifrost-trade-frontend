@@ -46,6 +46,9 @@ const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 /** Past this pressure, the broker is closer to closing positions than the house gate is. */
 const PRESSURE_WARN = 0.5
 
+/** Compact (§18.6, Rev .166): Margin users keeps the name, what is at risk and the kind of risk. */
+const USERS_COMPACT_KEEP = '1,3,4'
+
 export default function RiskMarginPage() {
   const statusQ = useMonitorStatus()
   const status = statusQ.data
@@ -236,7 +239,11 @@ export default function RiskMarginPage() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(min(100%,21.25rem),1fr)] items-start gap-3 max-[1100px]:grid-cols-1">
+            {/* The two columns stack on compact (Rev .166, `data-sr-stack`). */}
+            <div
+              data-sr-stack=""
+              className="grid grid-cols-[minmax(0,1.6fr)_minmax(min(100%,21.25rem),1fr)] items-start gap-3 max-[1100px]:grid-cols-1"
+            >
               <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Margin users">
                 <header className={positionsUi.panelHead}>
                   <span className={positionsUi.cap}>Margin users</span>
@@ -258,7 +265,7 @@ export default function RiskMarginPage() {
                     No name in this scope ties up capital the model service can measure.
                   </p>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto" data-sr-keep={USERS_COMPACT_KEEP}>
                     <table data-sr-table="" className="min-w-[640px]">
                       <thead>
                         <tr>

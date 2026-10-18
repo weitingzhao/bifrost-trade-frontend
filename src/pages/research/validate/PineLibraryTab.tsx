@@ -436,7 +436,10 @@ export function PineLibraryTab({
             </div>
           ) : null}
 
-          <div className="grid grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          {/* Source beside its details and Check result; one column on medium
+              and compact (`data-sr-stack="medium"`, Rev .169) — the width
+              class, not a viewport breakpoint. */}
+          <div data-sr-stack="medium" className="grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] gap-3 p-3">
             <div className="min-w-0 space-y-1">
               <div className="flex items-baseline gap-2">
                 <span className={cap}>Source</span>

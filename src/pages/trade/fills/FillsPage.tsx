@@ -10,6 +10,12 @@
  * IB is working and what came back. The design reserves a Send action and marks
  * it `not wired`, and it lives on Plans rather than here — D10 governs either
  * way (design DECISIONS 2026-09-18).
+ *
+ * The picked fill's question (Rev .166, §18.12) has three places and one
+ * content: with the dock it stays where it is, the rail's first panel; above
+ * compact otherwise it floats over the right edge, 440; on compact it is a
+ * bottom sheet (`DetailPane`). Compact reads — the link's writes are builders
+ * there (§18.2) — and each table keeps three columns (§18.6).
  */
 import { useMemo, useState } from 'react'
 import { usePageViewState } from '@/lib/pageView'
@@ -48,6 +54,8 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 import { clearCarriedSymbol, normalizeSymbol } from '@/lib/symbolContext'
 import { SymbolScopeChip } from '@/components/symbol/SymbolScopeChip'
 import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
+import { DetailPane, useDetailPlace } from '@/components/layout/DetailPane'
+import { useLayout } from '@/lib/device'
 
 const PAGE_LEAD =
   'The work side of the ledger: what IB is working right now, what came back, and which fills still need a home. Nothing here sends an order — TWS does that, and the reserved Send action lives on Plans, not wired.'
@@ -58,6 +66,19 @@ const WINDOWS: { value: string; label: string; days: number | null }[] = [
   { value: 'month', label: '1 month', days: 31 },
   { value: 'all', label: 'All', days: null },
 ]
+
+/**
+ * Compact (§18.6, Rev .166): an order keeps Contract · Side · IB status, a
+ * fill Date · Contract · Linked to — the design's Side · Contract · IB status
+ * and Time · Contract · State, in this table's columns (the link carries the
+ * state here). A fill's tap is the page's: it opens the question below.
+ */
+const ORDERS_COMPACT_KEEP = '1,2,7'
+const FILLS_COMPACT_KEEP = '1,2,9'
+
+/** The rail's basis (`flex-[1_1_21.25rem]`): docked, the question is the rail's first panel at its width. */
+const RAIL_PX = 340
+const BELONG = 'Where does this fill belong?'
 
 // Rev .62: a panel's foot is a rule, not a band.
 const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal text-muted-foreground text-pretty'
@@ -101,6 +122,10 @@ export default function FillsPage() {
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
   const plansQuery = useStrategyPlans()
+  // A kept table lays out its three columns by content: the shares in the
+  // colgroup would hand them the first three columns' widths.
+  const compact = useLayout().w === 'compact'
+  const place = useDetailPlace()
 
   const plans = useMemo(() => plansQuery.data?.items ?? [], [plansQuery.data?.items])
   const all = useMemo(
@@ -187,6 +212,12 @@ export default function FillsPage() {
     setLinkError(null)
   }
 
+  function clearSelection() {
+    setSelectedKey(null)
+    setPickedCandidate(null)
+    setLinkError(null)
+  }
+
   /**
    * The same write the Positions link modal makes — one write path into the
    * ledger, whichever page starts it. A link is a ledger fact, not an order.
@@ -214,6 +245,13 @@ export default function FillsPage() {
       setLinking(false)
     }
   }
+
+  const belongFoot = (
+    <p className={cn(FOOT, 'm-0')}>
+      The same write the Positions link modal makes — one path into the ledger, whichever page starts it.
+      Leaving a fill unlinked is not recorded anywhere, so it will still be here tomorrow.
+    </p>
+  )
 
   // §17.1: the execution feed is the page's critical source.
   const pageState =
@@ -307,18 +345,20 @@ export default function FillsPage() {
                   back is below.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-sr-keep={ORDERS_COMPACT_KEEP}>
                   {/* §14.6: seven columns, the design's 820 floor. */}
-                  <table className="w-full min-w-[820px] table-fixed border-collapse">
-                    <colgroup>
-                      <col style={{ width: '24%' }} />
-                      <col style={{ width: '9%' }} />
-                      <col style={{ width: '13%' }} />
-                      <col style={{ width: '11%' }} />
-                      <col style={{ width: '11%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '16%' }} />
-                    </colgroup>
+                  <table className={cn('w-full min-w-[820px] border-collapse', !compact && 'table-fixed')}>
+                    {compact ? null : (
+                      <colgroup>
+                        <col style={{ width: '24%' }} />
+                        <col style={{ width: '9%' }} />
+                        <col style={{ width: '13%' }} />
+                        <col style={{ width: '11%' }} />
+                        <col style={{ width: '11%' }} />
+                        <col style={{ width: '16%' }} />
+                        <col style={{ width: '16%' }} />
+                      </colgroup>
+                    )}
                     <thead>
                       <tr>
                         <th className={cn(positionsUi.th, 'text-left')}>Contract</th>
@@ -412,20 +452,22 @@ export default function FillsPage() {
                   )}
                 </p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-sr-keep={FILLS_COMPACT_KEEP} data-sr-detail="page">
                   {/* §14.6: nine columns, the design's 980 floor. */}
-                  <table className="w-full min-w-[980px] table-fixed border-collapse">
-                    <colgroup>
-                      <col style={{ width: '9%' }} />
-                      <col style={{ width: '20%' }} />
-                      <col style={{ width: '7%' }} />
-                      <col style={{ width: '11%' }} />
-                      <col style={{ width: '7%' }} />
-                      <col style={{ width: '9%' }} />
-                      <col style={{ width: '8%' }} />
-                      <col style={{ width: '7%' }} />
-                      <col style={{ width: '22%' }} />
-                    </colgroup>
+                  <table className={cn('w-full min-w-[980px] border-collapse', !compact && 'table-fixed')}>
+                    {compact ? null : (
+                      <colgroup>
+                        <col style={{ width: '9%' }} />
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '7%' }} />
+                        <col style={{ width: '11%' }} />
+                        <col style={{ width: '7%' }} />
+                        <col style={{ width: '9%' }} />
+                        <col style={{ width: '8%' }} />
+                        <col style={{ width: '7%' }} />
+                        <col style={{ width: '22%' }} />
+                      </colgroup>
+                    )}
                     <thead>
                       <tr>
                         <th className={positionsUi.th}>Date</th>
@@ -509,113 +551,127 @@ export default function FillsPage() {
               {/* The design's right rail: what has not gone out yet, and how
                   each import path is doing today. */}
               <aside className="flex min-w-0 max-w-[27.5rem] flex-[1_1_21.25rem] flex-col gap-3">
-            <section
-              className={cn(positionsUi.panel, selectedRow?.state === 'orphan' && 'border-[var(--sk-line2)]')}
-              aria-label="Where does this fill belong?"
-            >
-              <header className={positionsUi.panelHead}>
-                <span className={positionsUi.panelTitle}>Where does this fill belong?</span>
-                {selectedRow ? (
-                  <CloseButton label="Close the question" className="ml-auto" onClick={() => selectRow(selectedRow.key)} />
-                ) : null}
-              </header>
-              {selectedRow == null ? (
+            {/* Nothing picked: the question's place in the rail says how to ask it. */}
+            {selectedRow == null ? (
+              <section className={positionsUi.panel} aria-label={BELONG}>
+                <header className={positionsUi.panelHead}>
+                  <span className={positionsUi.panelTitle}>{BELONG}</span>
+                </header>
                 <p className="m-0 px-3 py-3 text-dense-meta leading-normal text-muted-foreground text-pretty">
                   Pick a fill in the table — its candidates open here, strongest reason first. A link is a ledger
                   write, never an order.
                 </p>
-              ) : (
-                <div className="flex flex-col gap-2 px-3 py-2.5">
-                  <div className="flex flex-wrap items-baseline gap-x-2 text-dense-meta">
-                    <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
-                      {contractToken(selectedRow)}
-                    </span>
-                    <span className={selectedRow.side === 'SELL' ? 'text-warning' : 'text-secondary-foreground'}>
-                      {selectedRow.side} {selectedRow.qty}
-                    </span>
-                    <span className="text-muted-foreground">@ {fmtUsd(selectedRow.price)}</span>
-                    <span className={cn(positionsUi.mono, 'ml-auto text-muted-foreground')}>
-                      {selectedRow.accountId || 'no account'} · {SOURCE_LABEL[selectedRow.source] ?? selectedRow.source}
-                    </span>
-                  </div>
-                  {selectedRow.state === 'linked' ? (
-                    <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                      Already claimed by{' '}
-                      {selectedRow.tradeId != null ? (
-                        <TradeRef id={selectedRow.tradeId} list={linkedIds} from="Orders & Fills · on screen" />
-                      ) : null}{' '}
-                      — relinking and unlinking are the Ledger&rsquo;s writes.
-                    </p>
-                  ) : candidates.length === 0 ? (
-                    <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
-                      No trade argues for it: nothing holds this contract, and no opportunity in{' '}
-                      {selectedRow.accountId || 'this account'} covers {selectedRow.symbol}. Create the rule first —{' '}
-                      <Link to="/trade/rules" className={positionsUi.link}>
-                        Trading › Rules
-                      </Link>{' '}
-                      — or leave it a hand fill.
-                    </p>
-                  ) : (
-                    <>
-                      {candidates.map((c) => (
-                        <button
-                          key={c.tradeId}
-                          type="button"
-                          onClick={() => setPickedCandidate((prev) => (prev === c.tradeId ? null : c.tradeId))}
-                          className={cn(
-                            // Rev .142: a clickable card is group material — no frame, the card fill and radius.
-                            'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-[var(--mat-card-radius)] border px-2.5 py-2 text-left',
-                            // Rev .84: the picked candidate is the accent — edge and a 12% ground.
-                            pickedCandidate === c.tradeId
-                              ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
-                              : 'border-transparent bg-[var(--mat-card-fill)] hover:bg-[var(--mat-card-fill-hover)]',
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'mt-0.5 h-3 w-3 rounded-full border',
-                              pickedCandidate === c.tradeId ? 'border-primary bg-primary' : 'border-[var(--sk-line2)]',
-                            )}
-                            aria-hidden
-                          />
-                          <span className="min-w-0">
-                            <span className="flex flex-wrap items-baseline gap-x-2">
-                              <span className="min-w-0 text-dense-body font-semibold leading-normal text-foreground">
-                                {c.label}
+                {belongFoot}
+              </section>
+            ) : null}
+            {/* A fill picked: one content, three places (§18.12). Docked, the
+                wrapper is the column's own box, so the pane does not stick
+                over the panels below it; elsewhere it costs the rail nothing. */}
+            <div className={place === 'dock' && selectedRow != null ? undefined : 'contents'}>
+              <DetailPane
+                open={selectedRow != null}
+                onClose={clearSelection}
+                width={place === 'dock' ? RAIL_PX : 440}
+                label={BELONG}
+                className="border border-transparent"
+              >
+                {selectedRow == null ? null : (
+                  <section aria-label={BELONG}>
+                    <header className={positionsUi.panelHead}>
+                      <span className={positionsUi.panelTitle}>{BELONG}</span>
+                      <CloseButton label="Close the question" className="ml-auto" onClick={clearSelection} />
+                    </header>
+                    <div className="flex flex-col gap-2 px-3 py-2.5">
+                      <div className="flex flex-wrap items-baseline gap-x-2 text-dense-meta">
+                        <span className={cn(positionsUi.mono, 'font-bold text-[var(--color-entity-option)]')}>
+                          {contractToken(selectedRow)}
+                        </span>
+                        <span className={selectedRow.side === 'SELL' ? 'text-warning' : 'text-secondary-foreground'}>
+                          {selectedRow.side} {selectedRow.qty}
+                        </span>
+                        <span className="text-muted-foreground">@ {fmtUsd(selectedRow.price)}</span>
+                        <span className={cn(positionsUi.mono, 'ml-auto text-muted-foreground')}>
+                          {selectedRow.accountId || 'no account'} · {SOURCE_LABEL[selectedRow.source] ?? selectedRow.source}
+                        </span>
+                      </div>
+                      {selectedRow.state === 'linked' ? (
+                        <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                          Already claimed by{' '}
+                          {selectedRow.tradeId != null ? (
+                            <TradeRef id={selectedRow.tradeId} list={linkedIds} from="Orders & Fills · on screen" />
+                          ) : null}{' '}
+                          — relinking and unlinking are the Ledger&rsquo;s writes.
+                        </p>
+                      ) : candidates.length === 0 ? (
+                        <p className="m-0 text-dense-meta leading-normal text-muted-foreground text-pretty">
+                          No trade argues for it: nothing holds this contract, and no opportunity in{' '}
+                          {selectedRow.accountId || 'this account'} covers {selectedRow.symbol}. Create the rule first —{' '}
+                          <Link to="/trade/rules" className={positionsUi.link}>
+                            Trading › Rules
+                          </Link>{' '}
+                          — or leave it a hand fill.
+                        </p>
+                      ) : (
+                        <>
+                          {candidates.map((c) => (
+                            <button
+                              key={c.tradeId}
+                              type="button"
+                              onClick={() => setPickedCandidate((prev) => (prev === c.tradeId ? null : c.tradeId))}
+                              className={cn(
+                                // Rev .142: a clickable card is group material — no frame, the card fill and radius.
+                                'grid cursor-pointer grid-cols-[0.875rem_minmax(0,1fr)] items-start gap-2.5 rounded-[var(--mat-card-radius)] border px-2.5 py-2 text-left',
+                                // Rev .84: the picked candidate is the accent — edge and a 12% ground.
+                                pickedCandidate === c.tradeId
+                                  ? 'border-primary bg-[color-mix(in_srgb,var(--sk-accent)_12%,transparent)]'
+                                  : 'border-transparent bg-[var(--mat-card-fill)] hover:bg-[var(--mat-card-fill-hover)]',
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  'mt-0.5 h-3 w-3 rounded-full border',
+                                  pickedCandidate === c.tradeId ? 'border-primary bg-primary' : 'border-[var(--sk-line2)]',
+                                )}
+                                aria-hidden
+                              />
+                              <span className="min-w-0">
+                                <span className="flex flex-wrap items-baseline gap-x-2">
+                                  <span className="min-w-0 text-dense-body font-semibold leading-normal text-foreground">
+                                    {c.label}
+                                  </span>
+                                  <DenseTag variant={c.tag === 'same contract' ? 'success' : 'info'} size="cell">
+                                    {c.tag}
+                                  </DenseTag>
+                                </span>
+                                <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
+                                  {c.why}
+                                </span>
                               </span>
-                              <DenseTag variant={c.tag === 'same contract' ? 'success' : 'info'} size="cell">
-                                {c.tag}
-                              </DenseTag>
-                            </span>
-                            <span className="block text-dense-meta leading-normal text-muted-foreground text-pretty">
-                              {c.why}
-                            </span>
+                            </button>
+                          ))}
+                          {linkError ? <p className="m-0 text-dense-meta text-danger text-pretty">{linkError}</p> : null}
+                          {/* The link's writes are builders: compact reads (§18.2). */}
+                          <span data-sr-build="" className="flex flex-wrap items-center gap-2">
+                            <button
+                              type="button"
+                              className={cn(positionsUi.btn, pickedCandidate != null && 'border-primary text-primary')}
+                              disabled={pickedCandidate == null || linking}
+                              onClick={() => void confirmLink()}
+                            >
+                              {linking ? 'Linking…' : 'Confirm link'}
+                            </button>
+                            <button type="button" className={positionsUi.btn} onClick={clearSelection}>
+                              Leave unlinked
+                            </button>
                           </span>
-                        </button>
-                      ))}
-                      {linkError ? <p className="m-0 text-dense-meta text-danger text-pretty">{linkError}</p> : null}
-                      <span className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
-                          className={cn(positionsUi.btn, pickedCandidate != null && 'border-primary text-primary')}
-                          disabled={pickedCandidate == null || linking}
-                          onClick={() => void confirmLink()}
-                        >
-                          {linking ? 'Linking…' : 'Confirm link'}
-                        </button>
-                        <button type="button" className={positionsUi.btn} onClick={() => selectRow(selectedRow.key)}>
-                          Leave unlinked
-                        </button>
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
-              <p className={cn(FOOT, 'm-0')}>
-                The same write the Positions link modal makes — one path into the ledger, whichever page starts it.
-                Leaving a fill unlinked is not recorded anywhere, so it will still be here tomorrow.
-              </p>
-            </section>
+                        </>
+                      )}
+                    </div>
+                    {belongFoot}
+                  </section>
+                )}
+              </DetailPane>
+            </div>
 
             <section className={cn(positionsUi.panel, 'border-warning/40')} aria-label="Intended plans">
               <header className={positionsUi.panelHead}>

@@ -10,7 +10,7 @@
  * flat list sorted by days to expiry reads faster than five group headers.
  */
 import { useMemo } from 'react'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import {
   DenseDataTable,
@@ -51,7 +51,7 @@ export function ExpiriesView({
   onExpiryClick: (expiry: string) => void
 }) {
   const feedAgeSec = quoteFeedAgeSec(Object.values(quotesBySymbol))
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
 
   const totals = useMemo(() => {
     let shortContracts = 0

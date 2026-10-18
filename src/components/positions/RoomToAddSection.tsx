@@ -20,6 +20,7 @@ import { positionsUi } from './positionsUi'
 import { roomDerivation, type RoomView } from './roomDerivation'
 import { roomIncome, type RoomToAdd } from '@/utils/roomToAdd'
 import { riskLevelFor, RISK_LEVELS, type RiskLevelId } from '@/hooks/usePressureCeiling'
+import { useLayout } from '@/lib/device'
 
 interface Props {
   room: RoomToAdd
@@ -131,6 +132,7 @@ function How({ view, label, open, onToggle }: { view: RoomView; label: string; o
 
 export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quiet = false }: Props) {
   const [openView, setOpenView] = useState<RoomView | null>(null)
+  const compact = useLayout().w === 'compact'
   const r = room
   const ceilingPct = Math.round(ceiling * 100)
   const toggle = (v: RoomView) => setOpenView((cur) => (cur === v ? null : v))
@@ -216,10 +218,19 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quie
           </span>
         )}
 
+        {/* Compact keeps step · premium · pressure (design Rev .165, 1·3·4): at
+            393 the bar column left the step's name 45px, one word a line. */}
         <div className="flex flex-col" data-testid="room-tiers">
           {tiers.map((t, i) => (
             <div key={t.id} className="border-t border-border/50 py-1.75" data-testid={`room-row-${t.id}`}>
-              <div className="grid grid-cols-[minmax(0,1fr)_minmax(5.625rem,8.75rem)_4.75rem_4rem] items-center gap-2">
+              <div
+                className={cn(
+                  'grid items-center gap-2',
+                  compact
+                    ? 'grid-cols-[minmax(0,1fr)_4.75rem_4rem]'
+                    : 'grid-cols-[minmax(0,1fr)_minmax(5.625rem,8.75rem)_4.75rem_4rem]',
+                )}
+              >
                 <span className="flex min-w-0 flex-col gap-px">
                   <span className="flex items-center gap-1.5">
                     <span className={cn('text-xs font-semibold leading-normal', TIER_NAME[t.id])}>{t.label}</span>
@@ -228,10 +239,12 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quie
                   <span className="text-dense-meta leading-normal text-muted-foreground text-pretty">{t.meaning}</span>
                   <span className={cn(positionsUi.mono, 'text-dense-meta leading-normal text-muted-foreground')}>{t.counts}</span>
                 </span>
-                <span className="flex flex-col gap-0.75">
-                  <PremiumLadder tiers={tiers} upTo={i} max={max} />
-                  <PressureAfter label={t.label} pressure={t.pressure} />
-                </span>
+                {compact ? null : (
+                  <span className="flex flex-col gap-0.75">
+                    <PremiumLadder tiers={tiers} upTo={i} max={max} />
+                    <PressureAfter label={t.label} pressure={t.pressure} />
+                  </span>
+                )}
                 <span className={cn(positionsUi.mono, 'text-right text-dense-body font-bold leading-normal', TIER_PREMIUM[t.id])}>
                   {t.premium == null ? '—' : `${i > 0 ? '+' : ''}${fmtUsd(t.premium, true)}`}
                 </span>
@@ -256,7 +269,7 @@ export function RoomToAddSection({ room, coverRows, ceiling, onLevelChange, quie
               {id === 'now' ? 'held' : id === 'backed' ? 'backed' : 'on margin'}
             </span>
           ))}
-          <span>wide bar = premium, each step on the last · thin bar = pressure after, amber from 50%</span>
+          <span data-sr-hide="compact">wide bar = premium, each step on the last · thin bar = pressure after, amber from 50%</span>
         </div>
 
         {openView ? (

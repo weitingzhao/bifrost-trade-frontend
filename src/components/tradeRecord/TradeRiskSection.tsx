@@ -168,7 +168,10 @@ export function TradeRiskSection({
               ) : null}
             </div>
             <Chart p={p} />
-            <div className="overflow-x-auto">
+            {/* Its own sideways scroller with the scenario pinned (§16.11,
+                RESPONSE 2026-10-17): the rail and the 440 face are narrower
+                than the five columns, so Total is one scroll away, never cut. */}
+            <div data-sr-hscroll="" className="min-w-0">
               <table data-sr-table="" className="w-full">
                 <thead>
                   <tr>

@@ -96,7 +96,9 @@ export function PerformanceOnTheFlySection({
           {!isLoading && !isError && rows.length > 0 && (
             <>
               {data?.computed != null && <SecTypeStrip rows={rows} computed={data.computed} />}
-              <div className="overflow-x-auto">
+              {/* Compact (Rev .165): Fill · Qty · Realized — the prototype's 1·2·5,
+                  one on for the Date column the app adds ahead of Fill. */}
+              <div className="overflow-x-auto" data-sr-keep="2,3,6">
                 {/* §14.6: the prototype's 620 floor plus a Date column. */}
                 <table className="w-full min-w-[700px] border-collapse">
                   <thead>

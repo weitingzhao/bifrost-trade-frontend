@@ -4,7 +4,7 @@
  * fold of earlier runs, and the keyboard cursor.
  *
  * The page owns the state and the writes; this only draws what it is handed.
- * On a phone (Rev .163) the cards stay folded to their rows and a row opens
+ * On compact (Rev .163 → .173) the cards stay folded to their rows and a row opens
  * its card in a bottom sheet (`InboxPhoneSheet`) — which card is in the sheet
  * is a look, not the page's state, so it is kept here.
  */
@@ -63,7 +63,7 @@ export function ExpiredDraftCard({
   item: ExpiredItem
   onOpenNewer: (key: string) => void
   onPutAway: () => void
-  /** A phone: the head wraps its provenance onto a second line rather than off the screen. */
+  /** Compact: the head wraps its provenance onto a second line rather than off the screen. */
   wrap?: boolean
 }) {
   const head = draftHeadline(item.draft)
@@ -125,8 +125,8 @@ export function InboxKeyHints() {
   )
   return (
     <div
-      // Keys a phone or an iPad on its own does not have (§18.3).
-      data-sr-touch="hide"
+      // Keys a finger does not have, until a hardware key is pressed (§18.3).
+      data-sr-hint="keys"
       className="flex flex-wrap items-center justify-end gap-3 text-dense-micro text-muted-foreground"
       title="Keyboard triage. A only approves an open card; a folded call records its answer directly."
     >
@@ -147,7 +147,7 @@ export function InboxDecisionList({
   headlineOf,
   failures,
   handlers,
-  phone = false,
+  compact = false,
 }: {
   sections: InboxSection<InboxItem>[]
   /** Expired drafts by section, drawn after its pending cards (Rev .156). */
@@ -158,18 +158,18 @@ export function InboxDecisionList({
   headlineOf: (card: InboxCard) => DraftHeadline
   failures: Readonly<Record<string, DraftWriteFailure>>
   handlers: InboxListHandlers
-  /** The route page on a phone: rows, and a sheet (Rev .163). */
-  phone?: boolean
+  /** The route page on compact: rows, and a sheet (Rev .163 → .173). */
+  compact?: boolean
 }) {
   // The sheet keeps the item it opened with, so a card that leaves the queue
   // on its verdict still reads while the sheet slides away (TradeTab's rule).
   const [sheet, setSheet] = useState<{ item: InboxItem; open: boolean } | null>(null)
   const all = sections.flatMap((s) => s.items)
   const show = (item: InboxItem) => setSheet({ item, open: true })
-  // A `?card=` opens its card's sheet on a phone, once — set while rendering,
+  // A `?card=` opens its card's sheet on compact, once — set while rendering,
   // as the page resolves the deep link.
   const [seenLit, setSeenLit] = useState<string | null>(null)
-  if (phone && litKey !== seenLit) {
+  if (compact && litKey !== seenLit) {
     const hit = litKey ? all.find((i) => i.key === litKey) : undefined
     if (!litKey || hit) {
       setSeenLit(litKey)
@@ -177,7 +177,7 @@ export function InboxDecisionList({
     }
   }
   const sheetItem = sheet ? (all.find((i) => i.key === sheet.item.key) ?? sheet.item) : null
-  const openNewer = phone
+  const openNewer = compact
     ? (key: string) => {
         const hit = all.find((i) => i.key === key)
         if (hit) show(hit)
@@ -187,26 +187,26 @@ export function InboxDecisionList({
     <div className="space-y-3">
       {sections.map((section) => (
         <section key={section.dest} className="space-y-2">
-          <InboxSectionHead dest={section.dest} pending={section.items.length} wrap={phone} />
+          <InboxSectionHead dest={section.dest} pending={section.items.length} wrap={compact} />
           {section.items.map((item) => {
-            const open = !phone && item.key === openKey
-            const cursor = !phone && item.key === curKey && !open
-            const onToggle = phone ? () => show(item) : () => handlers.toggle(item.key)
+            const open = !compact && item.key === openKey
+            const cursor = !compact && item.key === curKey && !open
+            const onToggle = compact ? () => show(item) : () => handlers.toggle(item.key)
             if (item.type === 'rule') {
               return (
                 <RuleProposalCard
                   key={item.key}
                   cardKey={item.key}
                   proposal={item.proposal}
-                  face={phone ? 'row' : 'card'}
+                  face={compact ? 'row' : 'card'}
                   expanded={open}
                   cursor={cursor}
                   onToggle={onToggle}
                   // No rules store: Dismiss is drawn and says why rather than
                   // answering nothing (Rev .144 on a card the store cannot hold).
-                  // A phone's row only opens its sheet; the verdicts are there.
+                  // A compact row only opens its sheet; the verdicts are there.
                   quick={
-                    phone ? undefined : (
+                    compact ? undefined : (
                       <InboxQuickActions approveHint="Approve → Playbook" onDismiss={() => {}} dismissOff={`Dismiss — ${NO_RULES_STORE}`} />
                     )
                   }
@@ -221,7 +221,7 @@ export function InboxDecisionList({
               <div key={item.key} className="space-y-1">
                 <DraftCard
                   cardKey={item.key}
-                  face={phone ? 'row' : 'card'}
+                  face={compact ? 'row' : 'card'}
                   draft={card.head}
                   headline={head}
                   meta={cardMeta(card, head)}
@@ -237,7 +237,7 @@ export function InboxDecisionList({
                   onDismiss={() => handlers.dismiss(card)}
                   onDiscuss={() => handlers.discuss(card)}
                   quick={
-                    phone ? undefined : (
+                    compact ? undefined : (
                       <InboxQuickActions
                         approveHint={isCall ? null : quickApproveHint(card)}
                         onRecord={isCall ? () => handlers.record(card) : undefined}
@@ -263,14 +263,14 @@ export function InboxDecisionList({
             <ExpiredDraftCard
               key={x.key}
               item={x}
-              wrap={phone}
+              wrap={compact}
               onOpenNewer={openNewer}
               onPutAway={() => handlers.putAwayExpired(x)}
             />
           ))}
         </section>
       ))}
-      {phone ? (
+      {compact ? (
         <InboxDecisionSheet
           open={sheet?.open === true}
           onOpenChange={(o) => setSheet((s) => (s ? { ...s, open: o } : s))}

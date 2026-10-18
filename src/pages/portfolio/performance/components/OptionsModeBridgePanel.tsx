@@ -125,7 +125,8 @@ function ChainDayBlocks({
             {dayOpen ? (
               <div className="space-y-2 pr-3 pb-2.5 pl-11.5">
                 {day.steps.map((step) => (
-                  <div key={`${step.closeContractKey}|${step.openContractKey}`} className="min-w-0">
+                  // Compact (Rev .165): Qty · Close · Book close; a row opens the rest in its sheet.
+                  <div key={`${step.closeContractKey}|${step.openContractKey}`} className="min-w-0" data-sr-keep="1,2,4">
                     {day.steps.length > 1 ? (
                       <p className="mb-1 text-dense-meta text-muted-foreground">
                         <span className="font-mono text-entity-option">

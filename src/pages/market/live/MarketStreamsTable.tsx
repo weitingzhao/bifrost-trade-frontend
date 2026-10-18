@@ -39,6 +39,9 @@ import { liveTable } from './liveTableClasses'
 import styles from './live.module.css'
 import { liveEmptyHintClass } from './liveUi'
 
+/** Compact (§18.6, Rev .166): the symbol, its last and its daily % — the row's sheet carries the rest. */
+const STREAMS_COMPACT_KEEP = '1,4,6'
+
 /** Symbol + Qty + Cost + Last + Daily $ + Daily % + Since $ + Since % */
 function marketStreamsColSpan(hasStreamAccounts: boolean): number {
   void hasStreamAccounts
@@ -279,7 +282,7 @@ export function MarketStreamsTable({
   })()
 
   return (
-    <div className={liveTable.shell}>
+    <div className={liveTable.shell} data-sr-keep={STREAMS_COMPACT_KEEP}>
       <SortLine mode={msSortMode} />
       <table className={liveTable.table}>
         <DenseTableHeader className={liveTable.stickyThead}>

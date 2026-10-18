@@ -149,10 +149,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio',
     label: 'Portfolio',
     crumbs: [],
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.82',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio'],
     },
   },
@@ -160,12 +161,13 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio/performance',
     label: 'Performance',
     crumbs: PORTFOLIO,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .77 moved the page's own stamp for its layer inks; re-walked and
       // built in batch H2, waiting for a look.
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.82',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/performance'],
     },
   },
@@ -196,10 +198,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio/pnl-explain',
     label: 'P&L Explain',
     crumbs: PORTFOLIO,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .86–.87 §16 refinement built in batch J3; Rev .112 moved Judgment or luck to Review.
       state: 'reviewing',
-      rev: '2026-09-29.112',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/pnl-explain'],
     },
   },
@@ -208,10 +211,11 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Backing & Model',
     crumbs: PORTFOLIO,
     symbolScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-02.150',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/backing'],
     },
   },
@@ -221,10 +225,11 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: PORTFOLIO,
     // Reads ?symbol= and narrows its name lists (Owner plan #21, 2026-10-04).
     symbolScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.109',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/corporate-actions'],
     },
   },
@@ -238,7 +243,8 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: [],
     // Rev .110: instances, review lamps, rows open Trade review in the queue's order.
     // Rev .112: How they ended, the Gaps chips and the Source column (from Outcome).
-    design: { state: 'reviewing', rev: '2026-09-29.112', note: DESIGN_NOTES['/review'] },
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-10-17.168', note: DESIGN_NOTES['/review'] },
   },
   {
     path: '/review/trade',
@@ -247,24 +253,27 @@ export const ROUTES: readonly RouteEntry[] = [
     // Rev .110: the Trade's Review face (walk · lamp · Confirm review);
     // Rev .111: /review/fit → /review/trade, Single trade → Trade review.
     // Rev .112: Where the P&L came from, the corporate-action row, six endings.
-    design: { state: 'reviewing', rev: '2026-09-29.112', note: DESIGN_NOTES['/review/trade'] },
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-10-17.168', note: DESIGN_NOTES['/review/trade'] },
   },
   {
     path: '/review/habits',
     label: 'Habits',
     crumbs: REVIEW,
     // Rev .110: Plan × adherence is one reading and a door.
-    design: { state: 'reviewing', rev: '2026-09-29.110', note: DESIGN_NOTES['/review/habits'] },
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
+    design: { state: 'reviewing', rev: '2026-10-17.168', note: DESIGN_NOTES['/review/habits'] },
   },
   {
     path: '/review/objectives',
     label: 'Objectives',
     // Home since Rev .55 (the path stays for every link written to it).
     crumbs: MARKET,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.89',
+      rev: '2026-10-17.167',
       note: DESIGN_NOTES['/review/objectives'],
     },
   },
@@ -283,13 +292,14 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/risk/portfolio',
     label: 'Exposure',
     crumbs: RISK,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev 2026-09-23.3 added the two doors into Contract Greeks, which the
       // design re-homed here: the Legs cell per row (carrying `?sym=`) and the
       // header's unfiltered one. Built 2026-09-23.
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.107',
+      rev: '2026-10-17.166',
       note: DESIGN_NOTES['/risk/portfolio'],
     },
   },
@@ -300,10 +310,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/risk',
     label: 'Risk',
     crumbs: [],
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.82',
+      rev: '2026-10-17.166',
       note: DESIGN_NOTES['/risk'],
     },
   },
@@ -324,10 +335,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/risk/limits',
     label: 'Limits',
     crumbs: RISK,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.107',
+      rev: '2026-10-17.173',
       note: DESIGN_NOTES['/risk/limits'],
     },
   },
@@ -335,10 +347,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/risk/margin',
     label: 'Margin',
     crumbs: RISK,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.107',
+      rev: '2026-10-17.166',
       note: DESIGN_NOTES['/risk/margin'],
     },
   },
@@ -346,10 +359,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio/accounts',
     label: 'Accounts',
     crumbs: PORTFOLIO,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.84',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/accounts'],
     },
   },
@@ -358,11 +372,12 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Ledger',
     crumbs: PORTFOLIO,
     symbolScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-10-02.150',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/ledger'],
     },
   },
@@ -370,10 +385,11 @@ export const ROUTES: readonly RouteEntry[] = [
     path: '/portfolio/transfer',
     label: 'Transfer & Pay',
     crumbs: PORTFOLIO,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .86–.87 §16 refinement built in batch J3, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-02.150',
+      rev: '2026-10-17.165',
       note: DESIGN_NOTES['/portfolio/transfer'],
     },
   },
@@ -385,11 +401,12 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: TRADE_DESK,
     // Reads ?symbol= and narrows the executions (Owner plan #21, 2026-10-04).
     symbolScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-09-28.103',
+      rev: '2026-10-17.166',
       note: DESIGN_NOTES['/trade/fills'],
     },
   },
@@ -401,12 +418,13 @@ export const ROUTES: readonly RouteEntry[] = [
     label: 'Trading',
     crumbs: [],
     accountScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
       // Rev .104: dimensions dictionary read-only, ＋ code gone (V5); walk rev moved with Package .33.
       // Rev .111: Trading desk / Trading (the layer's name), Instances → Trades.
-      rev: '2026-09-29.111',
+      rev: '2026-10-17.172',
       note: DESIGN_NOTES['/trade/desk'],
     },
   },
@@ -431,10 +449,11 @@ export const ROUTES: readonly RouteEntry[] = [
     // only from a #NNN (like an objective's detail). Rev .111: was /instance/:id.
     path: '/trade/:id',
     label: 'Trade',
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .112: Lineage opens with Idea and Plan (Came from, ran under).
       state: 'reviewing',
-      rev: '2026-09-29.112',
+      rev: '2026-10-17.172',
       note: DESIGN_NOTES['/trade/:id'],
     },
   },
@@ -443,10 +462,11 @@ export const ROUTES: readonly RouteEntry[] = [
     // Rev .109: page name Expiry; Assignment is a section of it now.
     label: 'Expiry',
     crumbs: TRADE_DESK,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.109',
+      rev: '2026-10-17.173',
       note: DESIGN_NOTES['/trade/expiration'],
     },
   },
@@ -470,10 +490,11 @@ export const ROUTES: readonly RouteEntry[] = [
     crumbs: TRADE_DESK,
     symbolScope: true,
     accountScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-29.108',
+      rev: '2026-10-17.166',
       note: DESIGN_NOTES['/trade/plans'],
     },
   },

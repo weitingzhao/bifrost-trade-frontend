@@ -385,7 +385,11 @@ export default function ReviewObjectivesPage() {
         {loading ? (
           <ViewState kind="loading" title="Loading the chain" rows={5} cols={8} />
         ) : (
-          <ChainTable rows={rows} scoped={objective} />
+          // Compact keeps Objective · Net · Verdict (§18.6, Rev .167); the
+          // chain's other counts open in the row sheet.
+          <div data-sr-keep="1,7,8">
+            <ChainTable rows={rows} scoped={objective} />
+          </div>
         )}
         <p className="border-t border-border px-3 py-1.5 text-dense-meta leading-snug text-muted-foreground">
           Net is realised on settled positions only, per objective, never summed across accounts —

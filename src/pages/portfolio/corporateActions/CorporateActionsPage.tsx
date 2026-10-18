@@ -458,7 +458,8 @@ export default function CorporateActionsPage() {
                 </button>
               </p>
             ) : (
-              <div className="overflow-x-auto">
+              // Compact (Rev .165): Leg · Now · After the event.
+              <div className="overflow-x-auto" data-sr-keep="1,2,3">
                 {/* §14.6: six columns, the design's 900 floor. */}
                 <table className="w-full min-w-[900px] table-fixed border-collapse">
                   <colgroup>

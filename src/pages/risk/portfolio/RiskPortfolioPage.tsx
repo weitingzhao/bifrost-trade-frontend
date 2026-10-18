@@ -42,6 +42,7 @@ import { SYMBOL_PATH } from '@/lib/analyzeHubs'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { RISK_CONCENTRATION_FLOOR, RISK_UNRECORDED } from '@/utils/riskExposure'
 import { EQUITY_DELTA_LABEL, EQUITY_DELTA_TITLE } from '@/utils/equityDelta'
+import { useLayout } from '@/lib/device'
 
 const PAGE_LEAD =
   'Net book exposure, β-weighted to SPY, and what a spot shock costs it — pick a stress column to see who pays. What a position is worth at that price, and what backs it, is Backing & Model’s.'
@@ -52,12 +53,22 @@ const FOOT = 'border-t border-border px-3 py-1.5 text-dense-meta leading-normal 
 /** The share track, in ink (Rev .84): the accent's lime fallback is gone. Row hover is the list grammar's. */
 const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
+/**
+ * Compact (§18.6, Rev .166): Net Greeks keeps the name, its β-weighted Δ$
+ * and Γ; By expiry the expiry, Γ and Θ. The stress and correlation matrices
+ * are readings whole and keep their sideways scroll.
+ */
+const GREEKS_COMPACT_KEEP = '1,6,8'
+const EXPIRY_COMPACT_KEEP = '1,3,4'
 
 export default function RiskPortfolioPage() {
   const [accountFilter, setAccountFilter] = useState('all')
   const statusQ = useMonitorStatus()
   const preview = usePreviewState()
   const rowLink = useRowLink()
+  // A kept table lays out its three columns by content: the shares in the
+  // colgroup would hand them the first three columns' widths.
+  const compact = useLayout().w === 'compact'
   const {
     status,
     statusLoading,
@@ -318,22 +329,24 @@ export default function RiskPortfolioPage() {
                   </span>
                 ) : null}
               </header>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto" data-sr-keep={GREEKS_COMPACT_KEEP}>
                 {/* §14.6: eleven columns, the design's 1060 floor. */}
-                <table className="w-full min-w-[1060px] table-fixed border-collapse">
-                  <colgroup>
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '11%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '9%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '6%' }} />
-                  </colgroup>
+                <table className={cn('w-full min-w-[1060px] border-collapse', !compact && 'table-fixed')}>
+                  {compact ? null : (
+                    <colgroup>
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '11%' }} />
+                      <col style={{ width: '11%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '9%' }} />
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '8%' }} />
+                      <col style={{ width: '6%' }} />
+                    </colgroup>
+                  )}
                   <thead>
                     <tr>
                       <th className={cn(positionsUi.th, 'text-left')}>Sym</th>
@@ -452,7 +465,11 @@ export default function RiskPortfolioPage() {
                       <td className={cn(positionsUi.td, 'border-b-0 pl-2 text-left font-sans font-semibold text-muted-foreground')}>
                         Net
                       </td>
-                      <td className={cn(positionsUi.td, 'border-b-0')} colSpan={3} />
+                      {/* One cell per column, not a span: a kept table hides
+                          columns by position, and a span would shift them. */}
+                      <td className={cn(positionsUi.td, 'border-b-0')} />
+                      <td className={cn(positionsUi.td, 'border-b-0')} />
+                      <td className={cn(positionsUi.td, 'border-b-0')} />
                       <td className={cn(positionsUi.td, 'border-b-0 font-bold text-foreground')}>
                         {fmtSignedUsd0(totals.deltaDollars)}
                       </td>
@@ -533,16 +550,18 @@ export default function RiskPortfolioPage() {
               {expiries.length === 0 ? (
                 <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No option legs in this scope.</p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-sr-keep={EXPIRY_COMPACT_KEEP}>
                   {/* §14.6: five columns, the design's 620 floor. */}
-                  <table className="w-full min-w-[620px] table-fixed border-collapse">
-                    <colgroup>
-                      <col style={{ width: '18%' }} />
-                      <col style={{ width: '12%' }} />
-                      <col style={{ width: '20%' }} />
-                      <col style={{ width: '20%' }} />
-                      <col style={{ width: '30%' }} />
-                    </colgroup>
+                  <table className={cn('w-full min-w-[620px] border-collapse', !compact && 'table-fixed')}>
+                    {compact ? null : (
+                      <colgroup>
+                        <col style={{ width: '18%' }} />
+                        <col style={{ width: '12%' }} />
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '30%' }} />
+                      </colgroup>
+                    )}
                     <thead>
                       <tr>
                         <th className={cn(positionsUi.th, 'text-left')}>Expiry</th>

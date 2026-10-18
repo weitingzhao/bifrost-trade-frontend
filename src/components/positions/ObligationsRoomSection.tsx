@@ -53,10 +53,12 @@ export function ObligationsRoomSection({
   const total = rows.reduce((n, r) => n + r.cashIfAssigned, 0)
   return (
     <CollapsibleGroup variant="inset">
-      <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
+      {/* The answer line is long: where the row runs out it wraps under the
+          title instead of pushing the page sideways (a phone, a narrow pane). */}
+      <CollapsibleGroupHeader expanded={open} onToggle={onToggle} className="flex-wrap">
         <CollapsibleChevron expanded={open} />
         <CollapsibleGroupTitle>Obligations &amp; room</CollapsibleGroupTitle>
-        <CollapsibleGroupStats>
+        <CollapsibleGroupStats className="min-w-0 shrink">
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             if assigned {fmtUsd(total)}
             {coverRatio != null ? ` (${Math.round(coverRatio * 100)}% of BP)` : ''} ·{' '}

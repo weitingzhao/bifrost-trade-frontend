@@ -128,25 +128,29 @@ export default function DailyBriefPage() {
             >
               Pilot Console →
             </PageHeadLink>
-            <PageHeadLink to="/research/loop/decisions" title="Approve or leave the digest">
-              Inbox →
-            </PageHeadLink>
-            {/* The design's `⟳ Re-run` queues the Morning Prep run. Nothing on
-                this side triggers a digest: the agent runs on its own schedule
-                and there is no route that asks for another. Marked rather than
-                drawn — a button that queued nothing would be worse. */}
-            <span
-              className="rounded-full border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
-              title="The design offers ⟳ Re-run here. The digest agent runs on a schedule and no route asks it for another run, so there is nothing to queue."
-            >
-              ⟳ re-run · not on this side
+            {/* Compact keeps the Console alone (design Rev .167): the re-run
+                mark does not come out, and neither do the other two doors. */}
+            <span data-sr-hide="compact" className="contents">
+              <PageHeadLink to="/research/loop/decisions" title="Approve or leave the digest">
+                Inbox →
+              </PageHeadLink>
+              {/* The design's `⟳ Re-run` queues the Morning Prep run. Nothing on
+                  this side triggers a digest: the agent runs on its own schedule
+                  and there is no route that asks for another. Marked rather than
+                  drawn — a button that queued nothing would be worse. */}
+              <span
+                className="rounded-full border border-dashed border-border px-2 py-0.5 text-dense-caption text-muted-foreground/70"
+                title="The design offers ⟳ Re-run here. The digest agent runs on a schedule and no route asks it for another run, so there is nothing to queue."
+              >
+                ⟳ re-run · not on this side
+              </span>
+              <AskCopilotButton
+                originPage="daily-brief"
+                originLabel="Daily Brief"
+                snapshot={compactSnapshot({ day, one_thing: oneThing?.slice(0, 400) })}
+                suggestedPrompt="From this morning's digest: what is the one thing I should decide before the open?"
+              />
             </span>
-            <AskCopilotButton
-              originPage="daily-brief"
-              originLabel="Daily Brief"
-              snapshot={compactSnapshot({ day, one_thing: oneThing?.slice(0, 400) })}
-              suggestedPrompt="From this morning's digest: what is the one thing I should decide before the open?"
-            />
           </>
         }
       />

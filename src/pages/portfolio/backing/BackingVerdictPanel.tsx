@@ -100,9 +100,11 @@ export function BackingVerdictPanel({
       {basisOpen ? (
         <div className="border-t border-border" data-testid="backing-assumptions">
           {rows.map((row) => (
+            // Compact (Rev .165): the three cells stack — the basis, its value, its source.
             <div
               key={row.key}
               className="grid grid-cols-[9.25rem_minmax(0,1.25fr)_minmax(0,1fr)] items-start border-b border-border/55 last:border-b-0"
+              data-sr-stack=""
             >
               <span className="px-2.5 py-1.5 text-dense-meta leading-normal text-muted-foreground">{row.key}</span>
               <span className="flex gap-1.5 px-2.5 py-1.5 text-xs leading-normal text-foreground text-pretty">

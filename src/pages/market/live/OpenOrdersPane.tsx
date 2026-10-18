@@ -51,6 +51,14 @@ import {
   liveSourceHintClass,
 } from './liveUi'
 
+/**
+ * Compact (§18.6, Rev .166): the design's one order table keeps Order ·
+ * Limit · State. Here the order is two tables, so each keeps its own
+ * Symbol · Limit · Status — the row's sheet carries the contract and the rest.
+ */
+const OPT_ORDERS_COMPACT_KEEP = '2,8,9'
+const STK_ORDERS_COMPACT_KEEP = '2,5,6'
+
 interface Props {
   optOrders: OpenOrder[]
   stkOrders: OpenOrder[]
@@ -105,7 +113,7 @@ export function OpenOrdersPane({
           {optOrders.length > 0 && (
             <div className={liveOpenOrdersSectionClass}>
               <h3 className={liveOpenOrdersSubtitleClass}>Option (OPT)</h3>
-              <div className={liveTable.shell}>
+              <div className={liveTable.shell} data-sr-keep={OPT_ORDERS_COMPACT_KEEP}>
                 <table className={liveTable.table} aria-label="Open orders Option">
                   <DenseTableHeader className={liveTable.stickyThead}>
                   <DenseTableHeadRow>
@@ -172,7 +180,7 @@ export function OpenOrdersPane({
           {stkOrders.length > 0 && (
             <div className={liveOpenOrdersSectionClass}>
               <h3 className={liveOpenOrdersSubtitleClass}>Stock (STK)</h3>
-              <div className={liveTable.shell}>
+              <div className={liveTable.shell} data-sr-keep={STK_ORDERS_COMPACT_KEEP}>
                 <table className={liveTable.table} aria-label="Open orders Stock">
                   <DenseTableHeader className={liveTable.stickyThead}>
                   <DenseTableHeadRow>

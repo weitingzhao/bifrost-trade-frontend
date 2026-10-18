@@ -1,20 +1,21 @@
 /**
- * Two shell behaviours the device tiers add (design Rev .163):
+ * Two shell behaviours the layout axes add (design Rev .163 → .174):
  *
- * - **Kept columns (phone, §18.6).** A table container writes
- *   `data-sr-keep="1,4,8"` (column numbers from 1); on a phone every other
+ * - **Kept columns (compact, §18.6).** A table container writes
+ *   `data-sr-keep="1,4,8"` (column numbers from 1); on compact every other
  *   column hides. CSS cannot read a list out of an attribute, so the rule for
  *   each value is written once, the first time it is seen. Nested tables do
  *   not inherit: the rule is the container's direct table rows only.
- * - **The dock bar steps aside (pad, §18.11).** Reading down a page hides the
- *   bottom toolbar after 32px of travel; 24px back up, the top of the page,
- *   or a tap within 56px of the bottom edge brings it back. 220ms, drawn by
- *   `styles/device.css` off `<html data-sr-dockhide>`.
+ * - **The dock bar steps aside (short, above compact, §18.11).** Reading
+ *   down a page hides the bottom toolbar after 32px of travel; 24px back up,
+ *   the top of the page, or a tap — or the mouse — within 56px of the bottom
+ *   edge brings it back. 220ms, drawn by `styles/device.css` off
+ *   `<html data-sr-dockhide>`. An iPad Air and a 13″ laptop both qualify.
  */
 import { useEffect } from 'react'
-import { deviceNow, useDevice } from '@/lib/device'
+import { layoutNow, useLayout } from '@/lib/device'
 
-/** The CSS for one `data-sr-keep` value: every cell not in the list hides on a phone. */
+/** The CSS for one `data-sr-keep` value: every cell not in the list hides on compact. */
 export function keepRule(value: string): string {
   const keep = value
     .split(',')
@@ -26,13 +27,13 @@ export function keepRule(value: string): string {
   // `:not([colspan])`: a full-width group or empty row keeps spanning.
   // `tr:not(… td tr)`: a table nested in a cell keeps all its columns.
   const host = `[data-sr-keep="${v}"]`
-  return `html[data-device='phone'] ${host} tr:not(${host} td tr) > :is(th, td)${nots}:not([colspan]) { display: none; }`
+  return `html[data-w='compact'] ${host} tr:not(${host} td tr) > :is(th, td)${nots}:not([colspan]) { display: none; }`
 }
 
-export function usePhoneKeepRules(): void {
-  const { device } = useDevice()
+export function useCompactKeepRules(): void {
+  const compact = useLayout().w === 'compact'
   useEffect(() => {
-    if (device !== 'phone') return
+    if (!compact) return
     let style = document.getElementById('sr-keep-css') as HTMLStyleElement | null
     if (!style) {
       style = document.createElement('style')
@@ -60,8 +61,11 @@ export function usePhoneKeepRules(): void {
     const mo = new MutationObserver(scan)
     mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-sr-keep'] })
     return () => mo.disconnect()
-  }, [device])
+  }, [compact])
 }
+
+/** Rev .163's name. */
+export const usePhoneKeepRules = useCompactKeepRules
 
 export const DOCK_HIDE_AFTER_PX = 32
 export const DOCK_SHOW_AFTER_PX = 24
@@ -74,18 +78,24 @@ export function dockStep(y: number, acc: number): 'hide' | 'show' | 'stay' {
   return 'stay'
 }
 
-export function usePadDockAutoHide(): void {
-  const { device } = useDevice()
+const steps = () => {
+  const l = layoutNow()
+  return l.h === 'short' && l.w !== 'compact'
+}
+
+export function useShortDockAutoHide(): void {
+  const { w, h } = useLayout()
+  const on = h === 'short' && w !== 'compact'
   useEffect(() => {
     const root = document.documentElement
-    if (device !== 'pad') {
+    if (!on) {
       root.removeAttribute('data-sr-dockhide')
       return
     }
     const last = new WeakMap<Element, number>()
     let acc = 0
     const onScroll = (e: Event) => {
-      if (deviceNow().device !== 'pad') return
+      if (!steps()) return
       const t = e.target instanceof Element ? e.target : document.scrollingElement
       // The page lane and what scrolls inside it; a panel or a sheet scrolling is not reading the page.
       if (!t || !(t.id === 'main-content' || t.closest('#main-content'))) return
@@ -98,18 +108,28 @@ export function usePadDockAutoHide(): void {
       if (step === 'show') root.removeAttribute('data-sr-dockhide')
       else if (step === 'hide') root.setAttribute('data-sr-dockhide', '1')
     }
+    const back = () => {
+      root.removeAttribute('data-sr-dockhide')
+      acc = 0
+    }
     const onDown = (e: PointerEvent) => {
-      if (root.hasAttribute('data-sr-dockhide') && e.clientY > window.innerHeight - DOCK_EDGE_PX) {
-        root.removeAttribute('data-sr-dockhide')
-        acc = 0
-      }
+      if (root.hasAttribute('data-sr-dockhide') && e.clientY > window.innerHeight - DOCK_EDGE_PX) back()
+    }
+    // A laptop's pointer reaching for the bar brings it back too.
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && root.hasAttribute('data-sr-dockhide') && e.clientY > window.innerHeight - DOCK_EDGE_PX) back()
     }
     document.addEventListener('scroll', onScroll, true)
     document.addEventListener('pointerdown', onDown, true)
+    document.addEventListener('pointermove', onMove, true)
     return () => {
       document.removeEventListener('scroll', onScroll, true)
       document.removeEventListener('pointerdown', onDown, true)
+      document.removeEventListener('pointermove', onMove, true)
       root.removeAttribute('data-sr-dockhide')
     }
-  }, [device])
+  }, [on])
 }
+
+/** Rev .163's name. */
+export const usePadDockAutoHide = useShortDockAutoHide

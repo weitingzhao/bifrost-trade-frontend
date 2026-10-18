@@ -131,7 +131,7 @@ export function LinesToolbar({
             {shown} / {total}
           </span>
           <Select value={values.structureType} onValueChange={(v) => update({ structureType: v })}>
-            <SelectTrigger data-sr-phone="hide" className={cn(trigger, 'w-38')} aria-label="Contract type">
+            <SelectTrigger data-sr-hide="compact" className={cn(trigger, 'w-38')} aria-label="Contract type">
               <SelectValue placeholder="All contract types" />
             </SelectTrigger>
             <SelectContent>
@@ -145,7 +145,7 @@ export function LinesToolbar({
           </Select>
 
           <Select value={values.oppName} onValueChange={(v) => update({ oppName: v })}>
-            <SelectTrigger data-sr-phone="hide" className={cn(trigger, 'w-42')} aria-label="Opportunity">
+            <SelectTrigger data-sr-hide="compact" className={cn(trigger, 'w-42')} aria-label="Opportunity">
               <SelectValue placeholder="All opportunities" />
             </SelectTrigger>
             <SelectContent>
@@ -158,7 +158,7 @@ export function LinesToolbar({
             </SelectContent>
           </Select>
 
-          <span data-sr-phone="hide" className="flex items-center gap-1.5">
+          <span data-sr-hide="compact" className="flex items-center gap-1.5">
             <span className={positionsUi.cap}>Scope</span>
             <SegmentControl
               size="xs"
@@ -168,7 +168,7 @@ export function LinesToolbar({
               onChange={(v) => update({ scopeType: v })}
             />
           </span>
-          <span data-sr-phone="hide" className="flex items-center gap-1.5">
+          <span data-sr-hide="compact" className="flex items-center gap-1.5">
             <span className={positionsUi.cap}>Attribution</span>
             <SegmentControl
               size="xs"
@@ -187,7 +187,7 @@ export function LinesToolbar({
       ) : null}
 
       {view !== 'expiries' ? (
-        <span data-sr-phone="hide" className="ml-auto flex shrink-0 items-center gap-1.5">
+        <span data-sr-hide="compact" className="ml-auto flex shrink-0 items-center gap-1.5">
           <span className={positionsUi.cap}>Rows</span>
           <SegmentControl
             size="xs"

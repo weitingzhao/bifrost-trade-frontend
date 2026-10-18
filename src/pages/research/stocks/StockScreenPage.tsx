@@ -10,10 +10,12 @@
  * The data and every rule are in `stockScreenModel` / `stockScreenStages`;
  * this file holds state and wiring.
  *
- * Devices (Rev .163, DESIGN_CONTRACTS §18): on a phone the page is read-only
- * — the Screen column and Flow do not draw, the result keeps three columns
- * and Why is a bottom sheet (`WhyPanel`). An iPad opens Funnel · lineage
- * folded and keeps its own fold (§18.11).
+ * Layout (Rev .164 → .173, DESIGN_CONTRACTS §18): on compact the page is
+ * read-only — the Screen column, Flow, Save screen, → Autopilot objective and
+ * the Weights drawer do not draw, the result keeps three columns, Leaders two,
+ * and Why is a bottom sheet. With the dock, Why is a column beside the page
+ * (§18.12); otherwise it floats (`WhyPanel`). A short screen opens Funnel ·
+ * lineage folded and keeps its own fold (§18.11).
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -23,7 +25,7 @@ import { PageFaceSwitch, PageHead, PageHeadAction, PageShell } from '@/component
 import { SegmentControl, type SegmentOption } from '@/components/data-display'
 import { fetchSavedScreens, screenV1, screenV2, type SavedScreen } from '@/api/research/savedScreens'
 import { firstResearchAuthGapError } from '@/lib/auth/researchAuthGap'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { usePageViewState } from '@/lib/pageView'
 import { notify } from '@/lib/shellNotify'
 import { publishSymbolTrail } from '@/lib/symbolTrail'
@@ -120,12 +122,14 @@ export default function StockScreenPage() {
   const [view, setView] = usePageViewState<'ranked' | 'leaders'>('view', 'ranked')
   const [lsort, setLsort] = usePageViewState<LeaderSortKey>('lsort', 'peak')
   const [lsel, setLsel] = usePageViewState<{ symbol: string; date: string } | null>('lsel', null)
-  // Funnel · lineage: open on the desk, folded on an iPad; each tier keeps its own fold (§18.11).
-  const { device } = useDevice()
-  const [flowDesk, setFlowDesk] = usePageViewState('flowOpen', true)
-  const [flowPad, setFlowPad] = usePageViewState('flowOpen@pad', false)
-  const flowOpen = device === 'pad' ? flowPad : flowDesk
-  const setFlowOpen = device === 'pad' ? setFlowPad : setFlowDesk
+  // Funnel · lineage: open on a tall screen, folded on a short one (above
+  // compact, which does not draw it); each keeps its own fold (§18.11).
+  const layout = useLayout()
+  const short = layout.h === 'short' && layout.w !== 'compact'
+  const [flowTall, setFlowTall] = usePageViewState('flowOpen', true)
+  const [flowShort, setFlowShort] = usePageViewState('flowOpen@short', false)
+  const flowOpen = short ? flowShort : flowTall
+  const setFlowOpen = short ? setFlowShort : setFlowTall
   const [lf, setLf] = usePageViewState<LineageFocus>('lf', {})
   const [ff, setFf] = usePageViewState<FunnelFocus | null>('ff', null)
   const [startId, setStartId] = useState<string | null>(null)
@@ -485,287 +489,302 @@ export default function StockScreenPage() {
 
   const failed = data.error && !data.rows.length
   return (
-    <PageShell padding="compact" className="space-y-3">
-      <PageHead
-        title="Stock screen"
-        info="One page for picking stocks. A model ranks, a screen cuts, and each works alone or with the other: choose a universe, a model to order it (or none), then a screen to narrow it. The Method face (⧉) is where models are defined, conditions are written and screens are versioned."
-        actions={
-          <>
-            <SaveScreenAction screen={screen} stages={stages} nOn={nOn} universe={universe} />
-            <PageHeadAction
-              disabled
-              title="An objective from a screen writes a standing schedule, and what it stamps as its source is a product call — owed, as on Vol ratings."
-            >
-              → Autopilot objective
-            </PageHeadAction>
-          </>
-        }
-      />
-      <div data-sr-toolbar="">
-        <PageFaceSwitch path="/research/stocks" />
-        <span data-sr-tb="sep" />
-        <span data-sr-tb="label">View</span>
-        <SegmentControl
-          size="xs"
-          ariaLabel="View"
-          value={view}
-          options={VIEW_OPTIONS}
-          onChange={(v) => {
-            setView(v as 'ranked' | 'leaders')
-            setSel(null)
-            setLsel(null)
-            if (v === 'leaders') setModel('radar')
-          }}
-        />
-        <span data-sr-tb="sep" />
-        <span data-sr-tb="label">Universe</span>
-        <SegmentControl
-          size="xs"
-          ariaLabel="Universe"
-          value={universe}
-          options={UNIVERSE_OPTIONS}
-          onChange={(v) => {
-            setUniverse(v as UniverseId)
-            commit(screen, `universe ${UNIVERSE_LABEL[v as UniverseId]}`, startId, v)
-          }}
-        />
-        {nClear > 0 && view === 'ranked' ? (
-          <button type="button" onClick={clearAll} className="mat-btn h-6 border px-2 text-dense-meta">
-            Clear {nClear}
-          </button>
-        ) : null}
-        <span data-sr-tb="meta" className="ml-auto whitespace-nowrap font-mono">
-          {view === 'leaders'
-            ? `Radar · across sessions`
-            : `${pool.length.toLocaleString('en-US')} in universe · ${survivors.length.toLocaleString('en-US')} pass${model === 'none' ? '' : ` · ${rated.length} rated by ${MODEL_LABEL[model]}`}`}
-        </span>
-      </div>
+    <PageShell padding="compact">
+      {/* The page and Why side by side: with the dock Why is the column on the
+          right (§18.12); otherwise it floats over the edge or, on compact, is a
+          sheet, and the page keeps the whole width. */}
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1 space-y-3">
+          <PageHead
+            title="Stock screen"
+            info="One page for picking stocks. A model ranks, a screen cuts, and each works alone or with the other: choose a universe, a model to order it (or none), then a screen to narrow it. The Method face (⧉) is where models are defined, conditions are written and screens are versioned."
+            actions={
+              // Both write (a saved screen, a standing schedule): builders, not on compact (§18.2).
+              <>
+                <span data-sr-build="" className="contents">
+                  <SaveScreenAction screen={screen} stages={stages} nOn={nOn} universe={universe} />
+                </span>
+                <span data-sr-build="" className="contents">
+                  <PageHeadAction
+                    disabled
+                    title="An objective from a screen writes a standing schedule, and what it stamps as its source is a product call — owed, as on Vol ratings."
+                  >
+                    → Autopilot objective
+                  </PageHeadAction>
+                </span>
+              </>
+            }
+          />
+          <div data-sr-toolbar="">
+            <PageFaceSwitch path="/research/stocks" />
+            <span data-sr-tb="sep" />
+            <span data-sr-tb="label">View</span>
+            <SegmentControl
+              size="xs"
+              ariaLabel="View"
+              value={view}
+              options={VIEW_OPTIONS}
+              onChange={(v) => {
+                setView(v as 'ranked' | 'leaders')
+                setSel(null)
+                setLsel(null)
+                if (v === 'leaders') setModel('radar')
+              }}
+            />
+            <span data-sr-tb="sep" />
+            <span data-sr-tb="label">Universe</span>
+            {/* Five universes outgrow a compact line: the segment scrolls on its own, not the page (§18.7). */}
+            <span data-sr-scroll="" className={layout.w === 'compact' ? 'flex min-w-0 max-w-full' : 'contents'}>
+              <SegmentControl
+                size="xs"
+                ariaLabel="Universe"
+                value={universe}
+                options={UNIVERSE_OPTIONS}
+                onChange={(v) => {
+                  setUniverse(v as UniverseId)
+                  commit(screen, `universe ${UNIVERSE_LABEL[v as UniverseId]}`, startId, v)
+                }}
+              />
+            </span>
+            {nClear > 0 && view === 'ranked' ? (
+              <button type="button" onClick={clearAll} className="mat-btn h-6 border px-2 text-dense-meta">
+                Clear {nClear}
+              </button>
+            ) : null}
+            <span data-sr-tb="meta" className="ml-auto whitespace-nowrap font-mono">
+              {view === 'leaders'
+                ? `Radar · across sessions`
+                : `${pool.length.toLocaleString('en-US')} in universe · ${survivors.length.toLocaleString('en-US')} pass${model === 'none' ? '' : ` · ${rated.length} rated by ${MODEL_LABEL[model]}`}`}
+            </span>
+          </div>
 
-      {data.isLoading && !data.rows.length ? (
-        <ViewState kind="loading" title="Loading models and the screen universe" rows={8} cols={6} />
-      ) : failed ? (
-        <ViewState
-          kind="failed"
-          title="Couldn't load stock data"
-          detail={`${data.error?.message ?? 'A model store did not answer'}. No model was read and no condition evaluated, so an empty list here would not be a result.`}
-          onAction={data.refetch}
-        />
-      ) : (
-        <>
-          {data.error ? <ViewState kind="stale" title="One model store did not answer" detail={data.error.message} onAction={data.refetch} /> : null}
-          {data.setError ? <ViewState kind="failed" layout="strip" title="A condition set did not load" detail={data.setError} /> : null}
-          {view === 'ranked' ? (
+          {data.isLoading && !data.rows.length ? (
+            <ViewState kind="loading" title="Loading models and the screen universe" rows={8} cols={6} />
+          ) : failed ? (
+            <ViewState
+              kind="failed"
+              title="Couldn't load stock data"
+              detail={`${data.error?.message ?? 'A model store did not answer'}. No model was read and no condition evaluated, so an empty list here would not be a result.`}
+              onAction={data.refetch}
+            />
+          ) : (
             <>
-              <MatchCards
-                pass={survivors.length}
-                poolN={pool.length}
-                universeLabel={UNIVERSE_LABEL[universe]}
-                cells={cells}
-                base={base}
-                on={screen.on}
-                model={model}
-                reach={reach}
-                onToggle={toggleAgree}
-                onRankBy={rankBy}
-                allRequired={AGREE_IDS.every((id) => screen.on[id]) && !((screen.mins.agree ?? 0) > 0)}
-                onRequireAll={allThree}
-                noFocus={!hasLf}
-                onListAll={() => {
-                  clearFocus()
-                  setView('ranked')
-                }}
-                allThreeListed={allThreeListed}
-                onListAllThree={() => {
-                  setFf(allThreeListed ? null : { f: 3, st: 4 })
-                  setLf({})
-                  setSf(null)
-                }}
-                cardsRef={cardsRef}
-                pulse={pulse}
-              />
-              <FlowPanel
-                open={flowOpen}
-                onToggle={() => setFlowOpen(!flowOpen)}
-                funnels={funnels}
-                poolN={pool.length}
-                baseN={base.length}
-                reach={reach}
-                ff={ff}
-                onFunnelStep={(f, st) => {
-                  setFf(ff && ff.f === f && ff.st === st ? null : { f, st })
-                  setSf(null)
-                }}
-                base={base}
-                visible={visible}
-                pickedModels={picked}
-                focus={focus}
-                selected={sel}
-                onNode={(a, n) => {
-                  setSf(null)
-                  setLf((f) => {
-                    const o = { ...f }
-                    if (o[a] === n) delete o[a]
-                    else o[a] = n
-                    return o
-                  })
-                }}
-                onPick={(sym) => setSel(sym)}
-                hover={hover}
-              />
-            </>
-          ) : null}
-          <div className="flex min-w-0 flex-wrap items-start gap-3">
-              <ScreenPanel
-                title={screenTitle}
-                poolN={pool.length}
-                resultN={survivors.length}
-                nOn={nOn}
-                onClear={clearAll}
-                starts={starts}
-                startId={startId}
-                savedNote={savedNote}
-                stages={stages}
-                counts={counts}
-                screen={screen}
-                chipCountOf={chipCount}
-                pending={data.setsPending}
-                onChip={toggle}
-                onMin={(stageId, n, why) => commit({ ...screen, mins: { ...screen.mins, [stageId]: n } }, why)}
-                onPine={(pine, why) => commit({ ...screen, pine }, why)}
-                collapsed={!scrOpen}
-                onToggle={() => setScrOpen(!scrOpen)}
-                hovered={hs}
-                onHover={setHs}
-                cutIdx={cutAt}
-                onCut={(i) => {
-                  setSf(cutAt === i ? null : i)
-                  setFf(null)
-                  setLf({})
-                  setView('ranked')
-                }}
-                focusCounts={focusCounts}
-                onToCards={toCards}
-              />
-            <section className="mat-card min-w-[min(100%,480px)] max-w-full flex-[999_1_0] overflow-hidden border">
+              {data.error ? <ViewState kind="stale" title="One model store did not answer" detail={data.error.message} onAction={data.refetch} /> : null}
+              {data.setError ? <ViewState kind="failed" layout="strip" title="A condition set did not load" detail={data.setError} /> : null}
               {view === 'ranked' ? (
                 <>
-                  <ResultHead
-                    title={
-                      model === 'none'
-                        ? `${rated.length} names · ${nsort === 'earn' ? 'by next print' : 'A–Z'}`
-                        : `${rated.length} ranked by ${MODEL_LABEL[model]}${unrated.length ? ` · ${unrated.length} not rated` : ''}`
-                    }
-                    version={curV ? `v${curV.v}` : 'v…'}
-                    universeN={pool.length}
-                    resultN={survivors.length}
-                    diff={curV ? versionDiff({ ...curV, syms: survivorSyms }, parentV) : ''}
-                    chips={lfChips}
-                    focusNote={focusNote}
-                    onClearFocus={clearFocus}
+                  <MatchCards
+                    pass={survivors.length}
+                    poolN={pool.length}
+                    universeLabel={UNIVERSE_LABEL[universe]}
+                    cells={cells}
+                    base={base}
+                    on={screen.on}
                     model={model}
-                    onModel={rankBy}
-                    wOpen={wOpen}
-                    onToggleW={() => setWOpen(!wOpen)}
-                    weights={weights}
-                    onWeights={setWeights}
-                    noneSort={nsort}
-                    onNoneSort={setNsort}
-                    source={source[model]}
-                    versions={versions}
-                    cur={cur}
-                    countOf={(i) => symsOf(i).length}
-                    onStand={standOn}
+                    reach={reach}
+                    onToggle={toggleAgree}
+                    onRankBy={rankBy}
+                    allRequired={AGREE_IDS.every((id) => screen.on[id]) && !((screen.mins.agree ?? 0) > 0)}
+                    onRequireAll={allThree}
+                    noFocus={!hasLf}
+                    onListAll={() => {
+                      clearFocus()
+                      setView('ranked')
+                    }}
+                    allThreeListed={allThreeListed}
+                    onListAllThree={() => {
+                      setFf(allThreeListed ? null : { f: 3, st: 4 })
+                      setLf({})
+                      setSf(null)
+                    }}
+                    cardsRef={cardsRef}
+                    pulse={pulse}
                   />
-                  {rated.length + unrated.length > 0 ? (
-                    <ResultTable
-                      model={model}
-                      rated={rated}
-                      unrated={unrated}
-                      showAll={showAll}
-                      onShowAll={() => setShowAll(true)}
-                      sort={sort}
-                      dir={dir}
-                      onSort={(k) => {
-                        setDir(sort === k ? (dir === -1 ? 1 : -1) : -1)
-                        setSort(k)
-                      }}
-                      selected={sel}
-                      onSelect={setSel}
-                      bookOf={(s) => {
-                        const b = pf.isHolding(s)
-                        const w = pf.isWatchlist(s)
-                        return b ? (w ? 'book · watch' : 'in book') : w ? 'watchlist' : '—'
-                      }}
-                      rules={data.rules}
-                      sepaDate={data.sepaDate}
-                      earnings={data.earnings}
-                      chartSignal={pineChartSignal(screen.on)}
-                    />
+                  <FlowPanel
+                    open={flowOpen}
+                    onToggle={() => setFlowOpen(!flowOpen)}
+                    funnels={funnels}
+                    poolN={pool.length}
+                    baseN={base.length}
+                    reach={reach}
+                    ff={ff}
+                    onFunnelStep={(f, st) => {
+                      setFf(ff && ff.f === f && ff.st === st ? null : { f, st })
+                      setSf(null)
+                    }}
+                    base={base}
+                    visible={visible}
+                    pickedModels={picked}
+                    focus={focus}
+                    selected={sel}
+                    onNode={(a, n) => {
+                      setSf(null)
+                      setLf((f) => {
+                        const o = { ...f }
+                        if (o[a] === n) delete o[a]
+                        else o[a] = n
+                        return o
+                      })
+                    }}
+                    onPick={(sym) => setSel(sym)}
+                    hover={hover}
+                  />
+                </>
+              ) : null}
+              <div className="flex min-w-0 flex-wrap items-start gap-3">
+                  <ScreenPanel
+                    title={screenTitle}
+                    poolN={pool.length}
+                    resultN={survivors.length}
+                    nOn={nOn}
+                    onClear={clearAll}
+                    starts={starts}
+                    startId={startId}
+                    savedNote={savedNote}
+                    stages={stages}
+                    counts={counts}
+                    screen={screen}
+                    chipCountOf={chipCount}
+                    pending={data.setsPending}
+                    onChip={toggle}
+                    onMin={(stageId, n, why) => commit({ ...screen, mins: { ...screen.mins, [stageId]: n } }, why)}
+                    onPine={(pine, why) => commit({ ...screen, pine }, why)}
+                    collapsed={!scrOpen}
+                    onToggle={() => setScrOpen(!scrOpen)}
+                    hovered={hs}
+                    onHover={setHs}
+                    cutIdx={cutAt}
+                    onCut={(i) => {
+                      setSf(cutAt === i ? null : i)
+                      setFf(null)
+                      setLf({})
+                      setView('ranked')
+                    }}
+                    focusCounts={focusCounts}
+                    onToCards={toCards}
+                  />
+                <section className="mat-card min-w-[min(100%,480px)] max-w-full flex-[999_1_0] overflow-hidden border">
+                  {view === 'ranked' ? (
+                    <>
+                      <ResultHead
+                        title={
+                          model === 'none'
+                            ? `${rated.length} names · ${nsort === 'earn' ? 'by next print' : 'A–Z'}`
+                            : `${rated.length} ranked by ${MODEL_LABEL[model]}${unrated.length ? ` · ${unrated.length} not rated` : ''}`
+                        }
+                        version={curV ? `v${curV.v}` : 'v…'}
+                        universeN={pool.length}
+                        resultN={survivors.length}
+                        diff={curV ? versionDiff({ ...curV, syms: survivorSyms }, parentV) : ''}
+                        chips={lfChips}
+                        focusNote={focusNote}
+                        onClearFocus={clearFocus}
+                        model={model}
+                        onModel={rankBy}
+                        wOpen={wOpen}
+                        onToggleW={() => setWOpen(!wOpen)}
+                        weights={weights}
+                        onWeights={setWeights}
+                        noneSort={nsort}
+                        onNoneSort={setNsort}
+                        source={source[model]}
+                        versions={versions}
+                        cur={cur}
+                        countOf={(i) => symsOf(i).length}
+                        onStand={standOn}
+                      />
+                      {rated.length + unrated.length > 0 ? (
+                        <ResultTable
+                          model={model}
+                          rated={rated}
+                          unrated={unrated}
+                          showAll={showAll}
+                          onShowAll={() => setShowAll(true)}
+                          sort={sort}
+                          dir={dir}
+                          onSort={(k) => {
+                            setDir(sort === k ? (dir === -1 ? 1 : -1) : -1)
+                            setSort(k)
+                          }}
+                          selected={sel}
+                          onSelect={setSel}
+                          bookOf={(s) => {
+                            const b = pf.isHolding(s)
+                            const w = pf.isWatchlist(s)
+                            return b ? (w ? 'book · watch' : 'in book') : w ? 'watchlist' : '—'
+                          }}
+                          rules={data.rules}
+                          sepaDate={data.sepaDate}
+                          earnings={data.earnings}
+                          chartSignal={pineChartSignal(screen.on)}
+                        />
+                      ) : (
+                        <ViewState
+                          kind="filtered"
+                          title="Nothing survives this screen"
+                          detail={
+                            hasLf && survivors.length
+                              ? `The focus (${lfChips.map((c) => c.label).join(' + ')}) leaves none of the ${survivors.length} names that pass the full screen. The ribbons count names before the Model agreement stage.`
+                              : `${pool.length} in ${UNIVERSE_LABEL[universe]} · 0 after stage ${counts.findIndex((c) => c.after === 0) + 1}. Loosen that stage or widen the universe.`
+                          }
+                          actionLabel="Clear criteria"
+                          onAction={clearAll}
+                        />
+                      )}
+                      <div className="text-pretty border-t border-foreground/[0.06] px-3 py-2 text-dense-meta leading-normal text-muted-foreground">
+                        {FOOT[model]} Earn is Research’s estimated next print (last year’s same-quarter results 8-K + 52 weeks); — where a name has none.
+                      </div>
+                    </>
                   ) : (
-                    <ViewState
-                      kind="filtered"
-                      title="Nothing survives this screen"
-                      detail={
-                        hasLf && survivors.length
-                          ? `The focus (${lfChips.map((c) => c.label).join(' + ')}) leaves none of the ${survivors.length} names that pass the full screen. The ribbons count names before the Model agreement stage.`
-                          : `${pool.length} in ${UNIVERSE_LABEL[universe]} · 0 after stage ${counts.findIndex((c) => c.after === 0) + 1}. Loosen that stage or widen the universe.`
-                      }
-                      actionLabel="Clear criteria"
-                      onAction={clearAll}
+                    <LeadersFace
+                      universe={universe === 'all' || universe === 'options' ? 'all' : universe}
+                      inUniverse={(s) => (universe === 'book' ? pf.isHolding(s) : pf.isWatchlist(s))}
+                      sort={lsort}
+                      onSort={setLsort}
+                      selected={lsel}
+                      onSelect={setLsel}
+                      todayOf={(s) => {
+                        const r = data.rows.find((x) => x.sym === s)
+                        return r?.sepa ? { grade: r.sepa.grade, path: r.sepa.path } : null
+                      }}
+                      onUniverseAll={() => setUniverse('all')}
                     />
                   )}
-                  <div className="text-pretty border-t border-foreground/[0.06] px-3 py-2 text-dense-meta leading-normal text-muted-foreground">
-                    {FOOT[model]} Earn is Research’s estimated next print (last year’s same-quarter results 8-K + 52 weeks); — where a name has none.
-                  </div>
-                </>
-              ) : (
-                <LeadersFace
-                  universe={universe === 'all' || universe === 'options' ? 'all' : universe}
-                  inUniverse={(s) => (universe === 'book' ? pf.isHolding(s) : pf.isWatchlist(s))}
-                  sort={lsort}
-                  onSort={setLsort}
-                  selected={lsel}
-                  onSelect={setLsel}
-                  todayOf={(s) => {
-                    const r = data.rows.find((x) => x.sym === s)
-                    return r?.sepa ? { grade: r.sepa.grade, path: r.sepa.path } : null
-                  }}
-                  onUniverseAll={() => setUniverse('all')}
-                />
-              )}
-            </section>
-          </div>
-        </>
-      )}
+                </section>
+              </div>
+            </>
+          )}
+        </div>
 
-      <WhyPanel
-        row={whyRow}
-        model={view === 'leaders' ? 'radar' : model}
-        weights={weights}
-        score={whyRow ? scoreOf(whyRow) : null}
-        pos={
-          !whyRow
-            ? ''
-            : view === 'leaders' && lsel
-              ? `Leaders · ${lsel.date}`
-              : model === 'none'
-                ? `${walk.indexOf(whyRow.sym) + 1} of ${walk.length} · A–Z`
-                : scoreOf(whyRow) == null
-                  ? `not rated by ${MODEL_LABEL[model]}`
-                  : `#${walk.indexOf(whyRow.sym) + 1} of ${rated.length} ranked by ${MODEL_LABEL[model]}`
-        }
-        screen={screen}
-        stages={stages}
-        probe={probe}
-        rankIn={rankIn}
-        leadersSession={view === 'leaders' && lsel ? lsel.date : null}
-        onPrev={() => step(-1)}
-        onNext={() => step(1)}
-        onClose={() => {
-          setSel(null)
-          setLsel(null)
-        }}
-      />
+        <WhyPanel
+          row={whyRow}
+          model={view === 'leaders' ? 'radar' : model}
+          weights={weights}
+          score={whyRow ? scoreOf(whyRow) : null}
+          pos={
+            !whyRow
+              ? ''
+              : view === 'leaders' && lsel
+                ? `Leaders · ${lsel.date}`
+                : model === 'none'
+                  ? `${walk.indexOf(whyRow.sym) + 1} of ${walk.length} · A–Z`
+                  : scoreOf(whyRow) == null
+                    ? `not rated by ${MODEL_LABEL[model]}`
+                    : `#${walk.indexOf(whyRow.sym) + 1} of ${rated.length} ranked by ${MODEL_LABEL[model]}`
+          }
+          screen={screen}
+          stages={stages}
+          probe={probe}
+          rankIn={rankIn}
+          leadersSession={view === 'leaders' && lsel ? lsel.date : null}
+          onPrev={() => step(-1)}
+          onNext={() => step(1)}
+          onClose={() => {
+            setSel(null)
+            setLsel(null)
+          }}
+        />
+      </div>
     </PageShell>
   )
 

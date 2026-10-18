@@ -13,12 +13,13 @@
  * draws from, not from a second derivation. Nothing here writes: not a limit,
  * not an acknowledgement.
  *
- * On a phone (Rev .163, an `act` page: a glance at the headroom) the book
- * keeps three columns — the limit, its reading, the headroom — and a tap on a
- * row opens the shell's row sheet with the rest (§18.6); the history table
- * keeps When · Limit · Open for. The account switch scrolls on one line, and
- * the door to the rules editor is a builder (`data-sr-build`). On an iPad the
- * two reference panels at the foot start folded (§18.11).
+ * On compact (Rev .163 → .173, an `act` page: a glance at the headroom) the
+ * book keeps three columns — the limit, its reading, the headroom — and a tap
+ * on a row opens the shell's row sheet with the rest (§18.6); the history
+ * table keeps When · Limit · Open for. The account switch scrolls on one
+ * line, and the door to the rules editor is a builder (`data-sr-build`). On a
+ * short screen above compact the two reference panels at the foot start
+ * folded (§18.11) — an iPad Pro 13″ standing tall draws them open.
  */
 import { useState, type CSSProperties, type MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
@@ -33,7 +34,7 @@ import { fmtPct0 } from '@/utils/positions'
 import { useLimitBook } from '@/hooks/useLimitBook'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import {
@@ -102,22 +103,23 @@ const ESCALATION: { kind: string; tone: string; what: string }[] = [
   },
 ]
 
-/** The phone's columns (§18.6): the limit, its reading, the headroom — and When · Limit · Open for. */
-const BOOK_PHONE_KEEP = '1,3,5'
-const HISTORY_PHONE_KEEP = '1,2,4'
+/** Compact's columns (§18.6): the limit, its reading, the headroom — and When · Limit · Open for. */
+const BOOK_COMPACT_KEEP = '1,3,5'
+const HISTORY_COMPACT_KEEP = '1,2,4'
 
 type LimitsFold = 'open' | 'shut'
 const LIMITS_FOLDS: readonly LimitsFold[] = ['open', 'shut']
 
 /**
- * A reference panel at the foot, on an iPad (§18.11): shut by default, its
- * fold remembered for the iPad alone. The desk and the phone draw it open with
- * no control, as before.
+ * A reference panel at the foot, on a short screen above compact (§18.11,
+ * the design's `data-sr-fold="short"`): shut by default, its fold remembered
+ * for the short screen alone. A tall screen and compact draw it open with no
+ * control, as before.
  */
-function useLimitsPadFold(panel: 'escalation' | 'history', pad: boolean) {
-  const [fold, setFold] = usePersistedChoice<LimitsFold>(`bifrost.risk.limits.${panel}@pad`, 'shut', LIMITS_FOLDS)
-  const open = !pad || fold === 'open'
-  return { pad, open, toggle: () => setFold(open ? 'shut' : 'open') }
+function useLimitsShortFold(panel: 'escalation' | 'history', short: boolean) {
+  const [fold, setFold] = usePersistedChoice<LimitsFold>(`bifrost.risk.limits.${panel}@short`, 'shut', LIMITS_FOLDS)
+  const open = !short || fold === 'open'
+  return { short, open, toggle: () => setFold(open ? 'shut' : 'open') }
 }
 
 /** The fold's handle at the end of the panel head; the whole head toggles (the click bubbles to it). */
@@ -134,9 +136,9 @@ function LimitsFoldToggle({ open, label }: { open: boolean; label: string }) {
   )
 }
 
-/** The head's props while it folds its panel (iPad only); nothing on the desk or the phone. */
-function foldHead(fold: ReturnType<typeof useLimitsPadFold>) {
-  return fold.pad
+/** The head's props while it folds its panel (short above compact only); nothing elsewhere. */
+function foldHead(fold: ReturnType<typeof useLimitsShortFold>) {
+  return fold.short
     ? {
         onClick: (e: MouseEvent) => {
           if ((e.target as Element).closest('a')) return
@@ -149,10 +151,11 @@ function foldHead(fold: ReturnType<typeof useLimitsPadFold>) {
 
 export default function RiskLimitsPage() {
   const [accountFilter, setAccountFilter] = useState('all')
-  const { device } = useDevice()
-  const phone = device === 'phone'
-  const escalationFold = useLimitsPadFold('escalation', device === 'pad')
-  const historyFold = useLimitsPadFold('history', device === 'pad')
+  const { w, h } = useLayout()
+  const compact = w === 'compact'
+  const short = h === 'short' && !compact
+  const escalationFold = useLimitsShortFold('escalation', short)
+  const historyFold = useLimitsShortFold('history', short)
   // The book is assembled once, in `useLimitBook`, because Risk (the layer
   // page) and Today read the same one. This page draws it in full.
   const { rows, accountIds, modelQueries, error, gateReadings } = useLimitBook(accountFilter)
@@ -187,7 +190,7 @@ export default function RiskLimitsPage() {
           actions={
             // Straight to the destination: /strategy/gates is a redirect here
             // since the Strategy pages retired (2026-09-18). The rules editor
-            // is a builder, which a phone does not open (§18.2).
+            // is a builder, which compact does not open (§18.2).
             <span data-sr-build="" className="contents">
               <PageHeadLink to="/trade/rules" title="Trading › Rules — where gates are defined">
                 Rules engine →
@@ -196,7 +199,7 @@ export default function RiskLimitsPage() {
           }
         />
         {accountIds.length > 1 ? (
-          <div data-sr-toolbar="" data-sr-phone-scroll="">
+          <div data-sr-toolbar="" data-sr-scroll="">
             <span data-sr-tb="label">Account</span>
             <SegmentControl
               size="xs"
@@ -352,12 +355,12 @@ export default function RiskLimitsPage() {
                   — this page reads, never writes
                 </span>
               </header>
-              <div className="overflow-x-auto" data-sr-keep={BOOK_PHONE_KEEP}>
-                {/* §14.6: seven columns, the design's 1040 floor. A phone lays
+              <div className="overflow-x-auto" data-sr-keep={BOOK_COMPACT_KEEP}>
+                {/* §14.6: seven columns, the design's 1040 floor. Compact lays
                     out the three it keeps by their content: the shares would
                     hand them the first three columns' widths. */}
                 <table data-sr-table="" className="min-w-[1040px]">
-                  {phone ? null : (
+                  {compact ? null : (
                     <colgroup>
                       <col style={{ width: '21%' }} />
                       <col style={{ width: '6%' }} />
@@ -406,8 +409,8 @@ export default function RiskLimitsPage() {
                         </tr>,
                         ...inGroup.map((r) => (
                           <tr key={r.key}>
-                            {/* A phone's three columns share 360px: the name wraps there. */}
-                            <td data-sr-col={phone ? undefined : 'entity'} className="text-dense-label text-foreground">
+                            {/* Compact's three columns share 360px: the name wraps there. */}
+                            <td data-sr-col={compact ? undefined : 'entity'} className="text-dense-label text-foreground">
                               {r.name}
                               {r.breached ? (
                                 <span className={cn('ml-2 font-mono text-dense-caption font-bold', breachInk(r.kind))}>
@@ -445,17 +448,17 @@ export default function RiskLimitsPage() {
                             <td>
                               {r.use == null || r.headroom == null ? (
                                 // One line per rule, as drawn: the reason rides in the hover.
-                                // A phone has no hover, so its reason takes two lines —
+                                // Compact has no hover, so its reason takes two lines —
                                 // at a width the row sheet's label can still sit beside.
                                 <span
                                   className={cn(
                                     'flex items-center gap-1.5 text-dense-caption text-muted-foreground',
-                                    phone ? 'min-w-0' : 'max-w-[16rem]',
+                                    compact ? 'min-w-0' : 'max-w-[16rem]',
                                   )}
                                   title={r.noReading ?? 'No line is written for this rule'}
                                 >
                                   <StatusLamp lamp="gray" variant="dot" title={r.current == null ? 'No reading' : 'No line'} />
-                                  <span className={phone ? 'line-clamp-2 max-w-52 text-pretty' : 'truncate'}>
+                                  <span className={compact ? 'line-clamp-2 max-w-52 text-pretty' : 'truncate'}>
                                     {r.noReading ?? 'no line written'}
                                   </span>
                                 </span>
@@ -488,9 +491,9 @@ export default function RiskLimitsPage() {
                               )}
                             </td>
                             <td data-sr-col="text" title={r.onBreach} className="text-dense-meta text-muted-foreground">
-                              {/* Only the phone's row sheet shows this column: there it wraps
+                              {/* Only the compact row sheet shows this column: there it wraps
                                   rather than pushing its label out of the line. */}
-                              {phone ? <span className="inline-block max-w-52 text-pretty">{r.onBreach}</span> : r.onBreach}
+                              {compact ? <span className="inline-block max-w-52 text-pretty">{r.onBreach}</span> : r.onBreach}
                             </td>
                             <td data-sr-col="tag" className="text-dense-meta text-muted-foreground">
                               {r.scope}
@@ -517,7 +520,7 @@ export default function RiskLimitsPage() {
                 <header {...foldHead(escalationFold)}>
                   <span className={positionsUi.cap}>Escalation</span>
                   <span className={positionsUi.panelTitle}>what a breach does</span>
-                  {escalationFold.pad ? <LimitsFoldToggle open={escalationFold.open} label="Escalation" /> : null}
+                  {escalationFold.short ? <LimitsFoldToggle open={escalationFold.open} label="Escalation" /> : null}
                 </header>
                 {escalationFold.open ? (
                   <>
@@ -544,7 +547,7 @@ export default function RiskLimitsPage() {
                   <DenseTag variant="warning" size="cell">
                     ⚠ nothing records it
                   </DenseTag>
-                  {historyFold.pad ? <LimitsFoldToggle open={historyFold.open} label="Recent history" /> : null}
+                  {historyFold.short ? <LimitsFoldToggle open={historyFold.open} label="Recent history" /> : null}
                 </header>
                 {historyFold.open ? (
                   <>
@@ -554,9 +557,9 @@ export default function RiskLimitsPage() {
                     </p>
                     {/* The design's four columns, kept: a band that drops its shape
                         stops teaching what the store would have to hold. */}
-                    <div className="overflow-x-auto" data-sr-keep={HISTORY_PHONE_KEEP}>
+                    <div className="overflow-x-auto" data-sr-keep={HISTORY_COMPACT_KEEP}>
                       <table data-sr-table="" className="min-w-[26rem]">
-                        {phone ? null : (
+                        {compact ? null : (
                           <colgroup>
                             <col style={{ width: '22%' }} />
                             <col style={{ width: '34%' }} />

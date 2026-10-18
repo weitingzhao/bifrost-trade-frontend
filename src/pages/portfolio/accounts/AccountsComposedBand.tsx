@@ -145,6 +145,8 @@ function BySymbolTable({
 }) {
   const { rows, unrepresented } = reading
   return (
+    // Compact (Rev .165): Symbol · Value · of NLV; the symbol opens the detail beside the page.
+    <div data-sr-keep="1,5,6">
     <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[660px]">
       {/* Measured at the 660 floor: every figure fits whole. Accounts gives up
           the width — it is the one text column, and it carries its own title. */}
@@ -211,5 +213,6 @@ function BySymbolTable({
         ) : null}
       </DenseTableBody>
     </DenseDataTable>
+    </div>
   )
 }

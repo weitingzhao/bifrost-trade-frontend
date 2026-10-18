@@ -131,21 +131,24 @@ export function TransferPayLookingAt({
       <div className={transferPayUi.panel}>
         <div className={transferPayUi.chipRow}>
           <span className={transferPayUi.chipRowLabel}>Account</span>
-          {/* Which account is pick-one: the DS SegmentControl (§17.10). */}
-          <SegmentControl
-            size="xs"
-            ariaLabel="Account"
-            value={activeAccountId}
-            onChange={onActiveAccountId}
-            options={[
-              { value: 'all', label: countLabel('All accounts', totalCount), title: 'Every account' },
-              ...accountIds.map(id => ({
-                value: id,
-                label: countLabel(id, accountCounts[id] ?? 0),
-                title: 'Cash events happen in an account even when it holds no positions',
-              })),
-            ]}
-          />
+          {/* Which account is pick-one: the DS SegmentControl (§17.10). Every
+              account plus All outruns a phone: on compact it scrolls sideways (§18.7). */}
+          <span className="flex min-w-0 max-w-full" data-sr-scroll="">
+            <SegmentControl
+              size="xs"
+              ariaLabel="Account"
+              value={activeAccountId}
+              onChange={onActiveAccountId}
+              options={[
+                { value: 'all', label: countLabel('All accounts', totalCount), title: 'Every account' },
+                ...accountIds.map(id => ({
+                  value: id,
+                  label: countLabel(id, accountCounts[id] ?? 0),
+                  title: 'Cash events happen in an account even when it holds no positions',
+                })),
+              ]}
+            />
+          </span>
         </div>
 
         <div className={transferPayUi.chipRow}>

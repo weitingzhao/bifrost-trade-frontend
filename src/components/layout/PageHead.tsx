@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { PagePlaceButtons } from '@/layout/PagePlaceButtons'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 
 export { PageHeadAction, type PageHeadActionProps, type PageHeadTab } from '@bifrost/ui'
 
@@ -69,7 +69,7 @@ export function PageHead(props: PageHeadProps) {
   const onTitleVisible = useCallback((visible: boolean) => broadcast(visible ? 'in' : 'out'), [])
   // Rev .163 (契约 §18.4): a phone has no side panel to send the page to and
   // no second window to open it in, so neither shell verb rides its head.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const actions = (
     <>
       {props.actions}

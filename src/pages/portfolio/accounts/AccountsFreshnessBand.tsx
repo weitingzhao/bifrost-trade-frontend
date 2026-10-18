@@ -38,7 +38,11 @@ export function AccountsFreshnessBand({
 
   return (
     <section aria-label="Freshness">
-      <SectionHead meta={from}>Freshness</SectionHead>
+      {/* The band's meta does not wrap: on compact the fetch line moves under it. */}
+      <SectionHead meta={<span data-sr-hide="compact">{from}</span>}>Freshness</SectionHead>
+      <p className="m-0 mb-1.5 px-0.5 text-dense-meta text-muted-foreground" data-sr-only="compact">
+        {from}
+      </p>
 
       <div className={accountsUi.panel}>
         <div className={accountsUi.panelHead}>
@@ -51,6 +55,8 @@ export function AccountsFreshnessBand({
           />
         </div>
 
+        {/* Compact (Rev .165): Account · Source · Newest record. */}
+        <div data-sr-keep="1,2,3">
         <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[620px]">
           <colgroup>
             <col style={{ width: '16%' }} />
@@ -104,6 +110,7 @@ export function AccountsFreshnessBand({
             )}
           </DenseTableBody>
         </DenseDataTable>
+        </div>
 
         <div className={accountsUi.panelFoot}>
           <p className="m-0">

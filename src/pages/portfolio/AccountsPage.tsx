@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { HelpCircle, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
+import { useLayout } from '@/lib/device'
 import { useQuotes } from '@/hooks/useQuotes'
 import { useBenchmarks } from '@/hooks/useBenchmarks'
 import { useLatestBars } from '@/hooks/useLatestBars'
@@ -46,6 +47,7 @@ const PAGE_LEAD =
 
 export default function AccountsPage() {
   const statusQ = useMonitorStatus()
+  const compact = useLayout().w === 'compact'
   const { data } = statusQ
   const preview = usePreviewState()
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null)
@@ -116,16 +118,18 @@ export default function AccountsPage() {
   const totalNetLiq = broker.totals.netLiq
 
 
-  function closeInspector() {
-    setInspector({ type: null })
-  }
+  const closeInspector = useCallback(() => setInspector({ type: null }), [])
 
   // §17.1: the monitor's account read is the page's one source.
   const pageState = preview === 'loading' || preview === 'failed' || preview === 'stale' ? preview : sourceState(statusQ)
   const retry = () => void statusQ.refetch()
 
   return (
-    <PageShell padding="compact" className="space-y-3">
+    <PageShell padding="compact">
+      {/* §18.12: the page and its right-hand slot share one row — the slot docks
+          beside the page, floats over its edge, or is a sheet on compact. */}
+      <div className="flex min-w-0 items-start gap-3">
+      <div className="min-w-0 flex-1 space-y-3">
         {/* §16.10: the lead behind ⓘ; the two clocks — never one — are the
             stamp (IB pull/rec and Flex); the help and the IB refresh are the
             head's actions — Categories moved to Positions › Shares (Rev .115). */}
@@ -133,7 +137,9 @@ export default function AccountsPage() {
           title="Accounts"
           info={PAGE_LEAD}
           stamp={
-            <span className="inline-flex flex-wrap items-center gap-1.5">
+            // The head's stamp slot does not wrap; on compact the two clocks
+            // stand one above the other rather than run off the screen.
+            <span className={compact ? 'flex flex-col items-start gap-1' : 'inline-flex flex-wrap items-center gap-1.5'}>
               <AccountsClockBadge reading={ibClock} />
               <AccountsClockBadge reading={flexClock} />
             </span>
@@ -278,8 +284,10 @@ export default function AccountsPage() {
         )}
         </>
         )}
+      </div>
 
       <AccountsInspector state={inspector} onClose={closeInspector} />
+      </div>
     </PageShell>
   )
 }

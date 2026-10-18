@@ -31,6 +31,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HeroCard, HeroRow, PageHead, PageShell, SectionHead } from '@/components/layout'
+import { DeviceSectionBand } from '@/components/layout/DeviceSectionBand'
 import { ViewState } from '@bifrost/ui'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { readingToneClass, splitReading } from '@/utils/performanceHeroes'
@@ -121,12 +122,38 @@ const LAYER_COLOR: Record<string, string> = Object.fromEntries(
   GROWTH_LAYERS.map((l) => [l.key, l.color]),
 )
 
+/** Compact keeps the lamp, the source and the age bar (design Rev .165, §18.6). */
+const TRUST_COMPACT_KEEP = '1,2,5'
+const AREAS_FOLD_AT = ['compact', 'short'] as const
+
 const TONE_INK: Record<string, string> = {
   unrealized: 'text-[var(--color-unrealized)]',
   muted: 'text-muted-foreground',
   soft: 'text-muted-foreground',
   plain: '',
   loss: 'text-destructive',
+}
+
+/** The two layers this one hands questions to — Review for how a play performs, Risk for how much it may carry. */
+function OverviewLayerDoors() {
+  return (
+    <>
+      <Link
+        to="/review/trade"
+        title="How a play performs is Review’s question, not this layer’s"
+        className="text-dense-label text-primary no-underline hover:underline"
+      >
+        Review →
+      </Link>
+      <Link
+        to="/risk"
+        title="How much risk it may carry is Risk’s question"
+        className="text-dense-label text-primary no-underline hover:underline"
+      >
+        Risk →
+      </Link>
+    </>
+  )
 }
 
 export default function PortfolioOverviewPage() {
@@ -173,6 +200,9 @@ export default function PortfolioOverviewPage() {
     () => (perf.data ? buildScopeNote(bulk.data?.byDayRangeData, perf.data) : null),
     [bulk.data, perf.data],
   )
+  const quarterAsOf = [bulk.data?.optAsOf?.asOfDateStr ? `ASOF ${bulk.data.optAsOf.asOfDateStr}` : null, scopeNote]
+    .filter(Boolean)
+    .join(' · ')
 
   const optOpen = bulk.data?.optAsOf?.openUnrealized ?? null
   const earners = totals
@@ -284,7 +314,9 @@ export default function PortfolioOverviewPage() {
       >
         Trust
       </SectionHead>
-      <section className="overflow-hidden border mat-card">
+      {/* Compact (§18.6): the lamp, the source and its age bar; the row opens
+          its detail sheet, whose Open still goes to Accounts. */}
+      <section className="overflow-hidden border mat-card" data-sr-keep={TRUST_COMPACT_KEEP}>
         {freshState === 'loading' ? (
           <ViewState kind="loading" title="Loading source freshness" rows={5} cols={6} />
         ) : freshState === 'failed' ? (
@@ -366,10 +398,10 @@ export default function PortfolioOverviewPage() {
         note="This quarter, by what earned it. The four cells are realised inside the range; the open figure beside Options is unmatched premium as of today, not a sum over it. Unrealized above is every open position now rather than this quarter’s, and Net cash flow is money that crossed the account boundary — shown to say it is not P&L. Performance computes all of it and owns the basis behind each one."
         meta={
           <span className="flex items-baseline gap-2.5">
-            <span className="font-mono tabular-nums">
-              {[bulk.data?.optAsOf?.asOfDateStr ? `ASOF ${bulk.data.optAsOf.asOfDateStr}` : null, scopeNote]
-                .filter(Boolean)
-                .join(' · ')}
+            {/* The band's meta does not wrap; on compact the as-of line moves
+                under the band (below) instead of pushing the page sideways. */}
+            <span className="font-mono tabular-nums" data-sr-hide="compact">
+              {quarterAsOf}
             </span>
             <Link to="/portfolio/performance" className="text-dense-label text-primary no-underline hover:underline">
               Performance →
@@ -379,6 +411,11 @@ export default function PortfolioOverviewPage() {
       >
         Where it came from
       </SectionHead>
+      {quarterAsOf ? (
+        <p className="m-0 px-0.5 font-mono text-dense-meta tabular-nums text-muted-foreground" data-sr-only="compact">
+          {quarterAsOf}
+        </p>
+      ) : null}
       {bulk.isLoading ? (
         <section className="overflow-hidden border mat-card">
           <ViewState kind="loading" title="Loading the quarter" rows={2} cols={4} />
@@ -433,29 +470,22 @@ export default function PortfolioOverviewPage() {
         </>
       )}
 
-      <SectionHead
+      {/* Reference, not a reading (§18.7 · §18.11): folded by default on
+          compact and on a short screen, each remembering its own fold. */}
+      <DeviceSectionBand
+        id="each-area-owns-its-own-numbers"
+        title="Each area owns its own numbers"
         note="Research is the input · Trade is the process · Portfolio is the result"
+        summaryWhenFolded
+        foldAt={AREAS_FOLD_AT}
+        // The band's meta does not wrap, and on compact the long title leaves
+        // it no room: the two doors move to the foot of the section there.
         meta={
-          <span className="flex items-baseline gap-2.5">
-            <Link
-              to="/review/trade"
-              title="How a play performs is Review’s question, not this layer’s"
-              className="text-dense-label text-primary no-underline hover:underline"
-            >
-              Review →
-            </Link>
-            <Link
-              to="/risk"
-              title="How much risk it may carry is Risk’s question"
-              className="text-dense-label text-primary no-underline hover:underline"
-            >
-              Risk →
-            </Link>
+          <span className="flex items-baseline gap-2.5" data-sr-hide="compact">
+            <OverviewLayerDoors />
           </span>
         }
-      >
-        Each area owns its own numbers
-      </SectionHead>
+      />
       <section className="overflow-hidden border mat-card">
         {AREAS.map((a) => (
           <div key={a.cap} className="flex flex-wrap items-baseline gap-3 border-b px-3 py-2.5 last:border-b-0">
@@ -478,6 +508,9 @@ export default function PortfolioOverviewPage() {
           </div>
         ))}
       </section>
+      <p className="m-0 flex items-baseline gap-2.5 px-0.5" data-sr-only="compact">
+        <OverviewLayerDoors />
+      </p>
     </PageShell>
   )
 }

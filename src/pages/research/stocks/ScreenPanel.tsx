@@ -6,7 +6,7 @@
  * collapses to a 38px strip so the table can take the row.
  *
  * Both shapes are the screen's builder (`data-sr-build`, DESIGN_CONTRACTS
- * §18.2): a phone reads the result and builds nothing, so neither draws there.
+ * §18.2): compact reads the result and builds nothing, so neither draws there.
  */
 import { useState } from 'react'
 import { stageActive, type PineStageSettings, type ScreenState, type Stage, type StageCount } from './stockScreenModel'

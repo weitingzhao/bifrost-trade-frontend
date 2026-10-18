@@ -67,6 +67,9 @@ const KIND_TAG: Record<StuckKind, { label: string; variant: 'warning' | 'danger'
   'thin record': { label: 'thin record', variant: 'neutral' },
 }
 
+/** Waiting on you, on compact: Scope · What is waiting · Age (DESIGN_CONTRACTS §18.6). */
+const WAITING_KEEP = '2,3,5'
+
 /** Age is lateness: amber, never red (§16.13, Rev .83). */
 const AGE_INK = { old: 'text-warning', aging: 'text-warning', plain: 'text-muted-foreground' }
 
@@ -277,63 +280,68 @@ export default function ResearchBookPage() {
             description="Every hypothesis has a record, every candidate is fresh enough to still mean something, and every watched name carries a thesis. The book moves on its own until one of those stops being true."
           />
         ) : (
-          <DenseDataTable wrapClassName="rounded-none border-0" scrollX={false}>
-            <DenseTableHeader>
-              <DenseTableHeadRow>
-                <DenseTableHead className="w-24 max-w-none">Where</DenseTableHead>
-                <DenseTableHead className="w-20 max-w-none">Scope</DenseTableHead>
-                <DenseTableHead>What is waiting</DenseTableHead>
-                <DenseTableHead className="w-32 max-w-none">Reason</DenseTableHead>
-                <DenseTableHead className="w-16 max-w-none text-right">Age</DenseTableHead>
-              </DenseTableHeadRow>
-            </DenseTableHeader>
-            <DenseTableBody>
-              {stuck.map((s) => (
-                // The whole row opens the table it lives in — the design's own
-                // behaviour, and the only one that makes a five-column row
-                // worth reading before you click it.
-                <DenseTableRow key={s.key} title={s.why} {...rowLink(s.to)}>
-                  <DenseTableCell className="max-w-none whitespace-nowrap text-muted-foreground">
-                    {s.where}
-                  </DenseTableCell>
-                  <DenseTableCell className="max-w-none whitespace-nowrap font-mono">
-                    {/* The ticker is its own destination: the row goes to the
-                        table, the symbol goes to the name. Without this the
-                        only way from a stuck row to the evidence behind it is
-                        to retype the ticker. */}
-                    {s.symbol == null ? (
-                      <span
-                        className="text-muted-foreground"
-                        title="A belief about the whole book rather than one name — there is no symbol page to open."
-                      >
-                        {s.scope}
-                      </span>
-                    ) : (
-                      <Link
-                        to={withSymbolParam(SYMBOL_PATH, s.symbol)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="font-semibold text-entity-symbol hover:underline"
-                        title={`Open ${s.symbol} on Symbol`}
-                      >
-                        {s.scope}
-                      </Link>
-                    )}
-                  </DenseTableCell>
-                  <DenseTableCell>{s.what}</DenseTableCell>
-                  <DenseTableCell className="max-w-none">
-                    <DenseTag variant={KIND_TAG[s.kind].variant} size="cell">
-                      {KIND_TAG[s.kind].label}
-                    </DenseTag>
-                  </DenseTableCell>
-                  <DenseTableCell
-                    className={cn(denseTableNumCell, 'max-w-none', AGE_INK[stuckAgeTone(s.ageDays)])}
-                  >
-                    {s.ageDays == null ? '—' : `${s.ageDays}d`}
-                  </DenseTableCell>
-                </DenseTableRow>
-              ))}
-            </DenseTableBody>
-          </DenseDataTable>
+          // Compact keeps Scope · What is waiting · Age (§18.6). The design
+          // keeps Where for the first, but every Watchlist row then reads the
+          // same sentence with no name on it; Where titles the row sheet.
+          <div data-sr-keep={WAITING_KEEP}>
+            <DenseDataTable wrapClassName="rounded-none border-0" scrollX={false}>
+              <DenseTableHeader>
+                <DenseTableHeadRow>
+                  <DenseTableHead className="w-24 max-w-none">Where</DenseTableHead>
+                  <DenseTableHead className="w-20 max-w-none">Scope</DenseTableHead>
+                  <DenseTableHead>What is waiting</DenseTableHead>
+                  <DenseTableHead className="w-32 max-w-none">Reason</DenseTableHead>
+                  <DenseTableHead className="w-16 max-w-none text-right">Age</DenseTableHead>
+                </DenseTableHeadRow>
+              </DenseTableHeader>
+              <DenseTableBody>
+                {stuck.map((s) => (
+                  // The whole row opens the table it lives in — the design's own
+                  // behaviour, and the only one that makes a five-column row
+                  // worth reading before you click it.
+                  <DenseTableRow key={s.key} title={s.why} {...rowLink(s.to)}>
+                    <DenseTableCell className="max-w-none whitespace-nowrap text-muted-foreground">
+                      {s.where}
+                    </DenseTableCell>
+                    <DenseTableCell className="max-w-none whitespace-nowrap font-mono">
+                      {/* The ticker is its own destination: the row goes to the
+                          table, the symbol goes to the name. Without this the
+                          only way from a stuck row to the evidence behind it is
+                          to retype the ticker. */}
+                      {s.symbol == null ? (
+                        <span
+                          className="text-muted-foreground"
+                          title="A belief about the whole book rather than one name — there is no symbol page to open."
+                        >
+                          {s.scope}
+                        </span>
+                      ) : (
+                        <Link
+                          to={withSymbolParam(SYMBOL_PATH, s.symbol)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="font-semibold text-entity-symbol hover:underline"
+                          title={`Open ${s.symbol} on Symbol`}
+                        >
+                          {s.scope}
+                        </Link>
+                      )}
+                    </DenseTableCell>
+                    <DenseTableCell>{s.what}</DenseTableCell>
+                    <DenseTableCell className="max-w-none">
+                      <DenseTag variant={KIND_TAG[s.kind].variant} size="cell">
+                        {KIND_TAG[s.kind].label}
+                      </DenseTag>
+                    </DenseTableCell>
+                    <DenseTableCell
+                      className={cn(denseTableNumCell, 'max-w-none', AGE_INK[stuckAgeTone(s.ageDays)])}
+                    >
+                      {s.ageDays == null ? '—' : `${s.ageDays}d`}
+                    </DenseTableCell>
+                  </DenseTableRow>
+                ))}
+              </DenseTableBody>
+            </DenseDataTable>
+          </div>
         )}
       </SectionPanel>
 

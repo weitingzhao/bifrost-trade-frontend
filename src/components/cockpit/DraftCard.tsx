@@ -106,7 +106,7 @@ function payloadProse(payload: Record<string, unknown>): string | null {
 
 /**
  * How the card is drawn (design Rev .163, DESIGN_CONTRACTS §18.10 ④). `card`
- * is the queue's own accordion card, everywhere but a phone. On a phone the
+ * is the queue's own accordion card, everywhere but compact. On compact the
  * queue is one `row` per question — its head wraps onto a second line instead
  * of running off the screen — and a row opens the card as a `sheet`: the
  * sheet's head carries the symbol and the title and its footer the verdicts,
@@ -140,7 +140,7 @@ export function DraftCard({
   face = 'card',
 }: {
   draft: AiDraft
-  /** `card` unless the phone draws it (Rev .163): see `DraftCardFace`. */
+  /** `card` unless compact draws it (Rev .163): see `DraftCardFace`. */
   face?: DraftCardFace
   /** The cut headline (Rev .143 #4); computed from the draft when not given. */
   headline?: DraftHeadline
@@ -261,7 +261,7 @@ export function DraftCard({
         // The card sets its own base size. Without it everything that does not
         // name a size inherits the app default 16px — which is how the kind tag
         // came to render larger than the title it labels.
-        // In the phone's sheet the sheet is the frame: the card keeps one only
+        // In the compact sheet the sheet is the frame: the card keeps one only
         // for a state it reads by (dissent, warn), and gives its width to the body.
         inSheet && !dissentActive && !warnActive
           ? 'space-y-2 text-dense-meta'
@@ -486,7 +486,7 @@ export function DraftCard({
         </p>
       ) : null}
 
-      {/* In the phone's sheet the verdicts are its footer; the rest of the row wraps. */}
+      {/* In the compact sheet the verdicts are its footer; the rest of the row wraps. */}
       <div className={inSheet ? 'flex flex-wrap items-center gap-x-1.5 gap-y-1' : 'flex items-center gap-1.5'}>
         {/*
           On a muted draft Approve writes nothing, so it stops being the primary

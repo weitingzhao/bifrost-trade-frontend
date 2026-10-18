@@ -210,6 +210,7 @@ export function LedgerLinksFace({
                   <DenseTableCell>
                     <button
                       type="button"
+                      data-sr-build=""
                       className="text-dense-meta text-destructive hover:underline"
                       onClick={() => row.account_execution_option_stock_link_id != null && setUnlinkId(row.account_execution_option_stock_link_id)}
                     >
@@ -270,7 +271,9 @@ export function LedgerLinksFace({
         )}
       </div>
 
-      <label className="flex flex-wrap items-center gap-2 text-dense-meta">
+      {/* Linking is a ledger write (Rev .165): the role, Remove and Link selected
+          are builders; compact reads the links and the candidates. */}
+      <label className="flex flex-wrap items-center gap-2 text-dense-meta" data-sr-build="">
         <span className="text-muted-foreground">Role for new links</span>
         <select
           className="h-7 border px-1.5 text-dense-meta mat-field"
@@ -283,7 +286,7 @@ export function LedgerLinksFace({
         </select>
       </label>
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1.5" data-sr-build="">
         <LedgerWriteCommitButton
           idleLabel="Link selected"
           confirmTitle={LEDGER_CONFIRM_LINKS.title}

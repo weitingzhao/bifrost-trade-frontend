@@ -167,6 +167,9 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
+      {/* Its own sideways scroller, the scenario pinned (§16.11): docked, the
+          face is 440 wide (§18.12) and Total is one scroll away, never cut. */}
+      <div data-sr-hscroll="" className="min-w-0">
       <table className={styles.scenarioMatrix}>
         <thead>
           <tr>
@@ -271,6 +274,7 @@ export function RiskProfileScenarioMatrix({ profile }: Props) {
           ) : null}
         </tbody>
       </table>
+      </div>
       {explainSelection ? (
         <ScenarioMatrixExplainPanel
           selection={explainSelection}

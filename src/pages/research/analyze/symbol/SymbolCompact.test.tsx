@@ -5,9 +5,9 @@ import type { SymbolFaces } from './useSymbolFaces'
 import { SymbolCompact } from './SymbolCompact'
 
 // The blocks are stubs that name themselves: this test reads the face's order
-// and which blocks a phone gets, not what each block reads.
+// and which blocks the compact page gets, not what each block reads.
 vi.mock('./SymbolIdentity', () => ({
-  SymbolIdentity: ({ phone }: { phone?: boolean }) => <div data-testid="block">{phone ? 'identity:phone' : 'identity'}</div>,
+  SymbolIdentity: ({ page }: { page?: boolean }) => <div data-testid="block">{page ? 'identity:page' : 'identity'}</div>,
 }))
 vi.mock('./SymbolHeldBar', () => ({ SymbolHeldBar: () => <div data-testid="block">held</div> }))
 vi.mock('./SymbolAdjustedOnlyNote', () => ({ SymbolAdjustedOnlyNote: () => <div data-testid="block">adjusted</div> }))
@@ -34,7 +34,7 @@ const faces: SymbolFaces = {
   failed: [],
 }
 
-function face(props: { phone?: boolean; active?: Parameters<typeof SymbolCompact>[0]['active'] }) {
+function face(props: { page?: boolean; active?: Parameters<typeof SymbolCompact>[0]['active'] }) {
   render(
     <MemoryRouter>
       <SymbolCompact
@@ -44,7 +44,7 @@ function face(props: { phone?: boolean; active?: Parameters<typeof SymbolCompact
         active={props.active ?? 'overview'}
         setTab={() => {}}
         lampFor={() => null}
-        phone={props.phone}
+        page={props.page}
       />
     </MemoryRouter>,
   )
@@ -63,14 +63,14 @@ describe('SymbolCompact', () => {
     expect(tabs).toEqual(['Overview', 'Volatility', 'Dealer', 'Scenario', 'Flow', 'Chain', 'Payoff'])
   })
 
-  it('reads in the design’s phone order, without the builders or the option faces', () => {
-    const { blocks, tabs } = face({ phone: true })
-    expect(blocks).toEqual(['identity:phone', 'held', 'adjusted', 'chart', 'trades', 'since:moved', 'narrative'])
+  it('reads in the design’s compact order, without the builders or the option faces', () => {
+    const { blocks, tabs } = face({ page: true })
+    expect(blocks).toEqual(['identity:page', 'held', 'adjusted', 'chart', 'trades', 'since:moved', 'narrative'])
     expect(tabs).toEqual(['Overview', 'Volatility', 'Dealer', 'Scenario', 'Flow'])
   })
 
-  it('lands a phone link to an option face on Overview', () => {
-    const { blocks } = face({ phone: true, active: 'chain' })
+  it('lands a compact link to an option face on Overview', () => {
+    const { blocks } = face({ page: true, active: 'chain' })
     expect(blocks).not.toContain('chain')
     expect(blocks).toContain('since:moved')
   })

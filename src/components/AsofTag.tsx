@@ -25,6 +25,8 @@ export interface AsofTagProps {
   judgedBy: string
   /** Where the judgement lives. */
   href: string
+  /** A line the page adds to the session's tooltip — Symbol's `from …` where its why line has no room (§18.13). */
+  note?: string
   className?: string
 }
 
@@ -33,7 +35,7 @@ export interface AsofTagProps {
 const CHIP =
   'inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-transparent px-2 font-mono text-dense-micro tracking-wide hover:brightness-125'
 
-export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, className }: AsofTagProps) {
+export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, note, className }: AsofTagProps) {
   const behind = asofHolding(asof, expected, sessions)
   const holding = behind > 0
 
@@ -50,12 +52,13 @@ export function AsofTag({ asof, expected, sessions, flag, judgedBy, href, classN
     : holding
       ? `Holding session ${asof}${expected ? ` — ${expected} never landed` : ''} · ${behind} session${behind === 1 ? '' : 's'} behind · judged by ${judgedBy}`
       : `Session ${asof} · judged by ${judgedBy} · click to open where it was judged`
+  const title = note ? `${asofTitle} · ${note}` : asofTitle
 
   return (
     <span className={cn('inline-flex min-w-0 items-center gap-2', className)}>
       <Link
         to={href}
-        title={asofTitle}
+        title={title}
         className={cn(
           CHIP,
           holding ? 'bg-warning/20 text-warning' : 'bg-[var(--mat-btn-fill)] text-muted-foreground',

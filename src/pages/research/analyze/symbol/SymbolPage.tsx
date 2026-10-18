@@ -33,14 +33,16 @@
  * `?tab=` still drives the tabs, so every link and bookmark written against
  * them is unchanged, and every retired `?view=` still lands on its anchor.
  *
- * ## Device tiers (Rev .163, contract §18)
+ * ## Layout classes (Rev .163 → .164, contract §18)
  *
- * On a **phone** the page is the 440 face — the same reading re-authored for
+ * On **compact** (`w === 'compact'`: an iPhone, a Duo's outer screen, a
+ * narrow window) the page is the 440 face — the same reading re-authored for
  * one column — rather than the wide page with blocks hidden one by one
- * (§18.2: "页面已有 440 面的(Symbol),phone 直接用 440 面"). On an **iPad**
- * the wide page keeps its body and its head goes from four lines to three
- * (§18.11). A panel or a float is a surface, and keeps its own form on every
- * device.
+ * (§18.2: "页面已有 440 面的(Symbol),compact 直接用 440 面"). Above it the
+ * wide page keeps its body and its head is three lines in every class
+ * (§18.13); only a wide, tall screen adds `from …` and the snapshot word.
+ * The tab row scrolls in one line on medium. A panel or a float is a
+ * surface, and keeps its own form in every class.
  */
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -50,7 +52,8 @@ import { CopilotVerdictStrip } from '@/components/research/CopilotVerdictStrip'
 import { useResearchContext } from '@/hooks/useResearchContext'
 import { useInSurface } from '@/lib/surfaceScope'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
+import { useSymbolTrail } from '@/lib/symbolTrail'
 import { SymbolCompact } from '@/pages/research/analyze/symbol/SymbolCompact'
 import { SYMBOL_PATH, SYMBOL_TABS, TAB_PARAM, tabFor, type SymbolTabId } from '@/lib/symbolTabs'
 import { SymbolAsofTag } from '@/pages/research/analyze/symbol/SymbolAsofTag'
@@ -99,9 +102,13 @@ export default function SymbolPage() {
   const inSurface = useInSurface()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const width = useContainerWidth(rootRef, 1200)
-  const { device } = useDevice()
-  const phonePage = device === 'phone' && !inSurface
-  const padPage = device === 'pad' && !inSurface
+  const layout = useLayout()
+  const compactPage = layout.w === 'compact' && !inSurface
+  const wideTall = layout.w === 'wide' && layout.h === 'tall' && !inSurface
+  // Below wide + tall the why line has no room for `from …`; it rides on the
+  // asof tag's tooltip instead, so where the name came from is still a hover away.
+  const trail = useSymbolTrail(symbol)
+  const fromNote = wideTall ? undefined : trail ? `from ${trail.label}` : 'opened directly'
 
   const setTab = (id: SymbolTabId) => {
     setParams((prev) => {
@@ -150,8 +157,8 @@ export default function SymbolPage() {
 
   // The 440 page (Rev .57): in a surface no wider than 640, the same page
   // re-authored for a panel — chosen by its own width, not a second route.
-  // A phone's page is that face too (Rev .163), chosen by the device tier.
-  if (symbol && (phonePage || (inSurface && width <= COMPACT_MAX_PX))) {
+  // The compact class's page is that face too (Rev .163 → .164).
+  if (symbol && (compactPage || (inSurface && width <= COMPACT_MAX_PX))) {
     const face = (
       <SymbolCompact
         symbol={symbol}
@@ -160,18 +167,18 @@ export default function SymbolPage() {
         active={active}
         setTab={setTab}
         lampFor={lampFor}
-        phone={phonePage}
+        page={compactPage}
       />
     )
     return (
       // A page root is a PageShell; in a surface the panel body is the shell.
-      <div ref={rootRef}>{phonePage ? <PageShell padding="none">{face}</PageShell> : face}</div>
+      <div ref={rootRef}>{compactPage ? <PageShell padding="none">{face}</PageShell> : face}</div>
     )
   }
 
-  // A phone with no name yet: what the page is, and where a name comes from.
-  // The wide page's Method switch and its seven empty tabs are not for a phone.
-  if (phonePage) {
+  // Compact with no name yet: what the page is, and where a name comes from.
+  // The wide page's Method switch and its seven empty tabs are not for compact.
+  if (compactPage) {
     return (
       <div ref={rootRef}>
         <PageShell padding="compact" className="space-y-2">
@@ -186,7 +193,7 @@ export default function SymbolPage() {
     <div ref={rootRef}>
     <PageShell padding="compact" className="space-y-2.5">
       {/* No name yet: the page says what it is and keeps its Method switch.
-          With one, the four-layer head below carries both (Rev .56). */}
+          With one, the three-line head below carries both (Rev .56 → .164). */}
       {!symbol ? (
         <div className="flex flex-wrap items-center gap-2">
           <PageFaceSwitch path={SYMBOL_PATH} />
@@ -197,15 +204,15 @@ export default function SymbolPage() {
           symbol={symbol}
           faces={faces}
           tab={active}
-          pad={padPage}
-          asof={<SymbolAsofTag symbol={symbol} />}
+          wideTall={wideTall}
+          asof={<SymbolAsofTag symbol={symbol} note={fromNote} />}
         />
       )}
 
       {/* Rev .142: the faces are capsule segments on a sticky bar with no slab —
           it parks over the scroll edge, as the DS sticky FilterBar does. */}
       <div data-sr-toolbar="" data-sticky="">
-        <div className={FACE_TAB_TRACK}>
+        <div className={FACE_TAB_TRACK} data-sr-scroll="medium">
           {SYMBOL_TABS.map((t, i) => {
             const lamp = lampFor(t.id)
             const on = t.id === active

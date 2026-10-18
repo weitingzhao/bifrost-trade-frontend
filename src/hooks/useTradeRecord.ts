@@ -21,11 +21,9 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTradeDetailData } from '@/hooks/useTradeDetailData'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
-import { useQuotes } from '@/hooks/useQuotes'
-import { useOptionGreeks, type GreekLeg } from '@/hooks/useOptionGreeks'
-import { buildOptionTicker } from '@/utils/optionTicker'
+import { legVendorTicker, useOpenLegMarks } from '@/hooks/useOpenLegMarks'
 import { fetchExecutionsRange } from '@/api/trading'
-import { fetchOptionDailyBars, fetchStockDailyCloses, occToOptionTicker } from '@/api/marketData/dailyBars'
+import { fetchStockDailyCloses } from '@/api/marketData/dailyBars'
 import type { Trade } from '@/types/positions'
 import {
   execGroupsOf,
@@ -34,9 +32,7 @@ import {
   heldLegs,
   payoffOf,
   positionOf,
-  type RecordLeg,
   twsRowsFor,
-  type LegMark,
 } from '@/utils/tradeRecord/tradeRecordModel'
 import { etTodayIso } from '@/lib/freshness'
 
@@ -51,71 +47,10 @@ export function useTradeRecord(trade: Trade | null, opts?: { tws?: boolean; with
   const today = etTodayIso()
 
   const bare = useMemo(() => legsOf(execs, {}), [execs])
-  const openKeys = useMemo(() => bare.filter((l) => l.open).map((l) => l.key), [bare])
-  const roots = useMemo(() => [...new Set(bare.map((l) => l.root).filter(Boolean))], [bare])
+  // Live → the vendor's snapshot → the last EOD close (`useOpenLegMarks`); the
+  // same quotes give spot, the same vendor rows the Greeks.
+  const { marks, openKeys, roots, quotesQ, quotes, greeks, pending: marksPending } = useOpenLegMarks(bare)
   const closed = bare.length > 0 && openKeys.length === 0
-
-  const quotesQ = useQuotes(roots, openKeys)
-  const quotes = useMemo(() => quotesQ.data?.quotes ?? [], [quotesQ.data])
-
-  const live: Record<string, LegMark> = useMemo(() => {
-    const out: Record<string, LegMark> = {}
-    for (const q of quotes) {
-      const ck = (q.contract_key ?? '').trim()
-      const px = q.mid ?? q.last ?? null
-      if (openKeys.includes(ck) && px != null && px > 0) out[ck] = { price: px, source: 'live' }
-    }
-    return out
-  }, [quotes, openKeys])
-
-  // The vendor's per-contract rows for the open legs — Positions' own read.
-  const greekLegs: GreekLeg[] = useMemo(
-    () =>
-      bare
-        .filter((l) => l.open && l.expiry)
-        .map((l) => ({ underlying: l.root, expiry: l.expiry!, strike: l.strike, right: l.right, qty: l.openQty })),
-    [bare],
-  )
-  const greeks = useOptionGreeks(greekLegs)
-  const tickerOf = (l: Pick<RecordLeg, 'root' | 'expiry' | 'strike' | 'right'>) =>
-    buildOptionTicker({ underlying: l.root, expiry: l.expiry ?? '', strike: l.strike, right: l.right })
-  const snap: Record<string, LegMark> = useMemo(() => {
-    const out: Record<string, LegMark> = {}
-    for (const l of bare) {
-      if (!l.open) continue
-      const t = tickerOf(l)
-      const c = t ? greeks.closeByTicker.get(t) : undefined
-      if (c && c.close > 0) out[l.key] = { price: c.close, source: 'snap', asOf: c.asOf ?? undefined }
-    }
-    return out
-    // tickerOf is a pure function of its argument.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bare, greeks.closeByTicker])
-
-  const needEod = useMemo(
-    () => (greeks.isLoading ? [] : openKeys.filter((k) => !live[k] && !snap[k])),
-    [openKeys, live, snap, greeks.isLoading],
-  )
-  const eodQ = useQuery({
-    queryKey: ['trade-record', 'eod-marks', needEod, today],
-    queryFn: async () => {
-      const out: Record<string, LegMark> = {}
-      await Promise.all(
-        needEod.map(async (k) => {
-          const ticker = occToOptionTicker(k)
-          if (!ticker) return
-          const bars = await fetchOptionDailyBars(ticker, shiftIso(today, -21), today)
-          const last = [...bars].reverse().find((b) => b.close != null && b.close > 0)
-          if (last) out[k] = { price: last.close!, source: 'eod', asOf: last.date }
-        }),
-      )
-      return out
-    },
-    enabled: needEod.length > 0,
-    staleTime: 15 * 60_000,
-  })
-
-  const marks = useMemo(() => ({ ...(eodQ.data ?? {}), ...snap, ...live }), [eodQ.data, snap, live])
   const legs = useMemo(() => legsOf(execs, marks), [execs, marks])
   const life = useMemo(() => lifeOf(execs, legs, today), [execs, legs, today])
 
@@ -210,7 +145,7 @@ export function useTradeRecord(trade: Trade | null, opts?: { tws?: boolean; with
     return positionOf(
       legs,
       (l) => {
-        const t = tickerOf(l)
+        const t = legVendorTicker(l)
         const row = t ? greeks.perShareByTicker.get(t) : undefined
         return row ? { delta: row.delta ?? null, theta: row.theta ?? null, asOf: row.snapshot_ts ?? null } : null
       },
@@ -218,7 +153,7 @@ export function useTradeRecord(trade: Trade | null, opts?: { tws?: boolean; with
       today,
       sh ? { qty: sh.qty, avgCost: sh.avgCost } : null,
     )
-    // sharesFor and tickerOf read only what is listed.
+    // sharesFor reads only what is listed.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [closed, heldRoots, spotNow, spotLast.data, legs, greeks.perShareByTicker, today, accounts, acct, opts?.withShares])
 
@@ -249,7 +184,7 @@ export function useTradeRecord(trade: Trade | null, opts?: { tws?: boolean; with
     execGroups: execGroupsOf(legs),
     tws,
     twsLoading: twsQ.isLoading,
-    marksPending: greeks.isLoading || (eodQ.isLoading && needEod.length > 0),
+    marksPending,
     position,
     positionPending: greeks.isLoading,
   }

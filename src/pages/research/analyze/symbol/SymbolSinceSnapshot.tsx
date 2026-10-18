@@ -15,9 +15,10 @@
  * gets the design's Earnings row (`earningsChange`); the rail waits for it so a
  * snapshot is never saved without it.
  *
- * `variant="moved"` is the phone's `Moved` block (design Rev .163, Symbol on
- * an iPhone): the same rows, band flips only, at most four, under the face
- * rows — and nothing at all when nothing flipped, as the design draws it.
+ * `variant="moved"` is the compact page's `Moved` block (design Rev .163 →
+ * .164, Symbol on compact): the same rows, band flips only, at most four,
+ * under the face rows — and nothing at all when nothing flipped, as the
+ * design draws it.
  */
 import { useEffect, useMemo } from 'react'
 import type { ExhibitPayload } from '@/api/research/exhibit'
@@ -89,7 +90,7 @@ function writeSessionRows(key: string, rows: BandChangeRow[]): void {
   }
 }
 
-/** The phone's Moved block lists this many flips; the count says how many there were. */
+/** The compact page's Moved block lists this many flips; the count says how many there were. */
 const MOVED_SHOWN = 4
 
 export function SymbolSinceSnapshot({ symbol, variant = 'rail' }: { symbol: string; variant?: 'rail' | 'moved' }) {

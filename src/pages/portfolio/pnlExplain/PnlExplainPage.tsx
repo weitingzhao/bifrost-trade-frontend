@@ -278,7 +278,8 @@ export default function PnlExplainPage() {
                   moved without a position behind it, and every leg carries a mark.
                 </p>
               ) : (
-                <div className="overflow-x-auto">
+                // Compact (Rev .165): Symbol · Amount · Most likely cause.
+                <div className="overflow-x-auto" data-sr-keep="1,2,5">
                   {/* §14.6: six columns, the design's 900 floor. */}
                   <table className="w-full min-w-[900px] table-fixed border-collapse">
                     <colgroup>

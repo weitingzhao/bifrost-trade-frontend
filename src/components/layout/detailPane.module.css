@@ -1,0 +1,49 @@
+/* DetailPane (DESIGN_CONTRACTS §18.12): the column, the overlay, the sheet slot. */
+.host {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  width: var(--detail-w, 440px);
+  max-width: calc(100vw - 16px);
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* Docked: in the flow beside the table, under the top of the lane while the
+   table scrolls; no shadow — it is part of the page. Its height leaves the
+   lane's bottom padding (the floating toolbar's 72, `--lane-pb`) and the
+   page's: a sticky box taller than what is left of its row is pushed up at
+   the end of the page, and Accounts lost its head 23px above the lane. */
+.dock {
+  position: sticky;
+  top: 8px;
+  align-self: flex-start;
+  flex: none;
+  max-height: calc(100dvh - 42px - 24px - var(--lane-pb, 0px) - 16px);
+  border-radius: 12px;
+  background: var(--mat-card-fill, color-mix(in srgb, var(--sk-ink) 4%, transparent));
+}
+
+/* Not docked: over the content's right edge, opaque, pinned to the viewport. */
+.overlay {
+  position: fixed;
+  z-index: 50;
+  bottom: 8px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    var(--glass-rim, color-mix(in srgb, var(--sk-ink) 12%, transparent)) border-box;
+  box-shadow: var(--glass-drop, 0 18px 50px -12px rgb(0 0 0 / 0.55));
+}
+
+.sheetSlot {
+  height: 100%;
+  min-height: 0;
+}

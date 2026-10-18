@@ -10,11 +10,11 @@ import { DeviceSectionBand } from '@/components/layout/DeviceSectionBand'
  * on the page opens it to show what it points at; its folded summary is the
  * legs, their premium range and the close the cushions are priced against.
  *
- * Device tiers (Rev .163, §18.7 · §18.11): each tier remembers its own fold
- * (`DeviceSectionBand`); the desk's is the one it always had. Book and
- * Pressure points, folded by default on a phone and an iPad, are folded by
- * the page there (`pages/portfolio/positions/tierFolds`), because a reading
- * opens them.
+ * Layout classes (Rev .164, §18.7 · §18.11): compact and short each remember
+ * their own fold (`DeviceSectionBand`); a tall screen's is the one it always
+ * had. Book and Pressure points, folded by default on compact and on a short
+ * screen, are folded by the page there (`pages/portfolio/positions/tierFolds`),
+ * because a reading opens them.
  */
 export function PositionsTier({
   label,

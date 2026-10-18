@@ -62,6 +62,8 @@ export interface StockInspectorPanelProps {
   livePosition?: LivePositionRow
   fundamentalSeed?: StockInspectorFundamentalSeed
   onClose?: () => void
+  /** No Wide control — in a DetailPane, which owns its width (§18.12). */
+  hideWide?: boolean
 }
 
 const SECTION_DOM_ID: Record<InspectorSectionId, string> = {
@@ -81,6 +83,7 @@ function StockInspectorPanelBody({
   livePosition,
   fundamentalSeed,
   onClose,
+  hideWide,
 }: BodyProps) {
   const [activeCond, setActiveCond] = useState<string | null>(null)
   const [expandedSections, setExpandedSections] = useState(defaultExpandedSections)
@@ -130,6 +133,7 @@ function StockInspectorPanelBody({
         actions={<PinToCockpit symbol={sym} />}
         onClose={onClose}
         closeLabel="Close stock inspector"
+        hideWide={hideWide}
       />
 
       <div className={inspectorShell.stack}>
@@ -223,6 +227,7 @@ export function StockInspectorPanel({
   livePosition,
   fundamentalSeed,
   onClose,
+  hideWide,
 }: StockInspectorPanelProps) {
   const sym = symbol.trim().toUpperCase()
 
@@ -235,6 +240,7 @@ export function StockInspectorPanel({
         livePosition={livePosition}
         fundamentalSeed={fundamentalSeed}
         onClose={onClose}
+        hideWide={hideWide}
       />
     </div>
   )

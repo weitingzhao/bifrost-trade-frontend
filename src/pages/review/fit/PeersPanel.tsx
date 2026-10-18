@@ -33,6 +33,8 @@ import {
 const W = 1000
 const H = 180
 const nameOf = (x: ReviewedTrade) => (x.tradeId != null ? `#${x.tradeId}` : x.label)
+/** Compact keeps Trade · Net · Fit (§18.6, Rev .168). */
+const PEERS_COMPACT_KEEP = '1,4,8'
 
 export function PeersPanel({
   self,
@@ -176,7 +178,7 @@ export function PeersPanel({
             ) : null}
             {loading ? <span className="absolute top-2.5 right-3.5 text-dense-micro text-muted-foreground">reading the peers’ bars…</span> : null}
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-sr-keep={PEERS_COMPACT_KEEP}>
             <table data-sr-table="" className="w-full">
               <thead>
                 <tr>

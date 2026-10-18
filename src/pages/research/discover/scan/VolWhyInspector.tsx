@@ -113,7 +113,8 @@ export function VolWhyInspector({
           {row.serverScore != null ? (
             <> · the server scored it {row.serverScore.toFixed(1)} at its own</>
           ) : null}
-          {' · j k walk the list'}
+          {/* The same key hint as the table head's (§18.3): gone on touch until a key is pressed. */}
+          <span data-sr-hint="keys"> · j k walk the list</span>
         </p>
 
         <div>

@@ -19,11 +19,13 @@
  * kind whose approval writes nothing says that instead of naming a
  * destination the design imagined for it.
  *
- * On a phone (Rev .163, an `act` page: batching the Inbox is one of the
- * phone's jobs) the queue is one row per question and a row opens its card in
- * a bottom sheet, Approve and Dismiss in its footer. New Draft is a builder
- * (`data-sr-build`); the key hints hide under a finger, on the iPad too. A
- * surfaced Inbox keeps its 440 face on every device.
+ * On compact (Rev .163 → .173, an `act` page: batching the Inbox is one of
+ * compact's jobs) the queue is one row per question and a row opens its card
+ * in a bottom sheet, Approve and Dismiss in its footer; a candidate batch
+ * keeps Symbol · Score · Rule that fits. New Draft is a builder
+ * (`data-sr-build`); the J K · Space · A · D strip is a key hint
+ * (`data-sr-hint="keys"`), gone under a finger until a hardware key is
+ * pressed. A surfaced Inbox keeps its 440 face in every class.
  */
 import { useCallback, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -63,7 +65,7 @@ import {
 import { useDraftWriteFailures } from '@/lib/harness/draftWriteFailures'
 import { openDraftInCopilot } from '@/lib/harness/loopCopilotPrefill'
 import { useInSurface } from '@/lib/surfaceScope'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { notify } from '@/lib/shellNotify'
 import {
   InboxDecisionList,
@@ -112,7 +114,7 @@ export default function DecisionInboxPage() {
   // id>` lands on that draft's card — first, ringed, open, its provenance out.
   const { pathname, search } = useLocation()
   const inSurface = useInSurface()
-  const phone = useDevice().device === 'phone' && !inSurface
+  const compact = useLayout().w === 'compact' && !inSurface
   const cardParam = useMemo(() => new URLSearchParams(search).get('card'), [search])
   const [view, setViewState] = useState<View>('decisions')
   const [dest, setDestState] = useState<Dest>(pathname === PROPOSALS_PATH ? 'rules' : 'any')
@@ -381,9 +383,9 @@ export default function DecisionInboxPage() {
       dismissCard(target.card)
     }
   }
-  // A phone reads in the sheet, and Enter there runs its verdict.
+  // Compact reads in the sheet, and Enter there runs its verdict.
   useInboxKeys({
-    enabled: !inSurface && showDecisions && !phone,
+    enabled: !inSurface && showDecisions && !compact,
     order,
     cur,
     openId: openKey,
@@ -434,10 +436,10 @@ export default function DecisionInboxPage() {
             <span data-sr-tb="label" title="Kind, read as where Approve writes. The tag colour on each card says the same thing.">
               Writes to
             </span>
-            {phone ? (
-              // Six places with their counts outgrow a phone's line: the
+            {compact ? (
+              // Six places with their counts outgrow a compact line: the
               // segment scrolls on its own row instead of the page (§18.7).
-              <span data-sr-phone-scroll="" className="flex min-w-0 max-w-full">
+              <span data-sr-scroll="" className="flex min-w-0 max-w-full">
                 {destSegment}
               </span>
             ) : (
@@ -548,7 +550,7 @@ export default function DecisionInboxPage() {
                 litKey={litKey}
                 headlineOf={headlineOf}
                 failures={failures}
-                phone={phone}
+                compact={compact}
                 handlers={{
                   toggle,
                   approve: approveCard,
@@ -572,7 +574,7 @@ export default function DecisionInboxPage() {
               litId={cardParam}
               onDismiss={(id) => dismiss(id)}
               onApprove={(id) => approve(id, 'Approved', { onLanded: land })}
-              phone={phone}
+              compact={compact}
             />
           )}
         </div>

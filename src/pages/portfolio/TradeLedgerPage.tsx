@@ -122,6 +122,7 @@ export default function TradeLedgerPage() {
   const [rowType, setRowType] = usePageViewState<LedgerRowType>('rowType', 'all')
   const [unlinkBasis, setUnlinkBasis] = usePageViewState<LedgerUnlinkBasis>('unlinkBasis', 'options')
   const [inspector, setInspector] = useState<LedgerInspectorState>({ type: null })
+  const closeInspector = useCallback(() => setInspector({ type: null }), [setInspector])
   const accountFilter = ledgerAccountIdFromScope(scope.accountFilter, status)
   const symbolFilter = scope.filterSymbol
 
@@ -511,7 +512,11 @@ export default function TradeLedgerPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <PageShell padding="compact" className="space-y-3">
+    <PageShell padding="compact">
+      {/* §18.12 (Rev .165): the page and its right-hand column share one row —
+          the column docks beside the page, floats over its edge, or is a sheet on compact. */}
+      <div className="flex min-w-0 items-start gap-3">
+      <div className="min-w-0 flex-1 space-y-3">
         {/* §16.10: the lead behind ⓘ, "history · no polling" as meta, Add
             journal — the page's one write the other sources cannot make — as
             the primary action. The title keeps the menu's name (§5a.5); the
@@ -758,6 +763,21 @@ export default function TradeLedgerPage() {
           />
         )}
 
+      </div>
+
+      <LedgerInspector
+        state={inspector}
+        onClose={closeInspector}
+        onFace={onInspectorFace}
+        explainPayload={explainPayload}
+        health={health}
+        unlinkBasis={unlinkBasis}
+        reconcile={reconcile}
+        onWrote={refreshAll}
+        onOpenFullJournalForm={handleHeaderAddJournal}
+      />
+      </div>
+
       <TradeLedgerModals
         accounts={accounts}
         opportunities={oppData?.items ?? []}
@@ -772,18 +792,6 @@ export default function TradeLedgerPage() {
         createSource={createSource}
         linkContext={linkContext}
         setLinkContext={setLinkContext}
-      />
-
-      <LedgerInspector
-        state={inspector}
-        onClose={() => setInspector({ type: null })}
-        onFace={onInspectorFace}
-        explainPayload={explainPayload}
-        health={health}
-        unlinkBasis={unlinkBasis}
-        reconcile={reconcile}
-        onWrote={refreshAll}
-        onOpenFullJournalForm={handleHeaderAddJournal}
       />
     </PageShell>
   )

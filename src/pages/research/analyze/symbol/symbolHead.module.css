@@ -1,8 +1,8 @@
 /*
- * The Symbol page's head — the design's four layers (Rev .56, contract
- * §16.10a) and its 440 form. A module because the design sets this head in
- * its own sizes (26 / 16 / 15 / 13 at full width, 20 / 14 / 13.5 in the
- * panel) and the page head is the one place on the page that does.
+ * The Symbol page's head — the design's three layers (Rev .56 → .164,
+ * contract §16.10a · §18.13) and its 440 form. A module because the design
+ * sets this head in its own sizes (26 / 16 / 15 / 13 at full width, 20 / 14 /
+ * 13.5 in the panel) and the page head is the one place on the page that does.
  */
 
 .head {
@@ -186,16 +186,16 @@
   gap: 4px 10px;
 }
 
-/* ── Device forms (Rev .163, contract §18) ────────────────────────────── */
+/* ── Layout classes (Rev .163 → .164, contract §18) ───────────────────── */
 
-/* Phone: the subject line stays one line — the name gives way, the held tag ends it. */
-.phoneLine {
+/* The compact page: the subject line stays one line — the name gives way, the held tag ends it. */
+.compactLine {
   flex-wrap: nowrap;
 }
 
-/* iPad: the verdict joins the subject line (§18.11), cut to one line; the
-   whole of it is in the title. */
-.padVerdict {
+/* Above compact the verdict joins the subject line (§18.13), cut to one
+   line; the whole of it is in the title. */
+.lineVerdict {
   align-self: center;
   flex: 1 1 200px;
   min-width: 0;

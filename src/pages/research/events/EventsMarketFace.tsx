@@ -42,6 +42,11 @@ const th =
 const td = 'px-2 py-1.5 align-top text-dense-meta'
 const mono = 'font-mono tabular-nums'
 
+/** What a compact screen keeps of each table (DESIGN_CONTRACTS §18.6, design Rev .167). */
+const THEMES_KEEP = '1,2,4'
+const FORWARD_KEEP = '1,3,5'
+const EVENTS_KEEP = '3,4,6'
+
 /** The tagger's own scale: 3 = high, 2 = med, 1 = low. */
 function impOf(importance: number): 'high' | 'med' | 'low' {
   return importance >= 3 ? 'high' : importance === 2 ? 'med' : 'low'
@@ -169,9 +174,9 @@ export function EventsMarketFace({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
+      <div data-sr-stack="" className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">
         {/* ── Themes ── */}
-        <section className="overflow-hidden border mat-card">
+        <section data-sr-keep={THEMES_KEEP} className="overflow-hidden border mat-card">
           <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
             <span className={cap}>Themes</span>
             <span className="text-dense-body font-semibold">
@@ -205,6 +210,8 @@ export function EventsMarketFace({
                       key={t.theme}
                       onClick={() => setTheme(on ? null : t.theme)}
                       data-selected={on || undefined}
+                      // The row sheet's action on compact: the row filters, it opens nothing.
+                      data-sr-open={on ? 'Clear filter' : 'Filter events'}
                       className="cursor-pointer"
                       title={on ? 'Clear the theme filter' : `Filter the events to ${t.theme}`}
                     >
@@ -240,7 +247,7 @@ export function EventsMarketFace({
         </section>
 
         {/* ── Forward ── */}
-        <section className="overflow-hidden border mat-card">
+        <section data-sr-keep={FORWARD_KEEP} className="overflow-hidden border mat-card">
           <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
             <span className={cap}>Forward</span>
             <span className="text-dense-body font-semibold">
@@ -318,8 +325,9 @@ export function EventsMarketFace({
               : 'Nothing passes the filters above — they filter this table only.'}
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse" style={{ minWidth: 880 }}>
+          // A class, not an inline style: the compact keep (§18.6) lifts the floor.
+          <div className="overflow-x-auto" data-sr-keep={EVENTS_KEEP}>
+            <table className="w-full min-w-[880px] border-collapse">
               <thead>
                 <tr>
                   <th className={th}>Collected</th>

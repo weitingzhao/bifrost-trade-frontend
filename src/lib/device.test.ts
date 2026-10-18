@@ -1,12 +1,38 @@
 import { describe, expect, it } from 'vitest'
-import { detectDevice } from './device'
+import { detectDevice, dockOf, heightClass, widthClass } from './device'
 import { phoneTier } from '@/layout/phoneTier'
 import { phoneTabOf } from '@/layout/phone/phoneTabs'
 import { dockStep, keepRule } from '@/layout/deviceRules'
 import { sheetRelease } from '@/components/ui/sheetGesture'
 
-// Design Rev .163, DESIGN_CONTRACTS §18 — the numbers are the contract's.
-describe('the tier is judged by the window (§18.1)', () => {
+// Design Rev .163 → .164, DESIGN_CONTRACTS §18 — the numbers are the contract's.
+describe('the width class is the window, not the device (§18.1)', () => {
+  it('compact < 600 · medium < 1024 · expanded < 1440 · wide', () => {
+    expect(widthClass(393)).toBe('compact')
+    expect(widthClass(599)).toBe('compact')
+    expect(widthClass(600)).toBe('medium')
+    expect(widthClass(1023)).toBe('medium')
+    expect(widthClass(1024)).toBe('expanded')
+    expect(widthClass(1439)).toBe('expanded')
+    expect(widthClass(1440)).toBe('wide')
+    expect(widthClass(2560)).toBe('wide')
+  })
+
+  it('short < 900 · tall', () => {
+    expect(heightClass(820)).toBe('short')
+    expect(heightClass(899)).toBe('short')
+    expect(heightClass(900)).toBe('tall')
+  })
+
+  it('docks a detail only on wide, and only with 1200 of content area (§18.12)', () => {
+    expect(dockOf('wide', 1200)).toBe(true)
+    expect(dockOf('wide', 1199)).toBe(false)
+    // An expanded window never docks, however wide its content reads.
+    expect(dockOf('expanded', 1300)).toBe(false)
+  })
+})
+
+describe("Rev .163's device label, kept for compatibility", () => {
   it('narrower than 600 is a phone, whatever the pointer', () => {
     expect(detectDevice(393, 852, true)).toBe('phone')
     expect(detectDevice(599, 900, false)).toBe('phone')
@@ -63,7 +89,7 @@ describe('kept columns (§18.6)', () => {
     const rule = keepRule('1,4,8')
     expect(rule).toContain(`[data-sr-keep="1,4,8"] tr:not([data-sr-keep="1,4,8"] td tr)`)
     expect(rule).toContain(':not(:nth-child(1)):not(:nth-child(4)):not(:nth-child(8)):not([colspan])')
-    expect(rule.startsWith("html[data-device='phone']")).toBe(true)
+    expect(rule.startsWith("html[data-w='compact']")).toBe(true)
   })
 
   it('writes nothing for a list with no column in it', () => {
@@ -72,7 +98,7 @@ describe('kept columns (§18.6)', () => {
   })
 })
 
-describe('the iPad dock bar steps aside (§18.11)', () => {
+describe('the dock bar steps aside on a short screen (§18.11)', () => {
   it('hides after 32px down, returns after 24px up or near the top', () => {
     expect(dockStep(200, 20)).toBe('stay')
     expect(dockStep(200, 33)).toBe('hide')

@@ -5,9 +5,16 @@
  * versioned) · Rank = how it is ordered (orders, never filters — the same
  * state as the cards' rank by). Under it, the version strip (renamed
  * Versions: the lineage chart owns the word Lineage).
+ *
+ * Compact (Rev .173, RESPONSE batch 1): Rank by stays (a way of reading);
+ * Weights re-weights the list, a builder (`data-sr-build`) — the radar's
+ * Factors and None's Sort are readings and stay; the Versions strip with
+ * Explain · lineage stays, folded until asked for.
  */
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SegmentControl } from '@/components/data-display'
+import { useLayout } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import { RankDrawer } from './RankDrawer'
 import type { NoneSort } from './stockScreenEarnings'
@@ -70,13 +77,17 @@ export function ResultHead({
 }) {
   const shown = versions.length > 6 ? versions.slice(versions.length - 6) : versions
   const wLabel = `${model === 'none' ? 'Sort' : model === 'radar' ? 'Factors' : 'Weights'} ${wOpen ? '▴' : '▾'}`
+  const weighs = model === 'sepa' || model === 'premium'
+  const compact = useLayout().w === 'compact'
+  const [versionsOpen, setVersionsOpen] = useState(false)
+  const versionsShown = !compact || versionsOpen
   return (
     <>
       <header className="flex flex-wrap items-baseline gap-2 border-b border-foreground/[0.06] px-3 py-2">
         <span data-sr-tb="label">Result</span>
         <span className="text-dense-body font-semibold">{title}</span>
-        {/* Keys a phone or an iPad on its own does not have (§18.3). */}
-        <span data-sr-touch="hide" className="ml-auto text-dense-meta text-muted-foreground">
+        {/* Keys a finger does not have, until a hardware key is pressed (§18.3). */}
+        <span data-sr-hint="keys" className="ml-auto text-dense-meta text-muted-foreground">
           click a row for why · j k walk · esc
         </span>
       </header>
@@ -135,27 +146,48 @@ export function ResultHead({
           </span>
           <span className="flex flex-wrap items-center gap-2.5">
             <SegmentControl options={RANK_OPTIONS} value={model} onChange={(v) => onModel(v as RankModel)} size="xs" ariaLabel="Rank by" />
-            <button type="button" onClick={onToggleW} aria-expanded={wOpen} className="text-dense-meta text-primary hover:underline">
+            <button
+              type="button"
+              onClick={onToggleW}
+              aria-expanded={wOpen}
+              data-sr-build={weighs ? '' : undefined}
+              className="text-dense-meta text-primary hover:underline"
+            >
               {wLabel}
             </button>
           </span>
         </div>
       </div>
       {wOpen ? (
-        <RankDrawer
-          model={model}
-          weights={weights}
-          onWeights={onWeights}
-          noneSort={noneSort}
-          onNoneSort={onNoneSort}
-          source={source}
-        />
+        <div data-sr-build={weighs ? '' : undefined}>
+          <RankDrawer
+            model={model}
+            weights={weights}
+            onWeights={onWeights}
+            noneSort={noneSort}
+            onNoneSort={onNoneSort}
+            source={source}
+          />
+        </div>
       ) : null}
       <div className="flex flex-wrap items-center gap-x-1 gap-y-1.5 border-b border-foreground/[0.06] px-3 py-1.5">
-        <span data-sr-tb="label" className="mr-1">
-          Versions
-        </span>
-        {shown.map((v, k) => {
+        {compact ? (
+          <button
+            type="button"
+            onClick={() => setVersionsOpen(!versionsOpen)}
+            aria-expanded={versionsOpen}
+            className="mr-1 inline-flex items-baseline gap-1.5"
+          >
+            <span data-sr-tb="label">Versions</span>
+            <span className="font-mono text-dense-caption text-muted-foreground">{version}</span>
+            <span className="text-dense-meta text-primary">{versionsOpen ? 'Hide ▴' : 'Explain · lineage ▾'}</span>
+          </button>
+        ) : (
+          <span data-sr-tb="label" className="mr-1">
+            Versions
+          </span>
+        )}
+        {versionsShown ? shown.map((v, k) => {
           const i = versions.indexOf(v)
           const n = countOf(i)
           const d = v.parent >= 0 ? n - countOf(v.parent) : 0
@@ -181,18 +213,20 @@ export function ResultHead({
               {k < shown.length - 1 ? <span className="text-dense-caption text-[var(--sk-faint)]">→</span> : null}
             </span>
           )
-        })}
-        <span className="ml-auto inline-flex items-baseline gap-2.5">
-          <Link to="/research/lab/stocks?tab=screens" className="text-dense-meta text-primary hover:underline" title="Saved screens and provenance live on the Method face">
-            Explain · lineage ⧉
-          </Link>
-          <span
-            className="font-mono text-dense-caption text-muted-foreground"
-            title="Not linked: these versions live in this tab. The screen store keeps saved screens, not their versions, so no Journal node exists for one."
-          >
-            Journal →
+        }) : null}
+        {versionsShown ? (
+          <span className="ml-auto inline-flex items-baseline gap-2.5">
+            <Link to="/research/lab/stocks?tab=screens" className="text-dense-meta text-primary hover:underline" title="Saved screens and provenance live on the Method face">
+              Explain · lineage ⧉
+            </Link>
+            <span
+              className="font-mono text-dense-caption text-muted-foreground"
+              title="Not linked: these versions live in this tab. The screen store keeps saved screens, not their versions, so no Journal node exists for one."
+            >
+              Journal →
+            </span>
           </span>
-        </span>
+        ) : null}
       </div>
     </>
   )

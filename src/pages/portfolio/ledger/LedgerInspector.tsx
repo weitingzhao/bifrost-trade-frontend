@@ -1,7 +1,19 @@
-import { InspectorDrawer } from '@/components/positions/InspectorDrawer'
-import { RightInspectorShell } from '@/components/layout/RightInspectorShell'
+/**
+ * The Ledger's right-hand column (design Rev .165, §18.12): Explain · Reconcile
+ * · Links · Journal, and a ticker's stock detail.
+ *
+ * One `DetailPane`: a column beside the page while the layout docks, a
+ * floating panel over the right edge otherwise, a bottom sheet on compact.
+ * It sits in the page lane rather than the shell's inspector slot, so opening
+ * it never narrows the area the dock is measured on. Every write in the faces
+ * goes through the same face components as before; only the surface moved.
+ */
+import { useEffect } from 'react'
+import { DetailPane } from '@/components/layout/DetailPane'
 import { RightInspectorHeader } from '@/components/layout/RightInspectorHeader'
 import { inspectorShell } from '@/components/layout/rightInspectorUi'
+import { StockInspectorPanel } from '@/components/positions/StockInspectorPanel'
+import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
 import { cn } from '@/lib/utils'
 import { LedgerExplainFace } from '@/pages/portfolio/ledger/LedgerExplainFace'
 import { LedgerReconcileFace } from '@/pages/portfolio/ledger/LedgerReconcileFace'
@@ -54,21 +66,67 @@ export function LedgerInspector({
   /** A journal row for a contract with no fills here, or for shares, needs the full form. */
   onOpenFullJournalForm: () => void
 }) {
-  if (state.type === 'stock') {
-    return (
-      <InspectorDrawer
-        state={{ type: 'stock', symbol: state.symbol, accountId: state.accountId }}
-        onClose={onClose}
-      />
-    )
-  }
-  if (state.type === null) return null
+  const open = state.type !== null
+  // Escape closes it ahead of the Copilot, as it did on the shell's inspector.
+  useEffect(() => (open ? registerInspectorEscape(onClose) : undefined), [open, onClose])
 
+  return (
+    <DetailPane
+      open={open}
+      onClose={onClose}
+      label={state.type === 'stock' ? 'Stock detail' : 'Trade ledger inspector'}
+    >
+      <div className={inspectorShell.panel}>
+        {state.type === 'stock' ? (
+          <StockInspectorPanel symbol={state.symbol} accountId={state.accountId} onClose={onClose} hideWide />
+        ) : state.type === null ? null : (
+          <LedgerFaces
+            state={state}
+            onClose={onClose}
+            onFace={onFace}
+            explainPayload={explainPayload}
+            health={health}
+            unlinkBasis={unlinkBasis}
+            reconcile={reconcile}
+            onWrote={onWrote}
+            onOpenFullJournalForm={onOpenFullJournalForm}
+          />
+        )}
+      </div>
+    </DetailPane>
+  )
+}
+
+type FacesProps = {
+  state: Exclude<LedgerInspectorState, { type: null } | { type: 'stock' }>
+  onClose: () => void
+  onFace: (face: LedgerInspectorFace) => void
+  explainPayload: LedgerMetricExplainPayload | null
+  health: LedgerHealthModel
+  unlinkBasis: LedgerUnlinkBasis
+  reconcile: LedgerReconcileModel
+  onWrote: () => void | Promise<void>
+  onOpenFullJournalForm: () => void
+}
+
+/** The four faces under one head; the pane holds its own width, so no Wide toggle. */
+function LedgerFaces({
+  state,
+  onClose,
+  onFace,
+  explainPayload,
+  health,
+  unlinkBasis,
+  reconcile,
+  onWrote,
+  onOpenFullJournalForm,
+}: FacesProps) {
   const face = faceOfInspector(state)
 
   return (
-    <RightInspectorShell open ariaLabel="Trade ledger inspector" onClose={onClose}>
+    <>
       <RightInspectorHeader
+        hideWide
         title={
           <span className="flex flex-wrap items-center gap-1.5">
             {FACES.map(f => (
@@ -118,6 +176,6 @@ export function LedgerInspector({
           />
         ) : null}
       </div>
-    </RightInspectorShell>
+    </>
   )
 }

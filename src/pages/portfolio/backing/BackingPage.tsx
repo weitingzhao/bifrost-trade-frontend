@@ -11,7 +11,7 @@
  * other half of the same add-or-not decision. `?symbol=` narrows the book and
  * opens that symbol's model row — the drill-down the rest of the app links to.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RoomToAddSection } from '@/components/positions/RoomToAddSection'
 import { computeRoomToAdd, summarizeRoom } from '@/utils/roomToAdd'
 import { usePressureCeiling } from '@/hooks/usePressureCeiling'
@@ -21,6 +21,9 @@ import { usePositionsScope } from '@/hooks/usePositionsScope'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { ViewState } from '@bifrost/ui'
 import { PageHead, PageHeadLink, PageShell, SectionHead } from '@/components/layout'
+import { DetailPane } from '@/components/layout/DetailPane'
+import { DeviceSectionBand } from '@/components/layout/DeviceSectionBand'
+import { registerInspectorEscape } from '@/lib/cockpit/inspectorEscape'
 import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/data-display'
 import { PositionsOpenControls } from '@/components/positions/PositionsOpenControls'
@@ -49,6 +52,16 @@ import { BackingFaceSlot, type BackingFace, type SymbolFace } from './BackingFac
 import { backingPoolUsage, deriveBackingJudgment } from '@/utils/backingJudgment'
 
 const SORTS: readonly ObligationsSort[] = ['cash', 'calls', 'spare', 'symbol']
+
+/**
+ * Compact (design Rev .165, §18.6): each table keeps the columns the prototype
+ * names — Obligations Symbol · Cash if assigned · Market value, Base holdings
+ * Symbol · Qty · Market value. The model's two tables keep theirs in the band.
+ */
+const OBLIGATIONS_COMPACT_KEEP = '1,3,8'
+const HOLDINGS_COMPACT_KEEP = '2,4,7'
+/** The model is hypothetical reference: folded by default on compact and on a short screen. */
+const MODEL_FOLD_AT = ['compact', 'short'] as const
 
 /** Who reads this page's figures, and what each of them may not recompute. */
 const BACKING_CITATIONS = [
@@ -120,6 +133,9 @@ export default function BackingPage() {
   // The slot beside the page: a modelled symbol's CAR and stress, or the symbol in focus.
   const [face, setFace] = useState<BackingFace>('symbol')
   const [slotOpen, setSlotOpen] = useState(false)
+  const closeSlot = useCallback(() => setSlotOpen(false), [])
+  // Escape closes the slot ahead of the Copilot; a stock inspector opened over it closes first.
+  useEffect(() => (slotOpen ? registerInspectorEscape(closeSlot) : undefined), [slotOpen, closeSlot])
 
   const rows = useMemo(
     () => sortObligations(book.obligationsRows, sort),
@@ -228,6 +244,8 @@ export default function BackingPage() {
         cushionTightPct={cushionTightPct}
         onCushionTightPctChange={setCushionTightPct}
         scopedCount={scopedCount}
+        // Compact (Rev .165): the typed expiry, TIGHT and Copy link step out, as on Positions.
+        trimOnPhone
       />
 
       {!book.hasAccountSelection ? (
@@ -322,7 +340,7 @@ export default function BackingPage() {
                 </span>
               )}
             </div>
-          <div id={BACKING_ANCHOR_ID.obligations} className="border-b border-border">
+          <div id={BACKING_ANCHOR_ID.obligations} className="border-b border-border" data-sr-keep={OBLIGATIONS_COMPACT_KEEP}>
             <ObligationsRoomSection
               open={obligationsOpen}
               onToggle={() => setObligationsOpen((v) => !v)}
@@ -339,7 +357,7 @@ export default function BackingPage() {
               onNakedClick={(symbol) => setFilterSymbol(symbol)}
             />
           </div>
-          <div id={BACKING_ANCHOR_ID.holdings}>
+          <div id={BACKING_ANCHOR_ID.holdings} data-sr-keep={HOLDINGS_COMPACT_KEEP}>
             <BaseHoldingsSection
               open={holdingsOpen}
               onToggle={() => setHoldingsOpen((v) => !v)}
@@ -361,13 +379,10 @@ export default function BackingPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      <div
-        className={cn(
-          'grid min-w-0 items-start gap-3',
-          slotOpen ? 'grid-cols-1 lg:grid-cols-[minmax(0,1fr)_min(26.25rem,38%)]' : 'grid-cols-1',
-        )}
-      >
-      <section className="flex min-w-0 flex-col gap-3" aria-label="Backing and model">
+      {/* §18.12 (Rev .165): the page and its detail share one row — the detail
+          docks beside the page, floats over its right edge, or is a sheet on compact. */}
+      <div className="flex min-w-0 items-start gap-3">
+      <section className="flex min-w-0 flex-1 flex-col gap-3" aria-label="Backing and model">
         {/* §16.10: the lead behind ⓘ, the snapshot's age as the stamp, the
             position count as meta, the way back to Positions as the door. */}
         <PageHead
@@ -410,8 +425,16 @@ export default function BackingPage() {
           ))}
         </section>
 
-        <SectionHead note="Hypothetical · one account at a time, never summed.">Model</SectionHead>
-        <div id={BACKING_ANCHOR_ID.model}>
+        {/* #model lands on the band's own heading, so the anchor holds while the band is folded. */}
+        <DeviceSectionBand
+          id="model"
+          headingId={BACKING_ANCHOR_ID.model}
+          title="Model"
+          note="Hypothetical · one account at a time, never summed."
+          summaryWhenFolded
+          foldAt={MODEL_FOLD_AT}
+        />
+        <div>
           <ModelBandSection
             {...model}
             table={{
@@ -425,16 +448,16 @@ export default function BackingPage() {
           />
         </div>
       </section>
-      {slotOpen ? (
+      <DetailPane open={slotOpen} onClose={closeSlot} width={420} label="Backing detail">
         <BackingFaceSlot
           face={face}
           onFace={setFace}
-          onClose={() => setSlotOpen(false)}
+          onClose={closeSlot}
           entry={modelEntry}
           accountLabel={model.account.accountId}
           symbol={symbolFace}
         />
-      ) : null}
+      </DetailPane>
       </div>
 
       <InspectorDrawer state={inspector} onClose={() => setInspector({ type: null })} />

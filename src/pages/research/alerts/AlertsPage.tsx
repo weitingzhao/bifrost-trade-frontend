@@ -52,15 +52,17 @@
  * owns, not conditions armed from a symbol. The section keeps its place and
  * names all four rather than drawing an empty table.
  *
- * ## On a phone (Rev .163, an `act` page)
+ * ## On compact (Rev .163 → .173, an `act` page)
  *
  * Fired is already the design's two-line row and reads as it is. The armed
  * table keeps three columns — Scope, the condition, and Distance (how far the
  * reading is from the trigger) — and a tap on a row opens the shell's row
- * sheet with the rest (§18.6). Nothing here arms or edits a rule, so there is
- * no builder to hide; arming would be one (`data-sr-build`) when it has a
- * store. In the panel or the float the page keeps its 440 face on every
- * device, so the kept columns are the route page's alone.
+ * sheet with the rest (§18.6): headed by the Scope, as every row sheet is by
+ * its first column, the Condition its first line (RESPONSE 2026-10-17).
+ * Nothing here arms or edits a rule, so there is no builder to hide; arming
+ * would be one (`data-sr-build`) when it has a store. In the panel or the
+ * float the page keeps its 440 face in every class, so the kept columns are
+ * the route page's alone.
  */
 import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -84,8 +86,8 @@ const armedTh =
   'whitespace-nowrap px-2 py-1 text-right align-bottom text-dense-meta font-semibold leading-[1.3] text-[var(--sk-mute)]'
 const armedTd = 'px-2 py-1.5 text-right font-mono text-dense-meta tabular-nums'
 
-/** The phone's three (§18.6): Scope · Condition · Distance — what is armed, and how far from firing. */
-const ARMED_PHONE_KEEP = '1,2,5'
+/** Compact's three (§18.6): Scope · Condition · Distance — what is armed, and how far from firing. */
+const ARMED_COMPACT_KEEP = '1,2,5'
 
 /** The store's own caps live with the shared query (`useFiredAlerts`). */
 const WINDOW_DAYS = ALERTS_WINDOW_DAYS
@@ -250,7 +252,7 @@ export default function AlertsPage() {
             onAction={() => navigate('/risk/limits')}
           />
         ) : (
-          <div className="overflow-x-auto" data-sr-keep={inSurface ? undefined : ARMED_PHONE_KEEP}>
+          <div className="overflow-x-auto" data-sr-keep={inSurface ? undefined : ARMED_COMPACT_KEEP}>
             <table className="w-full border-collapse">
               <thead>
                 <tr>
@@ -260,7 +262,7 @@ export default function AlertsPage() {
                   <th className={armedTh}>Trigger</th>
                   <th className={cn(armedTh, 'w-[22%] text-left')}>Distance</th>
                   <th className={cn(armedTh, 'text-left')}>Source</th>
-                  {/* Unseen on the desk; the phone's row sheet reads it as the door's label. */}
+                  {/* Unseen above compact; the compact row sheet reads it as the door's label. */}
                   <th className={cn(armedTh, 'text-left')}>
                     <span className="sr-only">Line owned by</span>
                   </th>

@@ -13,7 +13,7 @@
 import { createExternalStore } from '@/lib/cockpit/externalStore'
 import { panelDocks, SIDE_PANEL_FLOOR_PX } from '@/lib/panelDocks'
 import { useWindowWidth } from '@/hooks/useIsNarrowViewport'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { useSurfaces } from '@/layout/equipSurface'
 
 export type DockMode = 'strip' | 'docked' | 'float'
@@ -138,7 +138,7 @@ export function dockColumnFor(
 export function useDockColumn(): DockColumn {
   const state = useDockState()
   const { panel } = useSurfaces()
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const column = dockColumnFor(state, panel != null, useWindowWidth())
   return phone ? { mode: null, width: 0 } : column
 }

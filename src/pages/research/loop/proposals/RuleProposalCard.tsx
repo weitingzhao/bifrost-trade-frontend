@@ -38,7 +38,7 @@ const DIFF_GLYPH = 'text-muted-foreground/50'
 const RULE_VERBS_OFF: ReadonlySet<VerbKey> = new Set(['distill', 'settle'])
 
 export const NO_RULES_STORE = 'no rules store on this side, so neither verdict can be recorded'
-/** The verdict a rule card draws (disabled) — on the card, and in the phone sheet's footer. */
+/** The verdict a rule card draws (disabled) — on the card, and in the compact sheet's footer. */
 export const RULE_APPROVE_LABEL = 'Approve → edit Rules'
 const NO_STORE = NO_RULES_STORE
 
@@ -55,7 +55,7 @@ export function RuleProposalCard({
   expanded: boolean
   onToggle: () => void
   /**
-   * As the Inbox's other cards (Rev .163, `DraftCardFace`): a phone lists it
+   * As the Inbox's other cards (Rev .163, `DraftCardFace`): compact lists it
    * as a `row` and reads it in a `sheet`, whose head carries the title and
    * whose footer carries the two verdicts — drawn there, disabled, as here.
    */

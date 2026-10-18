@@ -37,6 +37,9 @@ import {
 
 const TRACK = 'bg-[color-mix(in_srgb,var(--sk-ink)_8%,transparent)]'
 
+/** Compact (§18.6, Rev .166): Who pays keeps the name, its price at the shock and what the shock costs it. */
+const WHO_PAYS_COMPACT_KEEP = '1,2,5'
+
 function shockPct(shock: number): string {
   return `${shock > 0 ? '+' : shock < 0 ? '−' : ''}${Math.abs(Math.round(shock * 100))}%`
 }
@@ -219,7 +222,7 @@ export function ExposureStressSection({
         {payers.length === 0 ? (
           <p className="m-0 px-3 pb-3 text-dense-meta text-muted-foreground">No underlying could be stressed at this column.</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-sr-keep={WHO_PAYS_COMPACT_KEEP}>
             <table data-sr-table="" className="w-full min-w-[720px]">
               <thead>
                 <tr>

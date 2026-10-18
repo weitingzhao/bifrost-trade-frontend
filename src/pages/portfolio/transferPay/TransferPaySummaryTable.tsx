@@ -101,6 +101,8 @@ export function TransferPaySummaryTable({
       {emptyHint ? (
         <p className={transferPayUi.sectionHint}>{emptyHint}</p>
       ) : (
+        // Compact (Rev .165): Period and Total — Total sits after one column per account.
+        <div data-sr-keep={`1,${accountIds.length + 2}`}>
         <DenseDataTable wrapClassName={cn(denseTable.scrollX)} tableClassName="min-w-[1040px]">
           <DenseTableHeader>
             <DenseTableHeadRow>
@@ -145,6 +147,7 @@ export function TransferPaySummaryTable({
             })}
           </DenseTableBody>
         </DenseDataTable>
+        </div>
       )}
       {!emptyHint && (
         <div className={transferPayUi.tableFoot}>

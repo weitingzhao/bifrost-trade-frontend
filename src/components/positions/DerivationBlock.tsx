@@ -146,10 +146,13 @@ export function DerivationBlock({
   derivation: d,
   onClose,
   className,
+  trimOnCompact = false,
 }: {
   derivation: Derivation
   onClose: () => void
   className?: string
+  /** Compact drops each row's source tag (Performance, Rev .165); the opened variable's card still names it. */
+  trimOnCompact?: boolean
 }) {
   const [openName, setOpenName] = useState<string | null>(null)
   const rows = derivationRows(d)
@@ -210,7 +213,13 @@ export function DerivationBlock({
                 </>
               ) : null}
               <span className="ml-auto flex items-center gap-x-1.5 font-mono">
-                <SourceBadge source={v.source} />
+                {trimOnCompact ? (
+                  <span data-sr-hide="compact" className="contents">
+                    <SourceBadge source={v.source} />
+                  </span>
+                ) : (
+                  <SourceBadge source={v.source} />
+                )}
                 {v.check ? <VerdictTag check={v.check} /> : null}
               </span>
             </div>

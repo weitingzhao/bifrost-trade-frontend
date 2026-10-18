@@ -108,7 +108,8 @@ export function PilotConversations() {
       note={`${today != null ? `${today} today · ` : ''}the hand-held end of the same Pilot — a thread keeps its origin page and symbol`}
       action={
         <button type="button" onClick={() => openResearchCopilot()} className="text-dense-meta text-primary hover:underline">
-          Ask (⌘J) →
+          {/* The chord is a key a finger does not have (§18.3, Rev .170): on touch it reads Ask →. */}
+          Ask<span data-sr-hint="keys"> (⌘J)</span> →
         </button>
       }
     >

@@ -149,7 +149,13 @@ describe('the design walk, by revision', () => {
     // Package .64 @ Rev .163 (2026-10-17, increment): iPhone / iPad — the
     // registry's device layer (`shellDevice`) and four sample pages; no route
     // or page rev moved (synced 2026-10-17).
-    expect(DESIGN_REV).toBe('2026-10-17.163')
+    // Package .69 @ Rev .174 (2026-10-17, full, superseding the .65–.68
+    // increments): §18 three axes and the batch tables Rev .165–.173 — 32
+    // walked pages' own revs moved (.165 Portfolio, .166 Risk / Trading /
+    // Market, .167 Home / Book, .168 Review, .169–.170 the desk tools, .172 the
+    // act pages, .173 Expiry and Limits) and P67 re-walked all of them the same
+    // day, so none reads stale; .174 itself is the @bifrost/ui 0.14.0 table.
+    expect(DESIGN_REV).toBe('2026-10-17.174')
     // Four, and honestly: Package 2026-09-19.1 moved exactly the pages the
     // Vision redesign touches — twelve Research routes to .18.2 — and only the
     // four that were signed off read stale; the rest of the walked set holds.

@@ -39,6 +39,8 @@ export function LedgerTradeFillsTable({
   stockFills?: Execution[]
 } & OptGroupCallbacks) {
   return (
+    // Compact (Rev .165): Date · account · Qty · Booking; the row actions are builders.
+    <div data-sr-keep="1,4,7">
     <DenseDataTable wrapClassName="rounded-sm" tableClassName={ledgerTableMinClass.t2}>
       {/* Measured on DEV at the 820 floor: the five action buttons stay whole; Booking wraps. */}
       <colgroup>
@@ -117,5 +119,6 @@ export function LedgerTradeFillsTable({
         })}
       </DenseTableBody>
     </DenseDataTable>
+    </div>
   )
 }

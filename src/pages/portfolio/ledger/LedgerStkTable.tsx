@@ -314,6 +314,8 @@ export function LedgerStkTable({
 
     return (
       <>
+        {/* Compact (Rev .165): Time · Category · Realized; the symbol rides its group row. */}
+        <div data-sr-keep="1,4,9">
         <DenseDataTable tableClassName={stkTableClass}>
           <StkColgroup showSymbolCol={false} />
           <StkTableHead showSymbolCol={false} stkSort={stkSort} toggleStkSort={toggleStkSort} />
@@ -341,6 +343,7 @@ export function LedgerStkTable({
             })}
           </DenseTableBody>
         </DenseDataTable>
+        </div>
         <LedgerStkPagination
           page={page}
           totalPages={totalPages}
@@ -361,6 +364,8 @@ export function LedgerStkTable({
 
   return (
     <>
+      {/* Compact: Time · Symbol · Realized — without group rows the symbol is the column to keep. */}
+      <div data-sr-keep={showSymbolCol ? '1,3,10' : '1,4,9'}>
       <DenseDataTable tableClassName={stkTableClass}>
         <StkColgroup showSymbolCol={showSymbolCol} />
         <StkTableHead showSymbolCol={showSymbolCol} stkSort={stkSort} toggleStkSort={toggleStkSort} />
@@ -379,6 +384,7 @@ export function LedgerStkTable({
           ))}
         </DenseTableBody>
       </DenseDataTable>
+      </div>
       <LedgerStkPagination
         page={page}
         totalPages={totalPages}
@@ -451,14 +457,17 @@ function GroupBlock({
             />
             <LedgerStkUrPnlGroupInline realized={pg.realized} unrealized={groupUnrealized} />
             {showJournal && (
-              <IconActionButton
-                onClick={() => onAddJournal(pg.accountId, pg.symbol)}
-                title="Add journal"
-                ariaLabel="Add journal"
-                size="dense"
-              >
-                <FileText className="h-3.5 w-3.5" />
-              </IconActionButton>
+              // An inline ledger write, like the row actions: a builder on compact (Rev .165).
+              <span data-sr-build="" className="contents">
+                <IconActionButton
+                  onClick={() => onAddJournal(pg.accountId, pg.symbol)}
+                  title="Add journal"
+                  ariaLabel="Add journal"
+                  size="dense"
+                >
+                  <FileText className="h-3.5 w-3.5" />
+                </IconActionButton>
+              </span>
             )}
           </div>
         </DenseTableCell>

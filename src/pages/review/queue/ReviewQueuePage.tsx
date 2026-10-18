@@ -46,6 +46,7 @@ import { useTradeStates } from '@/hooks/useStrategies'
 import { buildReviewedTrades, type ReviewedTrade } from '@/utils/reviewedTrades'
 import type { TradeReview } from '@/api/tradeReviews'
 import { etTodayIso } from '@/lib/freshness'
+import { useLayout } from '@/lib/device'
 
 const PAGE_LEAD =
   'Closed trades, newest first, each row carrying the gap between what the plan said and what I did. Reviewing here is what produces the labels — Habits is empty arithmetic without it.'
@@ -61,6 +62,13 @@ const SINCE_LABEL: Record<string, string> = { m: 'month', q: 'three months', hal
 
 /** The design's sample floor: below it Habits shows counts and withholds conclusions. */
 const SAMPLE_FLOOR = 20
+
+/**
+ * Compact keeps Trade · Symbol · Realised (§18.6, Rev .168). The design counts
+ * its lamp as a column of its own (`2,3,8`); here the lamp sits in the Trade
+ * cell, so the same three are 1, 2 and 7.
+ */
+const QUEUE_COMPACT_KEEP = '1,2,7'
 
 function closedSince(months: number | null): string | null {
   if (months == null) return null
@@ -227,6 +235,7 @@ function QueueRow({
 }
 
 export default function ReviewQueuePage() {
+  const compact = useLayout().w === 'compact'
   const [accountFilter, setAccountFilter] = useState('all')
   // The page's view (Rev .79 `since · quad · sel`), kept for the session.
   const [since, setSince] = usePageViewState('since', 'all')
@@ -414,7 +423,9 @@ export default function ReviewQueuePage() {
         <span data-sr-tb="meta" className={positionsUi.mono}>
           <span className={awaitingN > 0 ? 'text-warning' : 'text-muted-foreground'}>{awaitingN} awaiting</span> ·{' '}
           <span className="text-foreground">{rows.length} in range</span> · realised{' '}
-          <span className={pnlColorClass(realised)}>{fmtUsd(realised)}</span> · discipline n/c · plan n/c
+          <span className={pnlColorClass(realised)}>{fmtUsd(realised)}</span>
+          {/* Compact: the meta is one unwrapped line, and the two n/c tails would push the page sideways. */}
+          <span data-sr-hide="compact"> · discipline n/c · plan n/c</span>
         </span>
       </div>
 
@@ -499,7 +510,8 @@ export default function ReviewQueuePage() {
               </span>
               <span className="ml-auto text-dense-meta text-muted-foreground">click a segment to filter the queue</span>
             </header>
-            <div className="flex min-w-0 gap-1 px-3 py-2.5">
+            {/* Compact: one line that scrolls sideways (`data-sr-scroll`) — six endings at their 96 floor are wider than a phone. */}
+            <div data-sr-scroll="" className="flex min-w-0 gap-1 px-3 py-2.5">
               {exits.map((e) => {
                 const on = exitFilter === e.key
                 return (
@@ -589,11 +601,12 @@ export default function ReviewQueuePage() {
                   />
                 )
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-sr-keep={QUEUE_COMPACT_KEEP}>
                   {/* §14.6: twelve columns (Rev .112 adds Source). The design's floor is 1180, where
                       its Trade column is an id; ours is a whole contract token, so the table holds
-                      1560 to keep every cell unclipped at the measured widths. */}
-                  <table className="w-full min-w-[1560px] table-fixed border-collapse">
+                      1560 to keep every cell unclipped at the measured widths. Compact lays out the
+                      three it keeps by their content (the shell hides a kept table's colgroup). */}
+                  <table className={cn('w-full min-w-[1560px] border-collapse', !compact && 'table-fixed')}>
                     <colgroup>
                       <col style={{ width: '14%' }} />
                       <col style={{ width: '7%' }} />

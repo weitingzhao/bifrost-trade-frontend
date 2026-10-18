@@ -4,7 +4,7 @@
  * verdicts are pending, the oldest from 09-07. It draws the newest first and
  * a page at a time; the count above it is the whole set.
  *
- * On a phone (Rev .163) a briefing is a row, read in a bottom sheet
+ * On compact (Rev .163 → .173) a briefing is a row, read in a bottom sheet
  * (`InboxBriefingSheet`), like the decisions above it.
  */
 import { useState } from 'react'
@@ -25,7 +25,7 @@ export function InboxBriefings({
   litId,
   onDismiss,
   onApprove,
-  phone = false,
+  compact = false,
 }: {
   rows: readonly AiDraft[]
   loading: boolean
@@ -35,22 +35,22 @@ export function InboxBriefings({
   litId: string | null
   onDismiss: (id: string) => void
   onApprove: (id: string) => void
-  /** The route page on a phone: rows, and a sheet (Rev .163). */
-  phone?: boolean
+  /** The route page on compact: rows, and a sheet (Rev .163 → .173). */
+  compact?: boolean
 }) {
   const [shown, setShown] = useState(BRIEFINGS_PAGE)
   // One open at a time, like the decisions; `null` is "the first one".
   const [openId, setOpenId] = useState<string | null>(null)
-  // A phone's sheet holds its briefing past a Dismiss, so it reads while it slides away.
+  // The compact sheet holds its briefing past a Dismiss, so it reads while it slides away.
   const [sheet, setSheet] = useState<{ draft: AiDraft; open: boolean } | null>(null)
   const [seenLit, setSeenLit] = useState<string | null>(null)
   const lit = litId ? rows.find((r) => r.id === litId) ?? null : null
-  if (phone && lit && lit.id !== seenLit) {
+  if (compact && lit && lit.id !== seenLit) {
     setSeenLit(lit.id)
     setSheet({ draft: lit, open: true })
   }
   const ordered = lit ? [lit, ...rows.filter((r) => r !== lit)] : rows
-  const open = phone ? '' : (openId ?? ordered[0]?.id ?? '')
+  const open = compact ? '' : (openId ?? ordered[0]?.id ?? '')
   const inSheet = sheet ? (rows.find((r) => r.id === sheet.draft.id) ?? sheet.draft) : null
   if (loading) return <Skeleton className="h-32 w-full rounded-md" />
   if (rows.length === 0) return null
@@ -65,12 +65,12 @@ export function InboxBriefings({
         <DraftCard
           key={d.id}
           cardKey={`brief:${d.id}`}
-          face={phone ? 'row' : 'card'}
+          face={compact ? 'row' : 'card'}
           draft={d}
           lit={d.id === litId}
           defaultVerb={d.id === litId ? 'explain' : null}
           expanded={open === d.id}
-          onToggle={phone ? () => setSheet({ draft: d, open: true }) : () => setOpenId(open === d.id ? '' : d.id)}
+          onToggle={compact ? () => setSheet({ draft: d, open: true }) : () => setOpenId(open === d.id ? '' : d.id)}
           onApprove={() => onApprove(d.id)}
           onDismiss={() => onDismiss(d.id)}
           read={read.has(d.id)}
@@ -82,7 +82,7 @@ export function InboxBriefings({
           Show {Math.min(BRIEFINGS_PAGE, rows.length - shown)} more of {rows.length - shown}
         </Button>
       ) : null}
-      {phone ? (
+      {compact ? (
         <InboxBriefingSheet
           open={sheet?.open === true}
           onOpenChange={(o) => setSheet((s) => (s ? { ...s, open: o } : s))}

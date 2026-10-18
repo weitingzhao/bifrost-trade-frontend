@@ -25,7 +25,7 @@ import {
   DialogTrigger,
 } from '@bifrost/ui'
 import { cn } from '@/lib/utils'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { SheetGrip } from './SheetGrip'
 
 type DialogStackLayer = 'default' | 'elevated'
@@ -43,7 +43,7 @@ const DialogContent = React.forwardRef<
   const sheet = React.useRef<HTMLDivElement | null>(null)
   const [full, setFull] = React.useState(false)
   const spotlight = (props as Record<string, unknown>)['data-spotlight'] != null
-  const grip = useDevice().device === 'phone' && !spotlight
+  const grip = useLayout().w === 'compact' && !spotlight
   const setRef = React.useCallback(
     (el: HTMLDivElement | null) => {
       sheet.current = el

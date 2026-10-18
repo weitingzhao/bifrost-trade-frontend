@@ -17,14 +17,15 @@
  * The earnings marks those charts carry are said in words instead, in the
  * IV rank and term-structure sections (`compactVolEarnings.ts`).
  *
- * **`phone`** — the same face as a phone's whole page (design Rev .163,
- * contract §18.2), in the design's phone order: subject · verdict · why →
- * the in-hand bar (`SymbolHeldBar`, when a trade is open) → five tabs (Chain
- * and Payoff are not on a phone; a link to either lands on Overview) → the
- * small chart → trades → the six faces → `Moved` (band flips since your last
- * look) → Narrative. Follow / Lock, Send and Your verdict are builders and
- * stay off; so does ⇢, which on a phone would open the page already showing.
- * In a surface — on any device — the face is exactly the panel's.
+ * **`page`** — the same face as the compact class's whole page (design Rev
+ * .163 → .164, contract §18.2: an iPhone, a Duo's outer screen, a narrow
+ * window), in the design's compact order: subject · verdict · why → the
+ * in-hand bar (`SymbolHeldBar`, when a trade is open) → five tabs (Chain and
+ * Payoff are not on compact; a link to either lands on Overview) → the small
+ * chart → trades → the six faces → `Moved` (band flips since your last look)
+ * → Narrative. Follow / Lock, Send and Your verdict are builders and stay
+ * off; so does ⇢, which there would open the page already showing. In a
+ * surface — in any class — the face is exactly the panel's.
  */
 import { CollapsibleChevron } from '@/components/data-display'
 import { useState } from 'react'
@@ -60,8 +61,8 @@ const FOLD_FACE: Partial<Record<SymbolTabId, DossierFaceId>> = {
   flow: 'flow',
 }
 
-/** The option faces are not on a phone (Rev .163) — contract-level reading wants the width. */
-const PHONE_OFF: ReadonlySet<SymbolTabId> = new Set<SymbolTabId>(['chain', 'payoff'])
+/** The option faces are not on the compact page (Rev .163) — contract-level reading wants the width. */
+const COMPACT_OFF: ReadonlySet<SymbolTabId> = new Set<SymbolTabId>(['chain', 'payoff'])
 
 function FollowLock({ symbol }: { symbol: string }) {
   const subject = useSurfaceSubject()
@@ -244,7 +245,7 @@ export function SymbolCompact({
   setTab,
   lampFor,
   thesis,
-  phone = false,
+  page = false,
 }: {
   symbol: string
   faces: SymbolFaces
@@ -253,8 +254,8 @@ export function SymbolCompact({
   active: SymbolTabId
   setTab: (id: SymbolTabId) => void
   lampFor: (id: SymbolTabId) => LampColor | null
-  /** The face as a phone's whole page, not a panel (Rev .163). */
-  phone?: boolean
+  /** The face as the compact class's whole page, not a panel (Rev .163 → .164). */
+  page?: boolean
 }) {
   const frameNavigate = useFrameNavigate()
   const navigate = useNavigate()
@@ -262,9 +263,9 @@ export function SymbolCompact({
   // Which section is open, per tab — one at a time, the first by default.
   const [openBy, setOpenBy] = useState<Partial<Record<SymbolTabId, string | null>>>({})
   const liftTo = (to: SymbolTabId) => go(withSymbolParam(`${SYMBOL_PATH}?${TAB_PARAM}=${to}`, symbol))
-  // On a phone the option faces are not offered, and a link to one reads Overview.
-  const tabs = phone ? SYMBOL_TABS.filter((t) => !PHONE_OFF.has(t.id)) : SYMBOL_TABS
-  const tab: SymbolTabId = phone && PHONE_OFF.has(active) ? 'overview' : active
+  // On the compact page the option faces are not offered, and a link to one reads Overview.
+  const tabs = page ? SYMBOL_TABS.filter((t) => !COMPACT_OFF.has(t.id)) : SYMBOL_TABS
+  const tab: SymbolTabId = page && COMPACT_OFF.has(active) ? 'overview' : active
 
   const foldView = FOLD_FACE[tab] ? faces.views.find((v) => v.face.id === FOLD_FACE[tab]) : undefined
   const volEarnings = useVolFoldEarnings(symbol, tab === 'volatility')
@@ -277,16 +278,16 @@ export function SymbolCompact({
         faces={faces}
         tab={tab}
         compact
-        phone={phone}
+        page={page}
         subjectControl={<FollowLock symbol={symbol} />}
         asof={<SymbolAsofTag symbol={symbol} />}
       />
-      {phone ? <SymbolHeldBar symbol={symbol} /> : null}
+      {page ? <SymbolHeldBar symbol={symbol} /> : null}
 
       {/* Rev .142: capsule segments on a slab-free sticky bar (the scroll edge);
           the track scrolls sideways when the seven do not fit. */}
       <div data-sr-toolbar="" data-sticky="">
-        <div className={FACE_TAB_TRACK} data-sr-phone-scroll={phone ? '' : undefined}>
+        <div className={FACE_TAB_TRACK} data-sr-scroll={page ? '' : undefined}>
           {tabs.map((t) => {
             const lamp = lampFor(t.id)
             const on = t.id === tab
@@ -306,8 +307,8 @@ export function SymbolCompact({
         </div>
       </div>
 
-      {/* The panel leaves this to the wide page; on a phone this is the page. */}
-      {phone ? <SymbolAdjustedOnlyNote symbol={symbol} /> : null}
+      {/* The panel leaves this to the wide page; on compact this is the page. */}
+      {page ? <SymbolAdjustedOnlyNote symbol={symbol} /> : null}
 
       {tab === 'overview' ? (
         <>
@@ -323,7 +324,7 @@ export function SymbolCompact({
               else go(v.href)
             }}
           />
-          {phone ? (
+          {page ? (
             <SymbolSinceSnapshot symbol={symbol} variant="moved" />
           ) : (
             <SymbolVerdictPanel symbol={symbol} thesis={thesis} />
@@ -335,7 +336,7 @@ export function SymbolCompact({
           view={foldView}
           open={openRow}
           onToggle={(id) => setOpenBy((prev) => ({ ...prev, [tab]: openRow === id ? null : id }))}
-          onLift={phone ? undefined : () => liftTo(tab)}
+          onLift={page ? undefined : () => liftTo(tab)}
           earnings={tab === 'volatility' ? volEarnings : undefined}
         />
       ) : tab === 'chain' ? (

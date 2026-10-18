@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, type ReactNode } from 'react'
 import { usePageViewState } from '@/lib/pageView'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import { patchExecutionAttribution } from '@/api/trading'
 import { notify } from '@/lib/shellNotify'
@@ -123,7 +123,7 @@ export function OptionsTab({
   // (Rev .163, the prototype's 1·2·6), and a tap opens the row's every column
   // in the shell's sheet. The fills, their ledger writes and the contract slot
   // are the desk's: no expand column, no Opp / Actions, the name is plain.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const [syncingExecId, setSyncingExecId] = useState<number | null>(null)
   const [openOptSort, setOpenOptSort] = useState<{ column: OpenOptSortCol; dir: 'asc' | 'desc' }>({
     column: 'expiry',

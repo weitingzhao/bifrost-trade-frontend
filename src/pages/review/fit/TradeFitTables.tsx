@@ -17,6 +17,14 @@ import { fmtIsoDateToken } from '@/lib/format'
 import type { ReviewContract } from '@/utils/reviewContracts'
 import type { Counterfactual } from './tradeFitModel'
 
+/**
+ * Compact keeps (§18.6, Rev .168): exits Exit · P&L · vs actual; fills When ·
+ * Fill · Slippage — the design's three, at this table's own positions (it
+ * carries Fees and Cash where the design has Underlying and IV).
+ */
+const EXITS_COMPACT_KEEP = '1,3,4'
+const FILLS_COMPACT_KEEP = '1,4,8'
+
 export function CounterfactualsTable({ rows }: { rows: readonly Counterfactual[] }) {
   return (
     <section className={positionsUi.panel} aria-label="Counterfactuals">
@@ -27,7 +35,7 @@ export function CounterfactualsTable({ rows }: { rows: readonly Counterfactual[]
           every priced row reads off the curve above
         </span>
       </header>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-sr-keep={EXITS_COMPACT_KEEP}>
         <table className="w-full min-w-[46rem] border-collapse">
           <thead>
             <tr>
@@ -109,7 +117,7 @@ export function ExecutionTable({ trade }: { trade: ReviewContract }) {
           no mid at submit
         </DenseTag>
       </header>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-sr-keep={FILLS_COMPACT_KEEP}>
         <table className="w-full min-w-[42rem] border-collapse">
           <thead>
             <tr>
@@ -141,7 +149,10 @@ export function ExecutionTable({ trade }: { trade: ReviewContract }) {
                 <td className={cn(positionsUi.td, 'text-muted-foreground')}>—</td>
               </tr>
             ))}
-            <tr>
+            {/* The total row hides on compact, as a kept table's tfoot does (§18.6):
+                its spans would re-open the hidden columns. The realised figure
+                stays on the picker's button and in the economics panel's head. */}
+            <tr data-sr-hide="compact">
               <td className={cn(positionsUi.td, 'text-left font-sans font-semibold text-foreground')} colSpan={5}>
                 Realised
               </td>

@@ -116,7 +116,7 @@ export function WatchingTab({
   return (
     <div className="space-y-3">
       {showPositionPicker && positionsNotInWatchlist.length > 0 && (
-        <div className="flex flex-wrap gap-2 border p-3 mat-card">
+        <div data-sr-build="" className="flex flex-wrap gap-2 border p-3 mat-card">
           {positionsNotInWatchlist.map((p, idx) => {
             const ck = positionToContractKey(p)
             return (
@@ -158,15 +158,19 @@ export function WatchingTab({
         {isJoining && rows.length === 0 ? (
           <Skeleton className="mx-3 mb-3 h-32 rounded-md" />
         ) : (
-          <WatchBookTable
-            rows={rows}
-            categories={categories}
-            onCategoryChange={onCategoryChange}
-            onToggleOptionable={onToggleOptionable}
-            onInspect={onSymbolClick}
-            onAddOption={onAddOption}
-            onRemove={onRemove}
-          />
+          // Compact keeps Symbol · Last · Day (§18.6, Rev .167); the thesis,
+          // the filing and the doors open in the row sheet.
+          <div data-sr-keep="1,2,3">
+            <WatchBookTable
+              rows={rows}
+              categories={categories}
+              onCategoryChange={onCategoryChange}
+              onToggleOptionable={onToggleOptionable}
+              onInspect={onSymbolClick}
+              onAddOption={onAddOption}
+              onRemove={onRemove}
+            />
+          </div>
         )}
       </SectionPanel>
 
@@ -175,13 +179,16 @@ export function WatchingTab({
         title={`${watchlistOptions.length} tracked`}
         note="tracked from the chain — quotes stream on Live"
       >
-        <WatchBookContracts
-          items={watchlistOptions}
-          quoteByContractKey={quoteByContractKey}
-          symbolFromItem={symbolFromItem}
-          onRemove={onRemove}
-          now={now}
-        />
+        {/* Compact keeps Contract · Mid · DTE (§18.6, Rev .167). */}
+        <div data-sr-keep="1,2,6">
+          <WatchBookContracts
+            items={watchlistOptions}
+            quoteByContractKey={quoteByContractKey}
+            symbolFromItem={symbolFromItem}
+            onRemove={onRemove}
+            now={now}
+          />
+        </div>
       </SectionPanel>
 
       {/* The design's own footer, and the line that keeps this page inside

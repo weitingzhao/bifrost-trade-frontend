@@ -472,9 +472,15 @@ export default function ScanPage() {
                 : `${scored.length} underlying${scored.length === 1 ? '' : 's'}`
             }
             note={
-              sort === 'composite'
-                ? 'by your composite · click a lens header to rank by it · click a row for why · j k walk'
-                : `by ${VOL_LENSES.find((l) => l.key === sort)?.label} · click Comp to go back`
+              sort === 'composite' ? (
+                <>
+                  by your composite · click a lens header to rank by it · click a row for why
+                  {/* Keys a finger does not have (§18.3, Rev .169): gone on touch until a key is pressed. */}
+                  <span data-sr-hint="keys"> · j k walk · esc</span>
+                </>
+              ) : (
+                `by ${VOL_LENSES.find((l) => l.key === sort)?.label} · click Comp to go back`
+              )
             }
           >
             {isLoading ? (

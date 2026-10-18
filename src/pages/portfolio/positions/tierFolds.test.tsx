@@ -5,10 +5,18 @@ import { MemoryRouter } from 'react-router-dom'
 import { refreshDevice } from '@/lib/device'
 import { useBookFold, usePressureFold } from './tierFolds'
 
-/** `?device=` keeps the forced tier here for the tab's session (lib/device). */
-function setTier(tier: 'phone' | 'pad' | 'desk') {
+const TALL = 1000
+const SHORT = 820
+const innerHeight0 = window.innerHeight
+
+/**
+ * A layout class for the hook: `?layout=` keeps the width class for the tab's
+ * session (lib/device); the height class is the window's own.
+ */
+function setClass(w: 'compact' | 'expanded' | 'wide', h: number) {
   act(() => {
-    sessionStorage.setItem('bifrost.device', tier)
+    sessionStorage.setItem('bifrost.layout', w)
+    Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: h })
     refreshDevice()
   })
 }
@@ -19,53 +27,59 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 afterEach(() => {
   sessionStorage.clear()
+  Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: innerHeight0 })
   act(() => refreshDevice())
 })
 
-describe('usePressureFold (Rev .163 §18.7 · §18.11)', () => {
-  it('is open on the desk, as it always was', () => {
-    setTier('desk')
+describe('usePressureFold (Rev .164 §18.7 · §18.11)', () => {
+  it('is open on a tall screen above compact, as it always was — the desk, and an iPad Pro 13″ upright', () => {
+    setClass('wide', TALL)
     const { result } = renderHook(() => usePressureFold(), { wrapper })
+    expect(result.current[0]).toBe(true)
+    setClass('expanded', TALL)
     expect(result.current[0]).toBe(true)
   })
 
-  it('starts folded on a phone and on an iPad', () => {
-    setTier('phone')
+  it('starts folded on compact and on a short screen', () => {
+    setClass('compact', TALL)
     const { result } = renderHook(() => usePressureFold(), { wrapper })
     expect(result.current[0]).toBe(false)
-    setTier('pad')
+    setClass('expanded', SHORT)
+    expect(result.current[0]).toBe(false)
+    // A short laptop on the desk is short too.
+    setClass('wide', SHORT)
     expect(result.current[0]).toBe(false)
   })
 
-  it('keeps each tier’s fold apart: opening it on the phone leaves the iPad and the desk as they were', () => {
-    setTier('phone')
+  it('keeps each class’s fold apart: opening it on compact leaves short and tall as they were', () => {
+    setClass('compact', TALL)
     const { result } = renderHook(() => usePressureFold(), { wrapper })
     act(() => result.current[1](true))
     expect(result.current[0]).toBe(true)
-    setTier('pad')
+    setClass('expanded', SHORT)
     expect(result.current[0]).toBe(false)
-    setTier('desk')
+    setClass('wide', TALL)
     expect(result.current[0]).toBe(true)
     act(() => result.current[1](false))
-    setTier('phone')
+    setClass('compact', TALL)
     expect(result.current[0]).toBe(true)
   })
 })
 
-describe('useBookFold (Rev .163)', () => {
-  it('leaves the desk’s band uncontrolled: no open, no onOpenChange', () => {
-    setTier('desk')
+describe('useBookFold (Rev .164)', () => {
+  it('leaves a tall screen’s band uncontrolled: no open, no onOpenChange', () => {
+    setClass('wide', TALL)
     const { result } = renderHook(() => useBookFold(), { wrapper })
     expect(result.current).toEqual({})
   })
 
-  it('starts folded on a phone, and a reading can open it there', () => {
-    setTier('phone')
+  it('starts folded on compact, and a reading can open it there', () => {
+    setClass('compact', TALL)
     const { result } = renderHook(() => useBookFold(), { wrapper })
     expect(result.current.open).toBe(false)
     act(() => result.current.onOpenChange?.(true))
     expect(result.current.open).toBe(true)
-    setTier('pad')
+    setClass('expanded', SHORT)
     expect(result.current.open).toBe(false)
   })
 })

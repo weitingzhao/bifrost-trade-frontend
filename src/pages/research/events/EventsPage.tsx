@@ -173,7 +173,15 @@ function StoreStanding({
 }) {
   const failed = standing.state === 'failed'
   return (
-    <section className="overflow-hidden border mat-card" aria-label="Event pipeline">
+    // Compact keeps the lamp, the store and its answer (§18.6); the path is
+    // the cell left behind. The table has no header row, so a row sheet would
+    // print every caption as a dash — the tap stays the page's.
+    <section
+      data-sr-keep="1,2,4"
+      data-sr-detail="page"
+      className="overflow-hidden border mat-card"
+      aria-label="Event pipeline"
+    >
       <div className="space-y-2 border-b border-border px-3 py-3">
         <p className="flex flex-wrap items-center gap-2">
           <StatusLamp lamp={failed ? 'fail' : 'gray'} variant="dot" />

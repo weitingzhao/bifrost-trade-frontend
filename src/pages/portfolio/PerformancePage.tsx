@@ -13,6 +13,7 @@ import { buildEquityGrowthChart, DEFAULT_LAYERS_VISIBLE, type GrowthLayer, type 
 import { buildFiBarChart } from '@/utils/ledger/fiBarChart'
 import { useMonitorStatus } from '@/hooks/useMonitorStatus'
 import { HeroCard, HeroRow, PageHead, PageShell, SectionHead } from '@/components/layout'
+import { DeviceSectionBand } from '@/components/layout/DeviceSectionBand'
 import { ViewState } from '@bifrost/ui'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
 import { AsofTag } from '@/components/AsofTag'
@@ -44,6 +45,8 @@ import { chicagoTodayDateStr } from '@/utils/ledger/optAsOfPnL'
 
 const PAGE_LEAD =
   'Did the system make money — by layer, by month, by day. Deposits and withdrawals recorded in Transfer & Pay are not P&L.'
+
+const AUDIT_FOLD_AT = ['compact', 'short'] as const
 
 const RANGE_WORD: Record<PerformanceTimeRange, string> = {
   month: 'this month',
@@ -354,7 +357,7 @@ export default function PerformancePage() {
       />
       {derivation && (
         <div id="performance-derivation">
-          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" />
+          <DerivationBlock derivation={derivation} onClose={() => setTree(null)} className="mt-0" trimOnCompact />
         </div>
       )}
       {view === 'loading' || view === 'failed' ? null : (
@@ -407,9 +410,15 @@ export default function PerformancePage() {
         onExplainCell={() => explain('calendar')}
       />
 
-      <SectionHead note="Above looks at trend — below reconciles. Month rows open into days; a day opens its records beside the calendar, in the Summary slot.">
-        Audit
-      </SectionHead>
+      {/* Reconciling, not reading (Rev .165): folded by default on compact and
+          on a short screen, each remembering its own fold. */}
+      <DeviceSectionBand
+        id="audit"
+        title="Audit"
+        note="Above looks at trend — below reconciles. Month rows open into days; a day opens its records beside the calendar, in the Summary slot."
+        summaryWhenFolded
+        foldAt={AUDIT_FOLD_AT}
+      />
       <MonthlyPnLTable
         byDayRangeData={bulk?.byDayRangeData ?? null}
         optOpenByOpenMonth={bulk?.byDayRangeData?.optOpenByOpenMonth ?? null}

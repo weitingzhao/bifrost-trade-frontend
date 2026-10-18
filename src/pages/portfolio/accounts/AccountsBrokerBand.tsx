@@ -96,6 +96,8 @@ export function AccountsBrokerBand({
           />
         </div>
 
+        {/* Compact (Rev .165): Account · Net liq · Cushion; a row opens the rest in its sheet. */}
+        <div data-sr-keep="1,2,8">
         <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[1000px]">
           <colgroup>
             <col style={{ width: '14%' }} />
@@ -221,6 +223,7 @@ export function AccountsBrokerBand({
             </GrandTotalRow>
           </DenseTableBody>
         </DenseDataTable>
+        </div>
 
         <div className={accountsUi.panelFoot}>
           <p className="m-0">

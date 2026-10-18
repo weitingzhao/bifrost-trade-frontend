@@ -27,6 +27,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ViewState } from '@bifrost/ui'
 import { HeroCard, HeroRow, PageHead, PageShell, SectionHead } from '@/components/layout'
+import { DeviceSectionBand } from '@/components/layout/DeviceSectionBand'
 import {
   DenseDataTable,
   DenseTableBody,
@@ -89,6 +90,9 @@ const AREAS = [
   ['03', 'Margin', '/risk/margin', 'What does the broker allow?'],
   ['04', 'Exposure', '/risk/portfolio', 'What is the book, and what would a shock cost?'],
 ] as const
+
+/** Compact keeps the lamp, the limit and its % (§18.6 · Rev .166). */
+const HEADROOM_COMPACT_KEEP = '1,2,6'
 
 const TONE_INK = { over: 'text-destructive', near: 'text-warning', plain: '' } as const
 /** A row inside its line reads in the soft ink, not full (Rev .82). */
@@ -333,7 +337,9 @@ export default function RiskOverviewPage() {
       >
         Headroom
       </SectionHead>
-      <section className="overflow-hidden border mat-card">
+      {/* Compact (§18.6, Rev .166): the lamp, the limit and its % — a row's
+          detail sheet carries the rest and opens the page that owns it. */}
+      <section className="overflow-hidden border mat-card" data-sr-keep={HEADROOM_COMPACT_KEEP}>
         {/* A model failure is narrower news than a book failure: it only
             leaves the greek lines unranked, so it is a strip over the table,
             not a block in place of it (§17.1-1). */}
@@ -492,9 +498,16 @@ export default function RiskOverviewPage() {
         </>
       )}
 
-      <SectionHead note="Risk reads the market and the account at once — which is why it hangs off neither Research nor Trade">
-        In the order a trade meets them
-      </SectionHead>
+      {/* A reference section: folded by default on compact and on a short
+          screen, each remembering its own (Rev .166, §18.7 · §18.11). The
+          desk's band and its memory are the ones SectionHead gave it. */}
+      <DeviceSectionBand
+        id="in-the-order-a-trade-meets-them"
+        title="In the order a trade meets them"
+        note="Risk reads the market and the account at once — which is why it hangs off neither Research nor Trade"
+        summaryWhenFolded
+        foldAt={['compact', 'short']}
+      />
       <nav aria-label="Risk pages" className="flex flex-wrap items-stretch gap-2">
         {AREAS.map(([n, name, to, q]) => (
           <Link

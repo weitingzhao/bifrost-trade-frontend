@@ -14,7 +14,7 @@ import { useSignalHealthSummary } from '@/hooks/useCopilotStanding'
 import { failedLensFlag, healthFlag, oldestAsof } from '@/lib/asofTag'
 import { RIBBON_LENSES } from '@/lib/regimeRibbon'
 
-export function SymbolAsofTag({ symbol }: { symbol: string }) {
+export function SymbolAsofTag({ symbol, note }: { symbol: string; note?: string }) {
   const exhibits = useExhibitComposite(RIBBON_LENSES, symbol)
   const health = useSignalHealthSummary()
 
@@ -29,6 +29,7 @@ export function SymbolAsofTag({ symbol }: { symbol: string }) {
       flag={flag}
       judgedBy="Research"
       href="/research/signal-health"
+      note={note}
     />
   )
 }

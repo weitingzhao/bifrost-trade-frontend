@@ -11,7 +11,7 @@
  *    its centre. A direct hit always wins over a neighbour's slop; only a
  *    control *inside* what was hit (the ✕ in a chip, a button in a row) can
  *    take the tap from it.
- * 3. **Row detail (phone).** In a table kept to 2–3 columns (`data-sr-keep`),
+ * 3. **Row detail (compact).** In a table kept to 2–3 columns (`data-sr-keep`),
  *    tapping a row opens every column in a sheet; its controls proxy to the
  *    originals, and a row that opens something gets `Open`. A page with its
  *    own detail writes `data-sr-detail="page"` and keeps the tap.
@@ -23,7 +23,7 @@
  * The values are the design's (`shell-registry.js` `shellDevice`).
  */
 import { useEffect } from 'react'
-import { deviceNow } from '@/lib/device'
+import { layoutNow } from '@/lib/device'
 import { openShellSheet } from './shellSheet'
 import { CTL, PASS, pass } from './touchPass'
 import { TouchCell as Cell } from './TouchCell'
@@ -153,7 +153,7 @@ function confirmOrder(b: HTMLElement): void {
 export function useTouchLayer(): void {
   useEffect(() => {
     let lp: { x: number; y: number; fired: boolean; t: number } | null = null
-    const touch = () => deviceNow().touch
+    const touch = () => layoutNow().input === 'touch'
 
     // 1 — a fired long-press eats the click that ends it.
     const eat = (e: MouseEvent) => {
@@ -180,16 +180,18 @@ export function useTouchLayer(): void {
       }
       best.click()
     }
-    // 3 — a kept table's row opens its detail on a phone.
+    // 3 — a kept table's row opens its detail on compact.
     const row = (e: MouseEvent) => {
-      if (deviceNow().device !== 'phone' || !(e.target instanceof Element)) return
+      if (layoutNow().w !== 'compact' || !(e.target instanceof Element)) return
       const tr = e.target.closest<HTMLTableRowElement>('[data-sr-keep] tbody tr')
       if (!tr || PASS.has(tr)) return
       const host = tr.closest('[data-sr-keep]')
       if (!host || host.getAttribute('data-sr-detail') === 'page') return
       if (tr.children.length === 1 && tr.firstElementChild?.hasAttribute('colspan')) return
+      // A control inside the row keeps its tap; the row itself matching CTL
+      // (useRowLink's role="button") is the row, not a control in it.
       const c = e.target.closest(CTL)
-      if (c && tr.contains(c)) return
+      if (c && c !== tr && tr.contains(c)) return
       e.preventDefault()
       e.stopImmediatePropagation()
       rowSheet(tr)

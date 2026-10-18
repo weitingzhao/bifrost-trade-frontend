@@ -309,8 +309,13 @@ function HabitRow({ habit }: { habit: HabitReading }) {
   const fmt = fmtFor(habit)
   const measuring = Boolean(habit.measuring)
   const thin = habit.value != null && habit.n < THIN_SAMPLE
+  // Compact stacks the reading over its strip (`data-sr-stack`, Rev .168); the
+  // auto-fit floor already does below 37rem, the hook says it on the axis.
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] items-start gap-x-4 gap-y-2 border-b border-border px-3 py-2.5 last:border-b-0">
+    <div
+      data-sr-stack=""
+      className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] items-start gap-x-4 gap-y-2 border-b border-border px-3 py-2.5 last:border-b-0"
+    >
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex flex-wrap items-baseline gap-2">
           <span

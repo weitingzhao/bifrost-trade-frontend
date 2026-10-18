@@ -47,4 +47,10 @@
 // as an expansion in a list scope — no fill, no zebra, no capsule, a hairline under,
 // `indent`; a nested table's head does not stick (§17.2).
 // 0.13.0 (naming R0): the `--sk-instance` alias goes; `--sk-trade` is the only name.
-export const UI_VERSION_NOW = '0.13.0'
+// 0.14.0: the exports neither app imported go (the props types among them).
+// 0.15.0 (Rev .174 "0.14.0 final", sections A + B): `@bifrost/ui/layout` — useLayout /
+// LayoutProvider (width · height · input · keys · dock on <html>), styles/layout and the
+// §18.7 hooks, BottomSheet, DetailPane, TabBar, compact routing for Dialog · Sheet ·
+// Popover · ContextMenu, the sidebar's compact / icon rail with per-class memory,
+// DenseDataTable compactKeep, SectionBand foldAt. All of it acts only under a provider.
+export const UI_VERSION_NOW = '0.15.0'

@@ -11,6 +11,10 @@
  * The payload is the top N **symbol × session** over three months, so its
  * newest session carries a handful of names; a page that headed it "today"
  * would be wrong about nearly every row it draws.
+ *
+ * Compact (Rev .173, RESPONSE batch 1): two columns — Symbol and the score the
+ * list is ordered by (Peak, Hits, or the last hit's date). The row's detail is
+ * the page's Why, so the shell only folds the columns (`data-sr-detail`).
  */
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
@@ -43,6 +47,9 @@ import {
 
 /** The design's own figure. One call; everything below is a fold over it. */
 const RADAR_LIMIT = 200
+
+/** Compact keeps Symbol and the column the order reads (Peak 3 · Hits 5 · Last hit 6). */
+const COMPACT_KEEP: Record<LeaderSortKey, string> = { peak: '1,3', hits: '1,5', last: '1,6' }
 
 export function LeadersFace({
   universe,
@@ -145,7 +152,7 @@ export function LeadersFace({
           />
         </div>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-sr-keep={COMPACT_KEEP[sort]} data-sr-detail="page">
           <DenseDataTable tableClassName="min-w-[1000px]">
             <DenseTableHeader>
               <DenseTableHeadRow>

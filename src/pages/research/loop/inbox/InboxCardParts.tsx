@@ -172,7 +172,7 @@ export function InboxSectionHead({
   dest: WritesTo
   pending: number
   children?: ReactNode
-  /** A phone: the note takes a second line instead of squeezing the label (Rev .163). */
+  /** Compact: the note takes a second line instead of squeezing the label (Rev .163). */
   wrap?: boolean
 }) {
   return (

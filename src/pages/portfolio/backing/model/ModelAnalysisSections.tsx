@@ -81,10 +81,12 @@ export function ModelAnalysisMainTable({ data, filterSymbol, open, onToggle, exp
 
   return (
     <CollapsibleGroup>
-      <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
+      {/* The answer line is long: where the row runs out it wraps under the
+          title instead of pushing the page sideways (a phone, a narrow pane). */}
+      <CollapsibleGroupHeader expanded={open} onToggle={onToggle} className="flex-wrap">
         <CollapsibleChevron expanded={open} />
         <CollapsibleGroupTitle>Per underlying</CollapsibleGroupTitle>
-        <CollapsibleGroupStats>
+        <CollapsibleGroupStats className="min-w-0 shrink">
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {shown.length !== entries.length ? `${shown.length} of ${entries.length}` : entries.length} symbol
             {entries.length !== 1 ? 's' : ''}
@@ -106,7 +108,10 @@ export function ModelAnalysisMainTable({ data, filterSymbol, open, onToggle, exp
         </CollapsibleGroupBody>
       ) : open ? (
         <CollapsibleGroupBody>
-          <div className={modelAnalysisTable.shell}>
+          {/* Compact (Rev .165): Symbol · Risk · CAR. The row is this page's own
+              detail (the model face beside the page), so the shell folds the
+              columns and leaves the tap to the row. */}
+          <div className={modelAnalysisTable.shell} data-sr-keep="2,7,8" data-sr-detail="page">
             <table className={modelAnalysisTable.table} aria-label="Model analysis per underlying">
               <DenseTableHeader className={modelAnalysisTable.stickyThead}>
                 <DenseTableHeadRow>
@@ -257,6 +262,8 @@ export function AccountStressSection({ data }: AccountStressProps) {
             })}
           </div>
 
+          {/* Compact (Rev .165): Spot shock · Δ P&L · P&L @exp. */}
+          <div data-sr-keep="1,3,4">
           <NestedDenseTable tableClassName="min-w-[460px]">
             <DenseTableHeader>
               <DenseTableHeadRow>
@@ -297,6 +304,7 @@ export function AccountStressSection({ data }: AccountStressProps) {
               ))}
             </DenseTableBody>
           </NestedDenseTable>
+          </div>
           <p className={modelAnalysisStressNoteClass}>
             Values are the <strong>sum</strong> of per-symbol stress totals for the same spot shock, at expiry intrinsic
             value. Open a <strong>symbol</strong> row below for its own CAR and stress, with the formulas.

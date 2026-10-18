@@ -52,7 +52,7 @@ import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import { useStuckMarks } from '@bifrost/ui'
 import { X } from 'lucide-react'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { SheetGrip } from '@/components/ui/SheetGrip'
 
 /** The width grip's drag: the column follows the pointer, and is kept on release. */
@@ -148,7 +148,7 @@ export function EquipPanel() {
   const open = Boolean(panel)
   // Rev .163 (契约 §18.5): on a phone the panel is a bottom sheet — no
   // column, no width grip, no slide in from the edge.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const [full, setFull] = useState(false)
   // Opened again, it starts at the half detent, not where it was dragged.
   const [wasShown, setWasShown] = useState(open)

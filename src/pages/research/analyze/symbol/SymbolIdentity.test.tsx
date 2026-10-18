@@ -31,7 +31,7 @@ const faces: SymbolFaces = {
   failed: [],
 }
 
-function head(props: { pad?: boolean; compact?: boolean; phone?: boolean; read?: SymbolFaces }) {
+function head(props: { wideTall?: boolean; compact?: boolean; page?: boolean; read?: SymbolFaces }) {
   const { read, ...rest } = props
   const { container } = render(
     <QueryClientProvider client={new QueryClient()}>
@@ -49,35 +49,37 @@ function head(props: { pad?: boolean; compact?: boolean; phone?: boolean; read?:
 }
 
 describe('SymbolIdentity', () => {
-  it('keeps the desk head at four lines', () => {
-    const { lines, text } = head({})
-    expect(lines).toBe(4)
-    expect(text).toContain('Verdict')
-    expect(text).toContain('snapshot · today only')
-    expect(text).toContain('Hypothesis')
-  })
-
-  it('draws the iPad head in three: the verdict on the subject line, Send on the why line, no snapshot word', () => {
-    const { lines, text } = head({ pad: true })
+  it('draws three lines on a wide, tall screen: the verdict on the subject line, Send ending the why line, from and snapshot shown', () => {
+    const { lines, rows, text } = head({ wideTall: true })
     expect(lines).toBe(3)
     expect(text).not.toContain('Verdict')
+    expect(rows[0]).toContain('No decisive edge')
+    expect(rows[1]).toMatch(/lenses decisive[\s\S]*opened directly[\s\S]*Hyp/)
+    expect(rows[2]).toContain('snapshot · today only')
+    expect(text).not.toContain('Hypothesis')
+  })
+
+  it('keeps the same three lines everywhere else above compact, without from or the snapshot word', () => {
+    const { lines, rows, text } = head({})
+    expect(lines).toBe(3)
+    expect(rows[0]).toContain('No decisive edge')
+    expect(rows[1]).toContain('Hyp')
     expect(text).not.toContain('snapshot')
-    expect(text).toContain('Hyp')
-    expect(text).toContain('No decisive edge')
-    // The way back to the list stays, in the controls line.
-    expect(text).toContain('opened directly')
+    expect(text).not.toContain('opened directly')
+    // The verbs' stand-in stays: the app has no artifact id to hide.
+    expect(rows[2]).toContain('read · no artifact store')
   })
 
-  it('keeps the 440 panel head, and drops Follow / Lock and Send for a phone page', () => {
+  it('keeps the 440 panel head, and drops Follow / Lock and Send for the compact page', () => {
     expect(head({ compact: true }).text).toMatch(/Follow[\s\S]*Send/)
-    const phone = head({ compact: true, phone: true })
-    expect(phone.text).not.toContain('Follow')
-    expect(phone.text).not.toContain('Send')
-    expect(phone.text).toContain('not held')
+    const page = head({ compact: true, page: true })
+    expect(page.text).not.toContain('Follow')
+    expect(page.text).not.toContain('Send')
+    expect(page.text).toContain('not held')
   })
 
-  it('gives a phone the why readings under the verdict, then where the name came from', () => {
-    const { rows } = head({ compact: true, phone: true })
+  it('gives the compact page the why readings under the verdict, then where the name came from', () => {
+    const { rows } = head({ compact: true, page: true })
     const verdict = rows.findIndex((r) => r.includes('No decisive edge'))
     const why = rows.findIndex((r) => r.includes('0 of 8 lenses decisive'))
     const from = rows.findIndex((r) => r.includes('opened directly'))
@@ -85,7 +87,7 @@ describe('SymbolIdentity', () => {
     expect(why).toBe(verdict + 1)
     expect(from).toBe(why + 1)
     // Nothing read and no list behind the name: no readings line at all.
-    const bare = head({ compact: true, phone: true, read: { ...faces, decisive: { n: 0, of: 0 } } })
+    const bare = head({ compact: true, page: true, read: { ...faces, decisive: { n: 0, of: 0 } } })
     expect(bare.text).not.toContain('lenses decisive')
     expect(bare.rows.length).toBe(rows.length - 1)
   })

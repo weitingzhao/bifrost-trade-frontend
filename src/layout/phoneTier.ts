@@ -1,6 +1,7 @@
 /**
- * What a page is on an iPhone (design Rev .163, DESIGN_CONTRACTS §18.2; the
- * design's table is `shell-registry.js` `phoneTier`).
+ * What a page is on compact (design Rev .163 → .164, DESIGN_CONTRACTS §18.2;
+ * the design's table is `shell-registry.js` `compactTier`). Only compact, and
+ * never inside a surface: medium and up have every page at full strength.
  *
  * - **act** — watch the book and act on it: positions, the inbox, close and
  *   roll, alerts, limits.
@@ -15,7 +16,9 @@
  * names a redirect still answers to are listed beside their pages, so a tier is
  * right before and after the redirect lands.
  */
-export type PhoneTier = 'act' | 'read' | 'desk'
+export type CompactTier = 'act' | 'read' | 'desk'
+/** Rev .163's name. */
+export type PhoneTier = CompactTier
 
 const ACT: ReadonlySet<string> = new Set([
   '/home',
@@ -23,6 +26,8 @@ const ACT: ReadonlySet<string> = new Set([
   '/trade/desk',
   '/trade/expiration',
   '/trade/assignment',
+  // The old name of a trade's page, still a redirect (Rev .172 lists it with /trade/:id).
+  '/instance',
   '/research/loop/decisions',
   '/review/proposals',
   '/research/event-radar',
@@ -76,15 +81,18 @@ const READ: ReadonlySet<string> = new Set([
   '/system/status',
 ])
 
-/** A trade's own page, `/trade/123` — act: it is where a roll or a close is decided. */
-const TRADE_PAGE = /^\/trade\/\d+\/?$/
+/** A trade's own page, `/trade/123` (or its old `/instance/123`) — act: it is where a roll or a close is decided. */
+const TRADE_PAGE = /^\/(trade|instance)\/\d+\/?$/
 
-export function phoneTier(pathname: string): PhoneTier {
+export function compactTier(pathname: string): CompactTier {
   const p = pathname.split(/[?#]/)[0].replace(/\/+$/, '') || '/'
   if (ACT.has(p) || TRADE_PAGE.test(p)) return 'act'
   if (READ.has(p)) return 'read'
   return 'desk'
 }
+
+/** Rev .163's name. */
+export const phoneTier = compactTier
 
 /** The reason a desk-tier row gives, on the gate and on More's faint rows. */
 export const DESK_TIER_REASON = 'Built for a larger screen — iPhone watches the book and acts on it'

@@ -40,6 +40,8 @@ export function LedgerTradeNest({ groups, onContractClick, stockFills = [] }: Pr
   }
 
   return (
+    // Compact (Rev .165): Contract · Net qty · Booking; a row opens the rest in its sheet, Open goes to its links.
+    <div data-sr-keep="1,5,7">
     <DenseDataTable wrapClassName="rounded-sm" tableClassName={ledgerTableMinClass.t1}>
       {/* Measured on DEV at the 660 floor, with strike as `$1,220.00` and the full contract token
           (widest 165px / 87px); Booking wraps rather than clipping. */}
@@ -93,5 +95,6 @@ export function LedgerTradeNest({ groups, onContractClick, stockFills = [] }: Pr
         })}
       </DenseTableBody>
     </DenseDataTable>
+    </div>
   )
 }

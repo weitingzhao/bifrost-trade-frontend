@@ -196,7 +196,10 @@ describe('the design walk, as it stands', () => {
     // package; the app's rename re-walked all three, so it is back to 4.
     // 3 with the Rev .151–.154 pilot (2026-10-04): Loop Run, rebuilt on the
     // panel glass, waits for a look in `reviewing`.
-    expect(counts.aligned + counts.byState.stale).toBe(3)
+    // 2 with P67 (2026-10-17, Package .69 @ Rev .174): Rev .170 moved the
+    // Copilot desk's own rev (the §18 batch 7 table); it was re-walked the
+    // same day — nothing on the page changes — and waits in `reviewing`.
+    expect(counts.aligned + counts.byState.stale).toBe(2)
     // Package 2026-09-23.3 @ Rev .7 adds two more, and for a different reason:
     // Live and Alerts leave the left sidebar for the right rail's new Market
     // group, so their crumbs become `['Market']` and neither is in the design's
@@ -228,7 +231,8 @@ describe('the design walk, as it stands', () => {
     // counts out of the direction inks. 52 signed pages read stale until
     // batches J1–J5 re-walk them; the sum above held at 56 until J1.
     // 3 with the Rev .154 pilot: Loop Run back in `reviewing`.
-    expect(counts.aligned).toBe(3)
+    // 2 with P67: the Copilot desk, behind Rev .170, re-walked into `reviewing`.
+    expect(counts.aligned).toBe(2)
     expect(
       rows
         .filter((r) => r.state === 'stale')
@@ -500,7 +504,10 @@ describe('the design walk, as it stands', () => {
     // faces are one page and one method face (four aliases now).
     // 72 with the Rev .154 pilot: Loop Run, rebuilt on the panel glass.
     // 73 with batch 6: Home › Calendar, built new (Rev .145–.150).
-    expect(counts.byState.reviewing).toBe(73)
+    // 74 with P67 (2026-10-17): the §18 batches (Rev .165–.173) re-stamped 32
+    // walked pages; all 32 were re-walked to their page revs the same day, and
+    // the one of them that was signed — the Copilot desk — joins the queue.
+    expect(counts.byState.reviewing).toBe(74)
     // Since 2026-09-29 a reviewing page whose design rev passed its walk reads
     // stale too; the thirteen that had (Rev .100–.103 built in batches R–V)
     // were re-stamped with the design receipt, so none does.
@@ -512,7 +519,7 @@ describe('the design walk, as it stands', () => {
         .sort()
     ).toEqual([
       // Rev .95: the four signed pages the §16 refinement round did not re-stamp.
-      '/research/copilot/trading',
+      // P67 took the Copilot desk to `reviewing` (Rev .170).
       '/research/workbench',
       '/review/proposals',
     ])
@@ -547,6 +554,7 @@ describe('the design walk, as it stands', () => {
       '/research/book',
       '/research/compare',
       '/research/contract-screener',
+      '/research/copilot/trading',
       '/research/daily-brief',
       '/research/event-radar',
       '/research/events',

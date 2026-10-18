@@ -537,7 +537,8 @@ function ContractGroup({
         <span className="font-mono text-dense-meta tabular-nums text-muted-foreground">{fmtUsd(tabComm)}</span>
       </div>
 
-      <div className="overflow-x-auto">
+      {/* Compact (Rev .165): Record · Trade date · P&L. */}
+      <div className="overflow-x-auto" data-sr-keep="1,4,9">
         {/* §14.6: nine columns, 720 floor; the panel scrolls sideways below it. */}
         <table className="w-full min-w-[720px] border-collapse">
           <thead>
@@ -773,7 +774,8 @@ function StkDayDetail({
             ? ' Stream is money flow: buy +, sell −.'
             : ' Notional is signed trade size: sell +, buy −.'}
       </p>
-      <div className="overflow-x-auto px-3 py-2.5">
+      {/* Compact: Symbol · Qty · Realized, the records table's reading for a share fill. */}
+      <div className="overflow-x-auto px-3 py-2.5" data-sr-keep="2,4,7">
         <table className="w-full min-w-[560px] border-collapse border mat-card">
           <thead>
             <tr>

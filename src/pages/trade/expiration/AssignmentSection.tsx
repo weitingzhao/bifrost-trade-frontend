@@ -27,7 +27,7 @@ import { useAssignmentLegs } from '@/hooks/useAssignmentLegs'
 import { useExecutionsAll } from '@/hooks/useExecutions'
 import { usePreviewState } from '@/hooks/usePreviewState'
 import { SYMBOL_PATH } from '@/lib/analyzeHubs'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { fmtIsoDateToken } from '@/lib/format'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { failedDetail, sourceState, staleDetail } from '@/lib/viewState'
@@ -56,19 +56,19 @@ const ROW_HOT = '[--sr-row:color-mix(in_srgb,var(--color-warning)_4%,transparent
 const WARN_EDGE = { borderColor: 'color-mix(in srgb, var(--color-warning) 45%, transparent)' }
 
 /**
- * What a phone keeps of each table (design Rev .163, §18.6); a tap on a row
+ * What compact keeps of each table (design Rev .163 → .173, §18.6); a tap on a row
  * opens the rest in the shell's sheet. Short legs keep Leg · To strike · Plan:
  * how deep the short sits, and the way out (the row's amber wash already says
  * when the time value is thin). History keeps When · Leg · Kind.
  */
-const SHORTS_PHONE_KEEP = '1,3,9'
-const HISTORY_PHONE_KEEP = '1,2,3'
+const SHORTS_COMPACT_KEEP = '1,3,9'
+const HISTORY_COMPACT_KEEP = '1,2,3'
 
 export function AssignmentSection() {
   const { attrQuery, legs, totals, thin, loading } = useAssignmentLegs()
   const execQuery = useExecutionsAll()
   const today = etTodayIso()
-  const phone = useDevice().device === 'phone'
+  const compact = useLayout().w === 'compact'
 
   // One read per name carrying a short call, on the key Home · Today uses —
   // one cache entry, so the two surfaces cannot disagree about an ex-date.
@@ -223,19 +223,19 @@ export function AssignmentSection() {
                   {hot} with a dividend over its time value
                 </span>
               ) : null}
-              {/* The foot and Early trigger say it again; a phone keeps the counts
+              {/* The foot and Early trigger say it again; compact keeps the counts
                   and starts the table (Rev .163). */}
-              <span data-sr-phone="hide" className="ml-auto text-dense-meta text-muted-foreground">
+              <span data-sr-hide="compact" className="ml-auto text-dense-meta text-muted-foreground">
                 early risk is an ITM short with almost no time value left, or a call under a larger dividend; otherwise
                 the risk sits at expiry
               </span>
             </header>
-            <div className="overflow-x-auto" data-sr-keep={SHORTS_PHONE_KEEP}>
+            <div className="overflow-x-auto" data-sr-keep={SHORTS_COMPACT_KEEP}>
               {/* §14.6: nine columns — the design's eight plus Plan. 1040 rather than the
                   design's 980: the early-trigger cell now carries a date and two amounts.
-                  A phone lays out the three it keeps by their content. */}
-              <table className={cn('w-full min-w-[1040px] border-collapse', !phone && 'table-fixed')}>
-                {phone ? null : (
+                  Compact lays out the three it keeps by their content. */}
+              <table className={cn('w-full min-w-[1040px] border-collapse', !compact && 'table-fixed')}>
+                {compact ? null : (
                   <colgroup>
                     <col style={{ width: '18%' }} />
                     <col style={{ width: '6%' }} />
@@ -472,7 +472,7 @@ export function AssignmentSection() {
                   No option leg was closed with shares moving beside it — every book entry here is an expiry.
                 </p>
               ) : (
-                <div className="overflow-x-auto" data-sr-keep={HISTORY_PHONE_KEEP}>
+                <div className="overflow-x-auto" data-sr-keep={HISTORY_COMPACT_KEEP}>
                   <table className="w-full min-w-[26rem] border-collapse">
                     <thead>
                       <tr>
@@ -500,13 +500,13 @@ export function AssignmentSection() {
                               {h.contractKey ? shortOptLegLabel(h.contractKey) : `${h.right} ${fmtIsoDateToken(h.expiry)}`}
                             </span>
                           </td>
-                          {/* Words: on a phone narrower than 393 they wrap rather than overflow. */}
+                          {/* Words: on a compact screen narrower than 393 they wrap rather than overflow. */}
                           <td
                             className={cn(
                               positionsUi.td,
                               'text-left font-sans',
                               h.early ? 'text-warning' : 'text-muted-foreground',
-                              phone && 'whitespace-normal',
+                              compact && 'whitespace-normal',
                             )}
                           >
                             {h.kind === 'assigned' ? (h.early ? 'early assignment' : 'assigned at expiry') : h.early ? 'exercised early' : 'exercised at expiry'}

@@ -66,6 +66,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // Rev .100: the Console took in the Copilot Desk (Vision §22.1).
     label: 'Pilot Console',
     crumbs: [],
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Package 2026-09-22.3 retired this page's own run drawer and pointed
       // its Copilot button at the one Thread. Both are landed; the Owner has
@@ -73,7 +74,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
       // Rev .104: bench strip = Track record · by source (V5); walk rev moved with Package .33.
-      rev: '2026-09-29.104',
+      rev: '2026-10-17.170',
       note: DESIGN_NOTES['/research/loop/harness'],
     },
   },
@@ -82,11 +83,12 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Decision Inbox',
     // One inbox, and it seats in Review (§5a.8). The trail follows the row.
     crumbs: REVIEW,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .143–.144 (kinds, calls, sections, folded-row actions, keys)
       // built in batch 4 of the Package .55 plan, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-02.144',
+      rev: '2026-10-17.172',
       note: DESIGN_NOTES['/research/loop/decisions'],
     },
   },
@@ -99,10 +101,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // A module home carries no trail (§5a.8): there is nothing above it now —
     // the equipment is not inside a layer, it is worn while working in one.
     crumbs: [],
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .82–.83 §16 refinement built in batch J1, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.93',
+      rev: '2026-10-17.167',
       note: DESIGN_NOTES['/research/book'],
     },
   },
@@ -197,10 +200,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // It stopped reading a symbol on 2026-09-22: the design's brief is the
     // morning's reading of the book, and the per-symbol dashboard it used to
     // be is the Symbol page's six faces.
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.89',
+      rev: '2026-10-17.167',
       note: DESIGN_NOTES['/research/daily-brief'],
     },
   },
@@ -211,11 +215,12 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // Copilot.
     label: 'Starters',
     crumbs: COPILOT,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .99 renamed the page «Starters» — the old name read as a member of
       // the toolbar's Book pod. Label-only; the walk carries over.
-      state: 'aligned',
-      rev: '2026-09-27.1',
+      state: 'reviewing',
+      rev: '2026-10-17.170',
       note: DESIGN_NOTES['/research/copilot/trading'],
     },
   },
@@ -371,13 +376,14 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     label: 'Backtest',
     crumbs: VALIDATE,
     symbolScope: true,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .158–.159 B3 Simulator + B5 Pine library, Rev .161 From the script
       // and Compared with; Rev .162 is Design writing the app's copy back
       // (TD-188). Waiting for a look; Check's mini K-line still owes a walk
       // with a Research identity.
       state: 'reviewing',
-      rev: '2026-10-06.162',
+      rev: '2026-10-17.169',
       note: DESIGN_NOTES['/research/backtest'],
     },
   },
@@ -502,10 +508,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/watchlist',
     label: 'Watchlist',
     crumbs: THE_BOOK,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.88',
+      rev: '2026-10-17.167',
       note: DESIGN_NOTES['/research/watchlist'],
     },
   },
@@ -516,11 +523,12 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/journal',
     label: 'Journal',
     crumbs: THE_BOOK,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
       // Rev .103 instance links open the surface (T5); walk rev moved 2026-09-29 with the design receipt.
-      rev: '2026-10-02.150',
+      rev: '2026-10-17.167',
       note: DESIGN_NOTES['/research/journal'],
     },
   },
@@ -588,10 +596,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/market/live',
     label: 'Live',
     crumbs: MARKET_RAIL,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .84–.85 §16 refinement built in batch J2, waiting for a look.
       state: 'reviewing',
-      rev: '2026-10-02.150',
+      rev: '2026-10-17.166',
       note: DESIGN_NOTES['/market/live'],
     },
   },
@@ -603,12 +612,13 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/events',
     label: 'Events',
     crumbs: MARKET,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Signed by the Owner 2026-09-24, after the fed rounds (macro lane,
       // themes stack, forward calendar).
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.89',
+      rev: '2026-10-17.167',
       note: DESIGN_NOTES['/research/events'],
     },
   },
@@ -621,10 +631,11 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     path: '/research/event-radar',
     label: 'Alerts',
     crumbs: MARKET_RAIL,
+    // P67 (2026-10-17): the three axes and the Rev .165–.173 batch table, waiting for a look.
     design: {
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
-      rev: '2026-09-25.90',
+      rev: '2026-10-17.172',
       note: DESIGN_NOTES['/research/event-radar'],
     },
   },

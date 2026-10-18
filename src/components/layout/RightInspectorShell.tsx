@@ -11,6 +11,8 @@ import { useDockColumn } from '@/layout/symbolDock/dockState'
 import { useInspectorWide } from '@/hooks/useInspectorWide'
 import { useInspectorSlot } from './inspectorSlot'
 import { useStuckMarks } from '@bifrost/ui'
+import { useLayout } from '@/lib/device'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 
 interface Props {
   open: boolean
@@ -26,10 +28,12 @@ interface Props {
  * The right-hand inspector: a docked column where the page can spare the
  * width, a floating panel where it cannot.
  *
- * One shell, two placements — never two components. Which one you get is
- * `inspectorDocksAt`, and the only thing that changes is whether the page
- * moves over or is covered; the panel's own contents do not know the
- * difference.
+ * One shell, three placements — never three components. Since design Rev
+ * .164 (§18.12, Rev .169) the dock is the layout's: it docks when the class
+ * is wide and the content area has its 1200 (`useLayout().dock`), at the
+ * reading width, and while the side panel is not pushing the page; otherwise
+ * it floats over the right edge; on compact it is a bottom sheet. The panel's
+ * own contents do not know the difference.
  */
 export function RightInspectorShell({
   open,
@@ -40,6 +44,7 @@ export function RightInspectorShell({
 }: Props) {
   const slot = useInspectorSlot()
   const viewport = useWindowWidth()
+  const layout = useLayout()
   const { wide } = useInspectorWide()
   const surfaces = useSurfaces()
   // The Symbol list's column is the outermost one; the inspector measures its
@@ -65,7 +70,30 @@ export function RightInspectorShell({
   // the page never pays for two docked columns at once (Design 09-14 ③).
   const panelOpen = surfaces.panel != null
   const room = viewport - dock.width
-  const docked = slot != null && !sidePanelPushes(panelOpen, room) && inspectorDocksAt(width, room)
+  // Two conditions: the layout docks (§18.12, wide and main ≥ 1200) and the
+  // page keeps its 760 beside this column (panelDocks). The design's 1200 is
+  // its 440 detail plus that floor; the inspector reads 560, so the floor is
+  // what keeps a docked inspector from leaving the page 634 at 1516.
+  const docked = slot != null && layout.dock && inspectorDocksAt(width, room) && !sidePanelPushes(panelOpen, room)
+
+  // Compact (§18.5): the inspector is a bottom sheet; its own head carries the close.
+  if (layout.w === 'compact') {
+    return (
+      <BottomSheet
+        open
+        onOpenChange={(next) => {
+          if (!next) onClose?.()
+        }}
+        head={false}
+        label={ariaLabel}
+        flush
+      >
+        <div data-frost-host="inspector" data-sr-list="" className={cn(inspectorShell.body, inspectorShell.panel)}>
+          {children}
+        </div>
+      </BottomSheet>
+    )
+  }
 
   const panel = (
     <aside

@@ -25,6 +25,9 @@ import {
 
 const NO_PLAN = 'No plan is linked to any position, so whether a trade broke its plan cannot be read.'
 
+/** Compact keeps Trade · Net · Fit (§18.6, Rev .168); a tap opens the row's sheet, its Open picks. */
+const PICK_COMPACT_KEEP = '1,6,8'
+
 function TradeName({ t }: { t: ReviewContract }) {
   return (
     <>
@@ -137,24 +140,27 @@ export function TradePicker({
         <section className="overflow-hidden mat-card" aria-label="Trades">
           <header className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
             <span className={positionsUi.cap}>Trades</span>
-            <SegmentControl
-              size="sm"
-              ariaLabel="Outcome"
-              value={outcome}
-              onChange={(v) => setOutcome(v as PickOutcome)}
-              options={OUTCOMES.map((o) => {
-                const n = outcomeCount(trades, o.key)
-                return {
-                  value: o.key,
-                  label: (
-                    <>
-                      {o.label} <span className="font-mono text-muted-foreground">{n == null ? 'n/c' : n}</span>
-                    </>
-                  ),
-                  title: n == null ? NO_PLAN : undefined,
-                }
-              })}
-            />
+            {/* Five outcomes with their counts are wider than a phone: compact scrolls them sideways. */}
+            <span data-sr-scroll="" className="flex min-w-0 max-w-full">
+              <SegmentControl
+                size="sm"
+                ariaLabel="Outcome"
+                value={outcome}
+                onChange={(v) => setOutcome(v as PickOutcome)}
+                options={OUTCOMES.map((o) => {
+                  const n = outcomeCount(trades, o.key)
+                  return {
+                    value: o.key,
+                    label: (
+                      <>
+                        {o.label} <span className="font-mono text-muted-foreground">{n == null ? 'n/c' : n}</span>
+                      </>
+                    ),
+                    title: n == null ? NO_PLAN : undefined,
+                  }
+                })}
+              />
+            </span>
             <span className="inline-flex items-center gap-1.5">
               <span className={positionsUi.cap}>Group</span>
               <SegmentControl
@@ -185,7 +191,7 @@ export function TradePicker({
           ) : rows.length === 0 ? (
             <p className="m-0 px-3 py-3 text-dense-meta text-muted-foreground">No trade matches — the filter is on, not the book empty.</p>
           ) : (
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto" data-sr-keep={PICK_COMPACT_KEEP}>
               <table data-sr-table="" className="w-full">
                 <thead>
                   <tr>

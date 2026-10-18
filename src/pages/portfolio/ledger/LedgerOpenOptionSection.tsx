@@ -117,6 +117,9 @@ function OpenGroupTable({
   ibNetForGroup?: (g: OptExecutionGroup) => number | null
 }) {
   return (
+    // Compact: Contract · Expiry · Net qty — an open contract read the way the
+    // closed table reads; the tap stays the row's (its fills open below).
+    <div data-sr-keep="2,4,6" data-sr-detail="page">
     <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={openOptTableClass}>
       <OpenOptColgroup showActions={showExpiredClose} />
       <DenseTableHeader>
@@ -198,7 +201,7 @@ function OpenGroupTable({
               </DenseTableCell>
               {showExpiredClose && (
                 <DenseTableCell className={openOptNumCell}>
-                  <div onClick={e => e.stopPropagation()}>
+                  <div onClick={e => e.stopPropagation()} data-sr-build="">
                     {onExpiredClose && (() => {
                       const target = expiredCloseTarget(g)
                       return (
@@ -222,6 +225,7 @@ function OpenGroupTable({
         })}
       </DenseTableBody>
     </DenseDataTable>
+    </div>
   )
 }
 
@@ -303,6 +307,8 @@ export function LedgerOpenOptionSection({
         subject={ledgerDetailsSubject(openExpandedGroups)}
         hint="the fills behind the row above"
       />
+      {/* Compact: Contract · Trade date · PnL, as the closed details keep. */}
+      <div data-sr-keep="1,5,10">
       <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={ledgerTableMinClass.t4Open}>
         <OpenOptDetailColgroup />
         <DenseTableHeader>
@@ -422,6 +428,7 @@ export function LedgerOpenOptionSection({
           )}
         </DenseTableBody>
       </DenseDataTable>
+      </div>
     </section>
   )
 }

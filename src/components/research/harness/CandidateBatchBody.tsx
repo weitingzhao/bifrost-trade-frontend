@@ -34,6 +34,7 @@ import { candidateBacking } from '@/lib/harness/candidateBacking'
 import { useOpportunities } from '@/hooks/useStrategies'
 import { usePositionsBook } from '@/hooks/usePositionsBook'
 import { CUSHION_TIGHT_PCT_DEFAULT } from '@/hooks/useCushionThreshold'
+import { useLayout } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import {
   NET_AGENT,
@@ -48,6 +49,25 @@ import { accountTag } from '@/utils/accountTag'
 
 /** Above this a decision card turns into a spreadsheet; batches are policy-capped at 50. */
 const MAX_ROWS = 20
+
+/**
+ * What compact keeps of the batch (design Rev .172, §18.6): Symbol · Score ·
+ * Rule that fits — the name, how it ranked and whether a rule would take it;
+ * a tap on a row opens the rest in the shell's sheet. The detail row under
+ * each name spans the table and stays.
+ */
+const BATCH_COMPACT_KEEP = '1,3,6'
+
+/** The eight columns' shares on the desk. */
+const BATCH_WIDTHS = ['8%', '17%', '6%', '9%', '10%', '9%', '12%', '29%']
+/**
+ * Compact's, laid out fixed: the kept three take the line. A folded cell is
+ * `display: none` and gives up its slot, so the three kept cells sit in the
+ * first three columns — the shares are theirs, in order. The cells are
+ * `max-w-0` (the DS table), so left to the auto layout every kept column
+ * shrinks to its padding and the line ends half empty.
+ */
+const BATCH_COMPACT_WIDTHS = ['30%', '18%', '52%']
 
 /** `net` may also be `dissent` — the judges split, which is a warning, not a stance. */
 function stanceVariant(stance: string): DenseTagVariant {
@@ -119,6 +139,8 @@ export function CandidateBatchBody({
   const suppressed = declinedSuppressed(payload)
   const acceptedIds = new Set(leash?.accepted.map((a) => a.id) ?? [])
   const heldById = new Map(leash?.held.map((h) => [h.id, h.reasons]) ?? [])
+  // Compact gives the line to the three it keeps.
+  const compact = useLayout().w === 'compact'
 
   return (
     <div className="space-y-2">
@@ -259,16 +281,12 @@ export function CandidateBatchBody({
 
       {items.length > 0 ? (
         <>
-          <DenseDataTable tableClassName="min-w-[60rem]">
+          <div data-sr-keep={BATCH_COMPACT_KEEP}>
+          <DenseDataTable tableClassName={cn('min-w-[60rem]', compact && 'table-fixed')}>
             <colgroup>
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '17%' }} />
-              <col style={{ width: '6%' }} />
-              <col style={{ width: '9%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '9%' }} />
-              <col style={{ width: '12%' }} />
-              <col style={{ width: '29%' }} />
+              {(compact ? BATCH_COMPACT_WIDTHS : BATCH_WIDTHS).map((w, i) => (
+                <col key={i} style={{ width: w }} />
+              ))}
             </colgroup>
             <DenseTableHeader>
               <DenseTableHeadRow>
@@ -545,6 +563,7 @@ export function CandidateBatchBody({
               })}
             </DenseTableBody>
           </DenseDataTable>
+          </div>
           {items.length > shown.length ? (
             <p className="text-dense-micro text-muted-foreground">
               +{items.length - shown.length} more candidate

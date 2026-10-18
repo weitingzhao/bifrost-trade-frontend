@@ -244,8 +244,8 @@ export default function TradeDeskPage() {
               </DenseTag>
             ) : null}
             <PageHeadLink to="/trade/plans">All plans →</PageHeadLink>
-            {/* Rev .163 (§18.2): a plan is written on the desk or an iPad; a
-                phone reads the plans it has, and the head keeps its title. */}
+            {/* Rev .163 (§18.2): a plan is written above compact; compact
+                reads the plans it has, and the head keeps its title. */}
             <span data-sr-build="" className="contents">
               <PageHeadLink to="/trade/plans?new=1" primary>
                 ＋ Plan a trade
@@ -300,8 +300,8 @@ export default function TradeDeskPage() {
                 Open the chain →
               </Link>
             </header>
-            {/* A phone reads the four one under another, without the column rules. */}
-            <div data-sr-phone-stack="" className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13.75rem),1fr))]">
+            {/* Compact reads the four one under another, without the column rules. */}
+            <div data-sr-stack="" className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,13.75rem),1fr))]">
               {[
                 {
                   k: 'Allocation',

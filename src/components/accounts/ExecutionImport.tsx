@@ -220,7 +220,9 @@ export function ExecutionImport({
               role="group"
               aria-label="Flex executions import"
             >
-              <div className="flex items-center gap-2">
+              {/* The Flex switches and the run are builders (Rev .165, §18.2): a
+                  phone reads the freshness they produce; the clock line stays. */}
+              <div className="flex items-center gap-2" data-sr-build="">
                 <Switch
                   checked={flexUseUpload}
                   onCheckedChange={setFlexUseUpload}
@@ -233,7 +235,7 @@ export function ExecutionImport({
                 </label>
               </div>
               {!flexUseUpload ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" data-sr-build="">
                   <Switch
                     checked={flexWiden}
                     onCheckedChange={setFlexWiden}
@@ -252,6 +254,7 @@ export function ExecutionImport({
                 className="h-7 text-xs gap-1.5"
                 onClick={flexUseUpload ? handleFlexUploadClick : handleFlexFetch}
                 disabled={busy}
+                data-sr-build=""
               >
                 <RefreshCw className={cn('h-3 w-3', flexLoading && 'animate-spin')} />
                 {flexLoading ? 'Fetching…' : 'Flex Refresh'}

@@ -21,7 +21,7 @@ import { useRef, useState, type ReactNode } from 'react'
 import { Dialog as SheetPrimitive } from 'radix-ui'
 import { X } from 'lucide-react'
 import { sheetEnter } from '@bifrost/ui'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { cn } from '@/lib/utils'
 import { SheetGrip } from './SheetGrip'
 import css from './bottomSheet.module.css'
@@ -75,8 +75,7 @@ export function BottomSheet({
   bodyClassName,
   flush = false,
 }: BottomSheetProps) {
-  const { device } = useDevice()
-  const phone = device === 'phone'
+  const phone = useLayout().w === 'compact'
   const startFull = (detent ?? (material === 'edit' ? 'full' : 'half')) === 'full'
   const [full, setFull] = useState(startFull)
   // A sheet re-opened starts at its own detent again, not where it was dragged.

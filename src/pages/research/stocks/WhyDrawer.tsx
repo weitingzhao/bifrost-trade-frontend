@@ -4,10 +4,10 @@
  * what the three models say about it (each against its own bar), and why it
  * passed (every active stage, condition by condition).
  *
- * The desk and the iPad read it in the right-hand inspector; a phone reads it
- * as a bottom sheet (`WhyPanel`), which takes the head and the way out
+ * Above compact it reads in the detail column or its overlay (`WhyPanel`);
+ * compact reads it as a bottom sheet, which takes the head and the way out
  * (`Symbol →`) into its own pinned head and footer. Plan this and Pool build
- * — a phone does not (`data-sr-build`, DESIGN_CONTRACTS §18.2).
+ * — compact does not (`data-sr-build`, DESIGN_CONTRACTS §18.2).
  */
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -57,7 +57,7 @@ function Part({ p }: { p: ScorePart }) {
   )
 }
 
-/** The name, its company, ‹ › to walk the list and ✕ — the inspector's head, and the phone sheet's. */
+/** The name, its company, ‹ › to walk the list and ✕ — the column's head, and the compact sheet's. */
 export function WhyHead({
   row,
   screen,
@@ -106,7 +106,7 @@ export interface WhyDrawerProps {
   onPrev: () => void
   onNext: () => void
   onClose: () => void
-  /** In the phone's bottom sheet: the sheet draws the head and the footer. */
+  /** In the compact bottom sheet: the sheet draws the head and the footer. */
   sheet?: boolean
 }
 

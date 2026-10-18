@@ -38,6 +38,8 @@ import { straddleMid } from '@/pages/research/analyze/symbol/symbolChainModel'
 import { etTodayIso } from '@/lib/freshness'
 
 const WINDOW_DAYS = 30
+/** Book × events on compact: Exposure · Event · In (DESIGN_CONTRACTS §18.6). */
+const CROSSING_KEEP = '1,2,3'
 
 const th =
   'whitespace-nowrap border-b border-border px-2 py-1 text-right align-bottom text-dense-caption font-semibold text-secondary-foreground'
@@ -302,8 +304,11 @@ export function EventsBookFace({ radarUnfed }: { radarUnfed: boolean }) {
         </div>
       </section>
 
-      {/* ── BOOK × EVENTS ── */}
-      <section className="overflow-hidden border mat-card">
+      {/* ── BOOK × EVENTS ── Compact keeps Exposure · Event · In (§18.6). The
+          design keeps Event · In · Read, but here Event names no ticker and
+          Read is one of two fixed sentences, so without Exposure a phone row
+          cannot say which leg crosses; the rest opens in the row sheet. */}
+      <section data-sr-keep={CROSSING_KEEP} className="overflow-hidden border mat-card">
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border px-3 py-2">
           <span className={cap}>Book × events</span>
           <span className="text-dense-body font-semibold">

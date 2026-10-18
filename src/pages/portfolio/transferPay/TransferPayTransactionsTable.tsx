@@ -62,6 +62,8 @@ export function TransferPayTransactionsTable({
 
   return (
     <div>
+      {/* Compact (Rev .165): Date · Type · Amount; a row opens the rest in its sheet. */}
+      <div data-sr-keep="1,3,5">
       <DenseDataTable wrapClassName={denseTable.scrollX} tableClassName="min-w-[980px]">
         {/*
           Seven columns with nothing declared share the width equally, which is
@@ -176,6 +178,7 @@ export function TransferPayTransactionsTable({
           )}
         </DenseTableBody>
       </DenseDataTable>
+      </div>
 
       <div className={transferPayUi.tableFoot}>
         <span>

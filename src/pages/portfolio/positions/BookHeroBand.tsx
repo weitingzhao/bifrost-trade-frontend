@@ -16,7 +16,7 @@
  * adds layout, not arithmetic.
  */
 import type { CSSProperties } from 'react'
-import { useDevice, type Device } from '@/lib/device'
+import { useLayout, type HeightClass, type WidthClass } from '@/lib/device'
 import { usePageViewSet, usePageViewState } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { ExplanationBlock } from '@/components/positions/ExplanationBlock'
@@ -41,15 +41,14 @@ const TARGET_WORD: Record<AlarmTarget, string> = {
 }
 
 /**
- * The reading line under a hero, by device tier (Rev .163: one line on a
- * phone, at most two on an iPad, whole on the desk). It is not marked
- * `data-sr-kpi-s`: the DS pattern behind that attribute sets 11px and the
- * mute ink, and this line is 12px in mute2 on the desk as on the prototype.
+ * The reading line under a hero, by layout class (Rev .164, §18.7 · §18.11:
+ * one line on compact, at most two on a short screen above it, whole on a
+ * tall one). It is not marked `data-sr-kpi-s`: the DS pattern behind that
+ * attribute sets 11px and the mute ink, and this line is 12px in mute2 on the
+ * desk as on the prototype.
  */
-const READ_CLAMP: Record<Device, string | undefined> = {
-  phone: 'line-clamp-1',
-  pad: 'line-clamp-2',
-  desk: undefined,
+function readClampFor(w: WidthClass, h: HeightClass): string | undefined {
+  return w === 'compact' ? 'line-clamp-1' : h === 'short' ? 'line-clamp-2' : undefined
 }
 
 /** Data-quality checks qualify the others: grey when they fire, never amber, never red. */
@@ -141,8 +140,8 @@ function HeroCard({
             />
           ))}
         </span>
-        {/* The segments already count it; a phone's half-width card has no room for both. */}
-        <span data-sr-phone="hide" className={cn(positionsUi.mono, 'text-dense-caption text-muted-foreground')}>
+        {/* The segments already count it; compact's half-width card has no room for both. */}
+        <span data-sr-hide="compact" className={cn(positionsUi.mono, 'text-dense-caption text-muted-foreground')}>
           {lit}/4
         </span>
         <button
@@ -191,7 +190,7 @@ export function BookHeroBand({
   // Folded gauges and the quiet rows are the page's view (Rev .75): kept for the session.
   const [open, setOpen] = usePageViewSet<GaugeId>('exp')
   const [showQuiet, setShowQuiet] = usePageViewState('quiet', false)
-  const { device } = useDevice()
+  const { w, h } = useLayout()
   const gauges = bookGauges(book, { tightPct, spotMix, room })
   const toggle = (id: GaugeId) =>
     setOpen((cur) => {
@@ -209,15 +208,15 @@ export function BookHeroBand({
     <section id="positions-readings" aria-label="Book readings" className="@container flex flex-col gap-2.5">
       {/* Four, two by two, or one — never three and one: a reading left alone on a
           row reads as an afterthought. Four columns once each card has its 230px.
-          A phone always reads them two by two (Rev .163, `data-sr-phone-grid`). */}
-      <div data-sr-phone-grid="2" className="grid grid-cols-1 gap-2.5 @[30rem]:grid-cols-2 @[59.5rem]:grid-cols-4">
+          Compact always reads them two by two (Rev .164, `data-sr-grid2`). */}
+      <div data-sr-grid2="" className="grid grid-cols-1 gap-2.5 @[30rem]:grid-cols-2 @[59.5rem]:grid-cols-4">
         {gauges.map((g, i) => (
           <HeroCard
             key={g.id}
             gauge={g}
             index={i}
             how={open.has(g.id)}
-            readClamp={READ_CLAMP[device]}
+            readClamp={readClampFor(w, h)}
             onOpen={() => onOpenTarget(g.target.to, g.target.sort)}
             onHow={() => toggle(g.id)}
           />

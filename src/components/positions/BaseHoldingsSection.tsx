@@ -127,10 +127,12 @@ export function BaseHoldingsSection({
 
   return (
     <CollapsibleGroup variant="inset">
-      <CollapsibleGroupHeader expanded={open} onToggle={onToggle}>
+      {/* The answer line is long: where the row runs out it wraps under the
+          title instead of pushing the page sideways (a phone, a narrow pane). */}
+      <CollapsibleGroupHeader expanded={open} onToggle={onToggle} className="flex-wrap">
         <CollapsibleChevron expanded={open} />
         <CollapsibleGroupTitle>Base holdings</CollapsibleGroupTitle>
-        <CollapsibleGroupStats>
+        <CollapsibleGroupStats className="min-w-0 shrink">
           <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {rowCount} {rowCount === 1 ? 'position' : 'positions'} · {fmtUsd(total)}
             {layers.map((l) => (

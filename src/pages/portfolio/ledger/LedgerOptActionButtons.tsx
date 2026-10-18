@@ -60,7 +60,9 @@ export function LedgerOptActionButtons({
   }
 
   return (
-    <span className="inline-flex flex-col items-end gap-0.5">
+    // Row actions are ledger writes, so they are builders (design Rev .165,
+    // §18.2): compact reads the ledger and leaves editing to a larger screen.
+    <span className="inline-flex flex-col items-end gap-0.5" data-sr-build="">
     <span className="inline-flex items-center justify-end gap-0.5">
       {onEdit && (
         <IconActionButton

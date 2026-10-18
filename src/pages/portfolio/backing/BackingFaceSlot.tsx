@@ -6,6 +6,10 @@
  * The CAR block used to open as a fourth level inside the per-underlying table.
  * Here the row opens it on the right instead, so the table stays a table and
  * the detail keeps the width its formulas need.
+ *
+ * The page carries it in a `DetailPane` (design Rev .165, §18.12): docked
+ * beside the page, floating over its edge, or a sheet on compact. The pane is
+ * the surface and Escape is the page's, so this is only the slot's contents.
  */
 import { cn } from '@/lib/utils'
 import { Link } from 'react-router-dom'
@@ -63,13 +67,7 @@ export function BackingFaceSlot({
   symbol?: SymbolFace | null
 }) {
   return (
-    <aside
-      className={cn(positionsUi.panel, 'sticky top-0')}
-      aria-label="Backing detail"
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
-    >
+    <div className="min-w-0" role="region" aria-label="Backing detail">
       <header className={positionsUi.panelHead}>
         {/* §17.3 / §17.10: the face is pick-one, so it is the DS SegmentControl —
             the picked face is ink 15%, not an accent edge. */}
@@ -173,6 +171,6 @@ export function BackingFaceSlot({
           </p>
         )
       ) : null}
-    </aside>
+    </div>
   )
 }

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { usePageViewSet } from '@/lib/pageView'
 import { cn } from '@/lib/utils'
 import { DenseTag, CollapsibleChevron } from '@/components/data-display'
@@ -180,7 +180,7 @@ export function TradeTab({
   // of opening its legs in place (Rev .163, `data-sr-detail="page"`). The sheet
   // is a look, not the page's view: it is not restored on return, and the key
   // outlives `open` so the sheet keeps its reading while it slides away.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const [sheetState, setSheet] = useState<{ key: string; open: boolean } | null>(null)
 
   const finalMap = useMemo(() => buildLiveOptExecutionMap(executionsFinal), [executionsFinal])

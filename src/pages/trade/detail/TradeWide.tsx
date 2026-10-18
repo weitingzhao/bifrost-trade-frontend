@@ -9,7 +9,7 @@
  */
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PageHead, PageHeadAction, TradeFaceSwitch } from '@/components/layout'
+import { PageHead, PageHeadAction, PageHeadLink, TradeFaceSwitch } from '@/components/layout'
 import { DenseTag } from '@/components/data-display'
 import { PositionsStat } from '@/components/positions/PositionsStat'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -18,7 +18,7 @@ import { tradeTracksFor } from '@/components/symbolChart/symbolPriceModel'
 import { TradeRecord } from '@/components/tradeRecord/TradeRecord'
 import { useTradeRecord } from '@/hooks/useTradeRecord'
 import { useSymbolGo } from '@/layout/symbolGo'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { useInSurface } from '@/lib/surfaceScope'
 import { withSymbolParam } from '@/lib/symbolLink'
 import { fmtPctSigned, fmtUsd, fmtUsdRound } from '@/lib/format'
@@ -37,9 +37,9 @@ const signed = (v: number | null | undefined) => (v == null ? '—' : v > 0 ? `+
 const px = (v: number | null) => (v == null ? '—' : `$${v.toFixed(2)}`)
 
 /**
- * The columns a phone keeps (design Rev .163, §18.6) — the first, which names
- * the row, and what says whether it made money and whether it is still open.
- * A tap on a row opens the rest in the shell's row sheet.
+ * The columns compact keeps (design Rev .163 → .172, §18.6) — the first, which
+ * names the row, and what says whether it made money and whether it is still
+ * open. A tap on a row opens the rest in the shell's row sheet.
  */
 const PHONE_KEEP_FILLS = '1,3,8' // Date · Contract · Cash
 const PHONE_KEEP_LEGS = '1,9,10' // Leg · Net · State
@@ -63,10 +63,10 @@ export function TradeWide({
 }) {
   const navigate = useNavigate()
   const symbolGo = useSymbolGo()
-  const { device } = useDevice()
+  const compact = useLayout().w === 'compact'
   const inSurface = useInSurface()
-  // The phone's page, not a surface drawn on a phone: a surface keeps its face.
-  const phonePage = device === 'phone' && !inSurface
+  // Compact's page, not a surface drawn on compact: a surface keeps its face.
+  const phonePage = compact && !inSurface
   const id = trade.trade_id
   const today = etTodayIso()
   const r = useTradeRecord(trade, { withShares: true })
@@ -103,18 +103,18 @@ export function TradeWide({
   return (
     <>
       <PageHead
-        // A phone names the trade and leaves its ticker to the toolbar under
+        // Compact names the trade and leaves its ticker to the toolbar under
         // the head, where it is the first word: the head keeps its title whole.
         title={`Trade #${id}${sym && !phonePage ? ` · ${sym}` : ''}`}
         info="One trade, whole: its price path, every leg and roll, every fill booked to it, the ledger by leg and the notes written about it. Reached from any #NNN token; beside any page it opens as the 440 panel."
         meta={`${trade.strategy_opportunity_name ?? '—'} · ${closed ? 'closed' : 'open'}`}
         actions={
           <>
-            {/* Rev .163: a phone keeps Positions — where an open leg is rolled
-                or closed — and drops two doors it has nearer: the ticker in the
-                toolbar opens Symbol, and the Ledger block has its own Ledger →. */}
+            {/* Rev .163: compact keeps Positions — where an open leg is marked —
+                and drops two doors it has nearer: the ticker in the toolbar
+                opens Symbol, and the Ledger block has its own Ledger →. */}
             {sym ? (
-              <span data-sr-phone="hide" className="contents">
+              <span data-sr-hide="compact" className="contents">
                 <PageHeadAction title={`Research › Symbol on ${sym} — the full detail page`} onClick={() => navigate(withSymbolParam('/research/symbol', sym))}>
                   {sym} · Symbol page →
                 </PageHeadAction>
@@ -123,11 +123,20 @@ export function TradeWide({
             <PageHeadAction title="Portfolio › Positions — where its open legs are marked" onClick={() => navigate(`/portfolio/positions?inst=${id}`)}>
               Positions →
             </PageHeadAction>
-            <span data-sr-phone="hide" className="contents">
+            <span data-sr-hide="compact" className="contents">
               <PageHeadAction title={`Portfolio › Ledger — every fill booked to #${id}`} onClick={() => navigate(`/portfolio/ledger?inst=${id}`)}>
                 Ledger →
               </PageHeadAction>
             </span>
+            {/* RESPONSE 2026-10-17 (Trade): an open trade's compact page ends its
+                head on the Expiry desk, where a roll or a close is decided and
+                an order confirms before it leaves — the same way out as the
+                strategy sheet on Positions. A link, never a write (D10). */}
+            {phonePage && !closed ? (
+              <PageHeadLink to="/trade/expiration" title="Trading › Expiry desk — roll or close is decided and confirmed there">
+                Roll or close →
+              </PageHeadLink>
+            ) : null}
           </>
         }
       />
@@ -302,9 +311,9 @@ export function TradeWide({
                       <td className="text-dense-micro text-[var(--sk-mute2)]">{f.source}</td>
                     </tr>
                   ))}
-                  {/* The total spans the columns a phone folds away, so on a
-                      phone it is the line under the table instead (§18.6). */}
-                  {device === 'phone' ? null : (
+                  {/* The total spans the columns compact folds away, so on
+                      compact it is the line under the table instead (§18.6). */}
+                  {compact ? null : (
                     <tr>
                       <td colSpan={6} className="font-semibold">
                         Net cash
@@ -321,7 +330,7 @@ export function TradeWide({
                 </tbody>
               </table>
             </div>
-            {device === 'phone' ? (
+            {compact ? (
               <div className="flex flex-wrap justify-end gap-x-4.5 gap-y-1 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3 pt-2 pb-2.5 font-mono text-dense-label text-[var(--sk-mute2)]">
                 <span>
                   Commission <span className="font-semibold">{fmtUsd(fills.comm)}</span>

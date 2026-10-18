@@ -196,7 +196,9 @@ export function PnlAttributionBand({
           )
         })}
       </div>
-      <div className="overflow-x-auto border-t border-border">
+      {/* Compact (Rev .165 keeps Symbol · Total · Unexpl.): this table has no
+          Total column, so Symbol · Unexpl. — the two of the three it carries. */}
+      <div className="overflow-x-auto border-t border-border" data-sr-keep="1,6">
         {/* §14.6: eight columns, the design's 980 floor. */}
         <table className="w-full min-w-[980px] table-fixed border-collapse">
           <colgroup>

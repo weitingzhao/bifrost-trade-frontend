@@ -124,14 +124,18 @@ export default function TodayPage() {
         <span data-sr-tb="label">Now</span>
         <span className={cn(positionsUi.mono, 'text-dense-body text-foreground')}>{clock} ET</span>
         <span className={cn(positionsUi.mono, 'text-dense-meta text-muted-foreground')}>{sessionLabel(clock)}</span>
-        <span data-sr-tb="meta" className="inline-flex items-center gap-2.5">
+        {/* One line that scrolls sideways on compact (§18.7 `data-sr-scroll`):
+            the account control grows with the accounts the book holds, and
+            three already outrun a 393 screen. */}
+        <span data-sr-tb="meta" data-sr-scroll="" className="inline-flex min-w-0 max-w-full items-center gap-2.5">
           <span className={positionsUi.mono}>{fmtIsoDateToken(today)}</span>
           {accountIds.length > 1 ? (
             <>
-              {/* The design's account note; a phone drops it (Rev .163) and keeps
-                  the control, which still names the scope it narrows to. */}
+              {/* The design's account note; compact drops it (Rev .163 → .164,
+                  `data-sr-hide="compact"`) and keeps the control, which still
+                  names the scope it narrows to. */}
               {hidden > 0 ? (
-                <span data-sr-phone="hide">
+                <span data-sr-hide="compact">
                   scoped to {accountFilter} · {hidden} {hidden === 1 ? 'item' : 'items'} hidden
                 </span>
               ) : null}
@@ -272,11 +276,11 @@ export default function TodayPage() {
                         {r.why}
                       </span>
                     </span>
-                    {/* Rev .163: a phone drops the layer label and the go hint (the
-                        square already names the layer); under a finger the hint has
-                        no hover to wait for, so touch shows it always. */}
+                    {/* Rev .163 → .164: compact drops the layer label and the go hint
+                        (the square already names the layer); under a finger the hint
+                        has no hover to wait for, so touch input shows it always. */}
                     <span
-                      data-sr-phone="hide"
+                      data-sr-hide="compact"
                       className="mt-0.5 inline-flex flex-none items-center gap-2 whitespace-nowrap"
                     >
                       <span className={cn(positionsUi.mono, 'text-dense-caption text-muted-foreground')}>

@@ -187,6 +187,8 @@ export function TradeTabContent({
             <h3 className={cn(ledgerShell.cap, 'm-0 mb-1.5')}>
               Raw executions without trade · showing {rawSlice.length} of {rawTotal}
             </h3>
+            {/* Compact: Date · Symbol · PnL, the fills table’s reading for a raw execution. */}
+            <div data-sr-keep="1,2,6">
             <DenseDataTable tableClassName={ledgerTableMinClass.t2}>
               <colgroup>
                 <col style={{ width: '12%' }} />
@@ -232,6 +234,7 @@ export function TradeTabContent({
                 ))}
               </DenseTableBody>
             </DenseDataTable>
+            </div>
             <LedgerPaginationBar
               page={rawPage}
               total={rawTotal}

@@ -12,7 +12,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { scrollWhenPresent, flashFound } from '@/lib/scrollWhenPresent'
 import { useQueryClient } from '@tanstack/react-query'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { SegmentControl } from '@/components/data-display'
 import { CloseButton } from '@/components/data-display'
 import { positionsUi } from '@/components/positions/positionsUi'
@@ -90,7 +90,7 @@ export function SharesBand({
   const [renaming, setRenaming] = useState<{ id: number; name: string } | null>(null)
   const [writeError, setWriteError] = useState<string | null>(null)
   const today = etTodayIso()
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
 
   // A registration shows at once: the monitor's status is cached for about 15 s
   // server-side, and the select must not snap back to the old type meanwhile.
@@ -317,7 +317,7 @@ export function SharesBand({
             : `No ${bucket === 'all' ? 'shares' : SHARE_BUCKETS.find(([k]) => k === bucket)?.[1].toLowerCase()} held in the accounts in scope.`}
         </p>
       ) : (
-        // A phone keeps Symbol · Qty · Value (Rev .163, the prototype's 1·3·5); a tap
+        // Compact keeps Symbol · Qty · Value (Rev .163, the prototype's 1·3·5); a tap
         // opens the row's every column in the shell's sheet.
         <div className="overflow-x-auto" data-sr-keep="1,3,5">
           <table className="w-full min-w-[1080px]">

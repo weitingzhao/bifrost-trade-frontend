@@ -109,6 +109,9 @@ function BackingCell({
   )
 }
 
+/** Compact (§18.6, Rev .166): a leg keeps Right · Strike · Expiry; its sheet carries the rest. */
+const LEGS_COMPACT_KEEP = '2,3,4'
+
 function LegsTable({ plan }: { plan: StrategyPlan }) {
   if (plan.legs_json.length === 0) {
     return (
@@ -118,7 +121,7 @@ function LegsTable({ plan }: { plan: StrategyPlan }) {
     )
   }
   return (
-    <table className="w-full text-dense-meta">
+    <table className="w-full text-dense-meta" data-sr-keep={LEGS_COMPACT_KEEP}>
       <thead className="text-dense-meta font-semibold text-muted-foreground">
         <tr>
           <th className="px-2 text-left font-medium">Side</th>

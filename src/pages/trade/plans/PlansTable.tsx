@@ -24,6 +24,13 @@ import { cn } from '@/lib/utils'
 import { planLegsText, planSourceText, planStatusVariant, planWhenText, planWhenTone } from './planRows'
 import { planCashSecured } from './planCardModel'
 
+/**
+ * Compact (§18.6, Rev .166): Status · Symbol · Est. credit. A row opens the
+ * plan in the inspector — a bottom sheet there — so the page keeps the tap
+ * (`data-sr-detail="page"`).
+ */
+const PLANS_COMPACT_KEEP = '1,2,7'
+
 export const NOT_COMPUTED = 'Not computed'
 export const NOT_COMPUTED_HINT =
   'Needs a per-plan margin estimate; no service computes it yet.'
@@ -75,69 +82,71 @@ export function PlansTable({
   onSelect: (plan: StrategyPlan) => void
 }) {
   return (
-    <DenseDataTable>
-      <DenseTableHeader>
-        <DenseTableHeadRow>
-          <DenseTableHead>Status</DenseTableHead>
-          <DenseTableHead>Symbol</DenseTableHead>
-          <DenseTableHead>Structure</DenseTableHead>
-          <DenseTableHead>Legs</DenseTableHead>
-          <DenseTableHead className="text-right">Qty</DenseTableHead>
-          <DenseTableHead>Acct</DenseTableHead>
-          <DenseTableHead className="text-right">Est. credit</DenseTableHead>
-          <DenseTableHead className="text-right">Cash / margin</DenseTableHead>
-          <DenseTableHead>Pressure after</DenseTableHead>
-          <DenseTableHead>Source</DenseTableHead>
-          <DenseTableHead>Expires / filled</DenseTableHead>
-        </DenseTableHeadRow>
-      </DenseTableHeader>
-      <DenseTableBody>
-        {plans.map((plan) => (
-          <DenseTableRow
-            key={plan.strategy_plan_id}
-            onClick={() => onSelect(plan)}
-            className="cursor-pointer"
-            // Rev .84: the picked row is the accent, mixed; Rev .154: as the
-            // row state (Trade Plans.dc.html `--sr-row`), not a tr fill.
-            rowTint={plan.strategy_plan_id === selectedId ? 'color-mix(in srgb, var(--sk-accent) 10%, transparent)' : undefined}
-          >
-            <DenseTableCell>
-              <DenseTag variant={planStatusVariant(plan.effective_status)}>
-                {planStatusLabel(plan.effective_status)}
-              </DenseTag>
-            </DenseTableCell>
-            <DenseTableCell className="font-mono font-semibold">{plan.symbol}</DenseTableCell>
-            <DenseTableCell>{plan.structure_label}</DenseTableCell>
-            <DenseTableCell className="font-mono text-dense-micro">
-              {planLegsText(plan.legs_json)}
-            </DenseTableCell>
-            <DenseTableCell className="text-right font-mono">{plan.qty}</DenseTableCell>
-            <DenseTableCell className="font-mono text-dense-micro">{plan.account_id}</DenseTableCell>
-            <DenseTableCell className="text-right">
-              <CreditCell plan={plan} />
-            </DenseTableCell>
-            <DenseTableCell className="text-right">
-              <CashCell plan={plan} />
-            </DenseTableCell>
-            <DenseTableCell>
-              <NotComputedCell />
-            </DenseTableCell>
-            <DenseTableCell className="text-dense-micro text-muted-foreground">
-              {planSourceText(plan)}
-            </DenseTableCell>
-            <DenseTableCell
-              className={cn(
-                'font-mono text-dense-micro',
-                planWhenTone(plan.effective_status) === 'warning'
-                  ? 'text-warning'
-                  : 'text-muted-foreground',
-              )}
+    <div data-sr-keep={PLANS_COMPACT_KEEP} data-sr-detail="page">
+      <DenseDataTable>
+        <DenseTableHeader>
+          <DenseTableHeadRow>
+            <DenseTableHead>Status</DenseTableHead>
+            <DenseTableHead>Symbol</DenseTableHead>
+            <DenseTableHead>Structure</DenseTableHead>
+            <DenseTableHead>Legs</DenseTableHead>
+            <DenseTableHead className="text-right">Qty</DenseTableHead>
+            <DenseTableHead>Acct</DenseTableHead>
+            <DenseTableHead className="text-right">Est. credit</DenseTableHead>
+            <DenseTableHead className="text-right">Cash / margin</DenseTableHead>
+            <DenseTableHead>Pressure after</DenseTableHead>
+            <DenseTableHead>Source</DenseTableHead>
+            <DenseTableHead>Expires / filled</DenseTableHead>
+          </DenseTableHeadRow>
+        </DenseTableHeader>
+        <DenseTableBody>
+          {plans.map((plan) => (
+            <DenseTableRow
+              key={plan.strategy_plan_id}
+              onClick={() => onSelect(plan)}
+              className="cursor-pointer"
+              // Rev .84: the picked row is the accent, mixed; Rev .154: as the
+              // row state (Trade Plans.dc.html `--sr-row`), not a tr fill.
+              rowTint={plan.strategy_plan_id === selectedId ? 'color-mix(in srgb, var(--sk-accent) 10%, transparent)' : undefined}
             >
-              {planWhenText(plan)}
-            </DenseTableCell>
-          </DenseTableRow>
-        ))}
-      </DenseTableBody>
-    </DenseDataTable>
+              <DenseTableCell>
+                <DenseTag variant={planStatusVariant(plan.effective_status)}>
+                  {planStatusLabel(plan.effective_status)}
+                </DenseTag>
+              </DenseTableCell>
+              <DenseTableCell className="font-mono font-semibold">{plan.symbol}</DenseTableCell>
+              <DenseTableCell>{plan.structure_label}</DenseTableCell>
+              <DenseTableCell className="font-mono text-dense-micro">
+                {planLegsText(plan.legs_json)}
+              </DenseTableCell>
+              <DenseTableCell className="text-right font-mono">{plan.qty}</DenseTableCell>
+              <DenseTableCell className="font-mono text-dense-micro">{plan.account_id}</DenseTableCell>
+              <DenseTableCell className="text-right">
+                <CreditCell plan={plan} />
+              </DenseTableCell>
+              <DenseTableCell className="text-right">
+                <CashCell plan={plan} />
+              </DenseTableCell>
+              <DenseTableCell>
+                <NotComputedCell />
+              </DenseTableCell>
+              <DenseTableCell className="text-dense-micro text-muted-foreground">
+                {planSourceText(plan)}
+              </DenseTableCell>
+              <DenseTableCell
+                className={cn(
+                  'font-mono text-dense-micro',
+                  planWhenTone(plan.effective_status) === 'warning'
+                    ? 'text-warning'
+                    : 'text-muted-foreground',
+                )}
+              >
+                {planWhenText(plan)}
+              </DenseTableCell>
+            </DenseTableRow>
+          ))}
+        </DenseTableBody>
+      </DenseDataTable>
+    </div>
   )
 }

@@ -285,7 +285,8 @@ export default function JournalPage() {
             ))}
           </div>
 
-          <div className="grid items-start gap-3 @4xl/page:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          {/* The trees and Selected stack on compact (§18.7, Rev .167). */}
+          <div data-sr-stack="" className="grid items-start gap-3 @4xl/page:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             <div className="flex min-w-0 flex-col gap-3">
               {trees.length === 0 ? (
                 <SectionPanel cap="Trees" title="Nothing on this day">
@@ -336,10 +337,13 @@ export default function JournalPage() {
                 </SectionPanel>
               ))}
 
-              <SettledPanel
-                rows={settled}
-                onSelect={(id) => setParam('sel', id)}
-              />
+              {/* Compact keeps Artifact · Outcome · Right (§18.6, Rev .167). */}
+              <div data-sr-keep="1,3,4">
+                <SettledPanel
+                  rows={settled}
+                  onSelect={(id) => setParam('sel', id)}
+                />
+              </div>
             </div>
 
             <SectionPanel

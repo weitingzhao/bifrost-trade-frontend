@@ -5,10 +5,10 @@
  * model does not cover sit under a "Not rated by X" group, A–Z, never mixed
  * into the ranking.
  *
- * Phone (Rev .163, DESIGN_CONTRACTS §18.6): the table keeps Symbol · Models ·
- * the model's own score (columns 2, 4, 5). The row's detail is this page's
- * Why, so the shell only folds the columns (`data-sr-detail="page"`) and the
- * tap still selects the row, which opens Why as a bottom sheet.
+ * Compact (Rev .163 → .173, DESIGN_CONTRACTS §18.6): the table keeps Symbol ·
+ * Models · the model's own score (columns 2, 4, 5). The row's detail is this
+ * page's Why, so the shell only folds the columns (`data-sr-detail="page"`)
+ * and the tap still selects the row, which opens Why as a bottom sheet.
  */
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
@@ -55,7 +55,7 @@ export interface Scored {
 export type SortKey = 'score' | 'trend' | 'growth' | 'ivr' | 'vrp'
 
 /** # · Symbol · Book · Models · then the model's columns, its score first. */
-const PHONE_KEEP = '2,4,5'
+const COMPACT_KEEP = '2,4,5'
 
 function pathVariant(p: string): 'success' | 'info' | 'danger' | 'neutral' {
   return p === 'PIVOT' ? 'success' : p === 'SETUP' ? 'info' : p === 'AVOID' ? 'danger' : 'neutral'
@@ -332,7 +332,7 @@ export function ResultTable({
   }
   return (
     <>
-      <div data-sr-keep={PHONE_KEEP} data-sr-detail="page">
+      <div data-sr-keep={COMPACT_KEEP} data-sr-detail="page">
         <DenseDataTable wrapClassName="rounded-none border-0 overflow-x-auto">
           <DenseTableHeader>
             <DenseTableHeadRow>

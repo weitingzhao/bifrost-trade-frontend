@@ -37,7 +37,7 @@ import mb from './menubar/menubar.module.css'
 import type { AlertGroup, AlertsSummary } from '@/hooks/useAlerts'
 import { useSymbolGo } from './symbolGo'
 import { SHELL_TOP_BAR_HEIGHT_CLASS } from './shellChrome'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 
 /** Top-level headings a first crumb can fall back to; System's is its first page. */
 const CRUMB_GROUPS = [...NAV_GROUPS, { label: 'System', to: SYSTEM_ITEM.to }]
@@ -83,7 +83,7 @@ export function AppHeader({
   // module's ‹), the search field across the middle, the Lens and the Copilot
   // — under the status bar. No sidebar to toggle, no note or feedback button
   // (`data-sr-phone="hide"`), and the leaf stays: there is no trail to fold into.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const leafFolded = usePageHeadVisibility() === 'in' && !phone
   const omniOpen = omnibarStore.useStore().open
 

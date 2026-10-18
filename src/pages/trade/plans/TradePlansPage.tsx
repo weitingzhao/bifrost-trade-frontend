@@ -372,7 +372,8 @@ export default function TradePlansPage() {
         title="Plans"
         info="Every trade you mean to make, from idea to fill: what I intend, how I exit, what filled, and which rule covers it. Advisory only — D10: nothing here places an order today, and the Send to IB action reserved on each intent is not wired."
         actions={
-          <>
+          // Both are builders, which compact reads past (Rev .166, §18.2).
+          <span data-sr-build="" className="contents">
             <PageHeadLink
               to="/research/loop/decisions"
               title="Import intents the Copilot or Autopilot drafted — opens the Decision Inbox"
@@ -388,7 +389,7 @@ export default function TradePlansPage() {
             >
               ＋ Plan a trade
             </PageHeadAction>
-          </>
+          </span>
         }
       />
 
@@ -590,7 +591,9 @@ export default function TradePlansPage() {
 
       {/* The card reads — and a draft is edited — in the inspector (Rev .138);
           a new plan is the design's order sheet, modal, twice as wide, the
-          live check beside the form. */}
+          live check beside the form. Where the inspector stands is the
+          shell's (Rev .166, §18.12): docked with the layout's dock, floating
+          otherwise, a bottom sheet on compact — the page measures nothing. */}
       <RightInspectorShell
         open={form == null && selected != null}
         ariaLabel="Plan"

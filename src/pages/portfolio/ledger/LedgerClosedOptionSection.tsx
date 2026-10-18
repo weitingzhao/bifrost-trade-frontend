@@ -130,6 +130,10 @@ export function LedgerClosedOptionSection({
 
   return (
     <section aria-label="Closed option positions and details" className={ledgerShell.panel}>
+      {/* Compact (Rev .165): Contract · Premium · Realized. The expand cell steps
+          out and the tap stays the row's: it opens the fills in Details · per
+          trade below — the page's own detail for the row (§18.6 detail="page"). */}
+      <div data-sr-keep="2,10,11" data-sr-detail="page">
       <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={closedOptTableClass}>
         <ClosedOptColgroup />
         <DenseTableHeader>
@@ -266,6 +270,7 @@ export function LedgerClosedOptionSection({
           </DenseTableRow>
         </tfoot>
       </DenseDataTable>
+      </div>
       <LedgerPaginationBar
         page={effectivePage}
         total={sortedClosedGroups.length}
@@ -278,6 +283,8 @@ export function LedgerClosedOptionSection({
         subject={ledgerDetailsSubject(closedExpandedGroups)}
         hint="the fills behind the row above"
       />
+      {/* Compact (Rev .165): Contract · Trade date · P&L. */}
+      <div data-sr-keep="1,3,8">
       <DenseDataTable wrapClassName="rounded-none border-0" tableClassName={closedOptDetailTableClass}>
         <ClosedOptDetailColgroup />
         <DenseTableHeader>
@@ -407,6 +414,7 @@ export function LedgerClosedOptionSection({
           </DenseTableRow>
         </tfoot>
       </DenseDataTable>
+      </div>
     </section>
   )
 }

@@ -18,7 +18,7 @@ import { symbolSurface } from './equipSurface'
 import { parseContract, symbolIn, type SymbolHit } from './shellContextTarget'
 import { contractParams, useSymbolGo } from './symbolGo'
 import css from './quickLook.module.css'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { QUICK_LOOK_NAME as NAME, QUICK_LOOK_ROW as ROW } from './quickLookTargets'
 const W = 420
 const H = 540
@@ -66,7 +66,7 @@ export function QuickLook() {
   const lookRef = useRef<Look | null>(null)
   // Rev .163 (契约 §18.5): on a phone (a keyboard attached to it is the one way
   // to press Space there) the card lands as a bottom sheet, not beside the row.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   useEffect(() => {
     lookRef.current = look
   }, [look])

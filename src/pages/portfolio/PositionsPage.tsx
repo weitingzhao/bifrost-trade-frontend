@@ -17,7 +17,7 @@ import { useTradeRoot } from '@/hooks/useTradeRoot'
 import { usePageViewParams, usePageViewState } from '@/lib/pageView'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { useCushionThreshold } from '@/hooks/useCushionThreshold'
 import { usePersistedChoice } from '@/hooks/usePersistedChoice'
 import { usePositionsScope } from '@/hooks/usePositionsScope'
@@ -195,8 +195,9 @@ export default function PositionsPage() {
     // filterSymbol is read at arrival only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusInst, focusRoot.isFetched, focusRoot.data])
-  // Book and Pressure points start folded on a phone and an iPad, each tier
-  // remembering its own (Rev .163); the desk's folds are as they were.
+  // Book and Pressure points start folded on compact and on a short screen,
+  // each class remembering its own (Rev .164, §18.7 · §18.11); a tall screen
+  // above compact keeps the desk's folds.
   const [pressureOpen, setPressureOpen] = usePressureFold()
   const bookFold = useBookFold()
   // Rev .116: the page's two holding bands — Options and Shares — as a scope axis; one stays on.
@@ -206,10 +207,14 @@ export default function PositionsPage() {
   // leg or fill, which is data, and reopens on the next pick.
   const [face, setFace] = usePageViewState<PositionsFace>('face', 'risk')
   const [faceOpen, setFaceOpen] = useState(false)
-  // A phone has no right-hand slot (Rev .163, §18.8): a strategy reads in its
-  // own sheet, and the contract / risk / ledger faces are not drawn there.
-  const { device } = useDevice()
-  const faceShown = faceOpen && device !== 'phone'
+  // Compact has no right-hand slot (Rev .163 → .164, §18.8): a strategy reads
+  // in its own sheet, and the contract / risk / ledger faces are not drawn
+  // there. Where the layout docks (§18.12, wide with 1200 of content area)
+  // the open face is a 440 column beside the lines; elsewhere it shares the
+  // row while both have their 520 and wraps under the lines when not, as before.
+  const { w, dock } = useLayout()
+  const compact = w === 'compact'
+  const faceShown = faceOpen && !compact
   const [faceContract, setFaceContract] = useState<OpenOptionPosition | null>(null)
   const [faceRisk, setFaceRisk] = useState<FaceRisk | null>(null)
   const [faceExec, setFaceExec] = useState<Execution | null>(null)
@@ -273,7 +278,7 @@ export default function PositionsPage() {
       } else if (t === 'lines') {
         scrollTo('positions-lines')
       } else if (t === 'margin') {
-        // The margin rows are in Book, folded by default on a phone and an iPad.
+        // The margin rows are in Book, folded by default on compact and on a short screen.
         bookFold.onOpenChange?.(true)
         scrollTo('positions-margin')
       } else if (t === 'room') {
@@ -595,9 +600,9 @@ export default function PositionsPage() {
                         onClearSymbol={() => setFilterSymbol('')}
                         selected={selectedLeg}
                         onSelect={setPickedLeg}
-                        // No contract face on a phone, so no button that would open one.
+                        // No contract face on compact, so no button that would open one.
                         onOpenContract={
-                          device === 'phone'
+                          compact
                             ? undefined
                             : (leg) => {
                                 const pos = book.filteredOptions.find(
@@ -619,7 +624,11 @@ export default function PositionsPage() {
                 <div
                   className={cn(
                     'sk-rise grid min-w-0 items-start gap-3',
-                    faceShown ? 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]' : 'grid-cols-1',
+                    !faceShown
+                      ? 'grid-cols-1'
+                      : dock
+                        ? 'grid-cols-[minmax(0,1fr)_440px]'
+                        : 'grid-cols-[repeat(auto-fit,minmax(min(100%,32.5rem),1fr))]',
                   )}
                 >
                 <section id="positions-lines" className={positionsUi.panel} aria-label="Options">

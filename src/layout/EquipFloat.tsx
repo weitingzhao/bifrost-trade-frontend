@@ -50,7 +50,7 @@ import { keepEquipmentLinksIn } from './surfaceLinks'
 import { useDockColumn } from './symbolDock/dockState'
 import css from './equipSurface.module.css'
 import { useStuckMarks } from '@bifrost/ui'
-import { useDevice } from '@/lib/device'
+import { useLayout } from '@/lib/device'
 import { SheetGrip } from '@/components/ui/SheetGrip'
 import { dismissSurface } from './equipMotion'
 
@@ -151,7 +151,7 @@ export function EquipFloat() {
   useStuckMarks(ref, key != null)
   // Rev .163 (契约 §18.5): on a phone the float is a bottom sheet — nothing
   // to drag, size or tile; the grip switches its two detents.
-  const phone = useDevice().device === 'phone'
+  const phone = useLayout().w === 'compact'
   const [full, setFull] = useState(false)
   const [wasKey, setWasKey] = useState(key)
   if (key !== wasKey) {

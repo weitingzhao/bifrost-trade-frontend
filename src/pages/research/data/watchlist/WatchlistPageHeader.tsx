@@ -50,13 +50,16 @@ export function WatchlistPageHeader({
             Screener →
           </PageHeadLink>
           {extraActions}
+          {/* The list's keeping (pin from positions, add a ticker) is a
+              builder: compact leaves it to a larger screen (§18.2) — on a
+              393 head the add box pushed the row past the screen. */}
           {showPosBtn && (
-            <Button type="button" variant="outline" size="sm" onClick={onTogglePositionPicker}>
+            <Button data-sr-build="" type="button" variant="outline" size="sm" onClick={onTogglePositionPicker}>
               Pos ({positionsNotInWatchlistCount})
             </Button>
           )}
           {primaryTab === 'watching' && (
-            <>
+            <span data-sr-build="" className="contents">
               <Input
                 value={addInput}
                 onChange={e => onAddInputChange(e.target.value.toUpperCase())}
@@ -76,7 +79,7 @@ export function WatchlistPageHeader({
               >
                 <Plus className="h-4 w-4" />
               </Button>
-            </>
+            </span>
           )}
           {showPositionPicker && positionsNotInWatchlistCount > 0 && (
             <span className="sr-only">Position picker open</span>

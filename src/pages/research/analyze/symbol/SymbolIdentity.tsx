@@ -1,17 +1,20 @@
 /**
- * The Symbol page's head — one hierarchy, top to bottom (design Rev .56,
- * contract §16.10a, still outside the shared PageHead):
+ * The Symbol page's head — one hierarchy, top to bottom (design Rev .56 →
+ * .164, contract §16.10a · §18.13, still outside the shared PageHead). Three
+ * lines in every class above compact (Rev .164; it was four on the desk):
  *
- *     ▢ PLTR  Palantir Technologies  156.90  +3.40%  [in the book]      subject
- *     VERDICT  Sell premium bias …                 Send to  Pin Pool Hyp ＋Plan
- *     3 of 8 lenses decisive · volatility drove the rating │ from Stock ratings  composite 77 …
+ *     ▢ PLTR  Palantir Technologies  156.90  +3.40%  [in the book] │ Sell premium bias …   subject + verdict
+ *     3 of 8 lenses decisive · volatility drove the rating │ from Stock ratings  composite 77 …   Pin Pool Hyp ＋Plan
  *     ─────────────────────────────────────────────────────────────────────
  *     ⧉ Reading | Method   snapshot · today only   ASOF …         read · no artifact store
+ *
+ * `from …` and the `snapshot` stand-in draw only when the screen is wide and
+ * tall (§18.13); elsewhere the head keeps to the readings.
  *
  * What left the page with Rev .56, and where it went (§15):
  * - the **FROM strip and ← n of N →** — the walk is the Symbol list's Source
  *   list now, j / k walk it there, and `3 of 18` is that list's foot; where
- *   the name came from, and why it was on the list, is the third line here;
+ *   the name came from, and why it was on the list, is the second line here;
  * - the **lamp row** — the tabs under the head carry the same lamps;
  * - the loose **Reading / Method** row — it sits with the other "which view
  *   of this subject" controls, and carries the tab you are on into Method.
@@ -27,23 +30,17 @@
  *   the ranked table published.
  * - **snapshot** is today only: `/research/exhibit` takes no as-of.
  * - **the six verbs** walk a read artifact, and no artifact store exists on
- *   this side; the Owner deferred them, so the row says what is missing.
+ *   this side; the Owner deferred them, so the row says what is missing (and
+ *   there is no artifact id to show or to hide).
  *
  * `compact` is the 440 form (Rev .57): the same facts, re-ordered for a panel
  * — the page switches on its container's width, not a second component.
- *
- * Two device forms (design Rev .163, contract §18), neither of them in a
- * surface — a panel or a float keeps the form it has:
- * - **`phone`** (the 440 form as the whole page): no Follow / Lock row and no
- *   Send — the held tag ends the subject line instead. Under the verdict, the
- *   wide head's why readings (the decisive count, the list's chips) get a line
- *   of their own, then `from …` on the next — §18.2's "判词 → why 读数". A
- *   name with no reading yet and no list behind it draws no readings line.
- * - **`pad`** (the wide form, §18.11 — four lines to three): the verdict joins
- *   the subject line, Send ends the why line, and the controls line drops the
- *   `snapshot` stand-in. `from …` moves down into the controls line rather
- *   than leaving: the design's iPad sends it to Explain, which this side has
- *   no store for, and it is the one way back to the list that ranked the name.
+ * `page` is that form as the compact class's whole page (design Rev .163 →
+ * .164, contract §18.2), never in a surface: no Follow / Lock row and no
+ * Send — the held tag ends the subject line instead. Under the verdict, the
+ * why readings (the decisive count, the list's chips) get a line of their
+ * own, then `from …` on the next — §18.2's "判词 → why 读数". A name with no
+ * reading yet and no list behind it draws no readings line.
  */
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -98,8 +95,8 @@ export function SymbolIdentity({
   tab,
   compact = false,
   subjectControl,
-  phone = false,
-  pad = false,
+  page = false,
+  wideTall = false,
 }: {
   symbol: string
   faces: SymbolFaces
@@ -109,10 +106,10 @@ export function SymbolIdentity({
   compact?: boolean
   /** The panel's Follow / Lock, when the page is a surface. */
   subjectControl?: ReactNode
-  /** The 440 form as a phone's whole page (Rev .163). */
-  phone?: boolean
-  /** The wide form on an iPad, three lines (Rev .163, §18.11). */
-  pad?: boolean
+  /** The 440 form as the compact class's whole page (Rev .163 → .164). */
+  page?: boolean
+  /** Wide and tall (§18.13): `from …` and the `snapshot` stand-in draw. */
+  wideTall?: boolean
 }) {
   const sym = (symbol || '').trim().toUpperCase()
   const quotes = useQuotes(sym ? [sym] : [])
@@ -168,7 +165,7 @@ export function SymbolIdentity({
     )
 
   const subject = (
-    <div className={cn(css.line, phone && css.phoneLine)}>
+    <div className={cn(css.line, page && css.compactLine)}>
       <span className={css.logo} aria-hidden title="Company logo — a monogram until the logo proxy is wired">
         {sym.charAt(0)}
       </span>
@@ -200,13 +197,13 @@ export function SymbolIdentity({
         </span>
       ) : null}
       {company && compact ? <span className={css.name}>{company}</span> : null}
-      {compact && phone ? <span className={cn(css.chip, 'ml-auto h-auto flex-none self-center py-px')}>{heldTag}</span> : null}
+      {compact && page ? <span className={cn(css.chip, 'ml-auto h-auto flex-none self-center py-px')}>{heldTag}</span> : null}
       {compact ? null : <span className={css.chip}>{heldTag}</span>}
-      {pad && !compact ? (
-        <span className={css.padVerdict} title={thesis}>
+      {compact ? null : (
+        <span className={css.lineVerdict} title={thesis}>
           {verdictWords}
         </span>
-      ) : null}
+      )}
       {compact ? null : <PagePlaceButtons className="ml-auto" />}
     </div>
   )
@@ -245,7 +242,7 @@ export function SymbolIdentity({
         defaultThesis={hyp.thesis}
         defaultSymbols={[sym]}
         defaultTags={hyp.tags}
-        label={compact || pad ? 'Hyp' : 'Hypothesis'}
+        label="Hyp"
         originRef={hyp.originRef}
       />
       <PlanThisButton symbol={sym} source="symbol" sourceLabel="Symbol" note={thesis} variant="primary" />
@@ -290,7 +287,7 @@ export function SymbolIdentity({
   if (compact) {
     return (
       <header className={cn(css.head, css.compact)}>
-        {phone ? null : (
+        {page ? null : (
           <div className="flex items-center gap-2">
             {subjectControl}
             <span className={cn(css.chip, 'ml-auto h-auto py-px')}>{heldTag}</span>
@@ -298,7 +295,7 @@ export function SymbolIdentity({
         )}
         {subject}
         {headline}
-        {phone ? (
+        {page ? (
           <>
             {faces.decisive.of > 0 || chips.length > 0 ? (
               <div className={css.why}>
@@ -314,7 +311,7 @@ export function SymbolIdentity({
             {from}
           </div>
         )}
-        {phone ? null : (
+        {page ? null : (
           <div className="mt-0.5 flex items-center gap-1">
             <span className={cn(css.cap, 'mr-0.5')}>Send</span>
             {send}
@@ -327,32 +324,18 @@ export function SymbolIdentity({
   return (
     <header className={css.head}>
       {subject}
-      {pad ? null : (
-        <div className={cn(css.line, 'items-center')}>
-          <span className={css.cap}>Verdict</span>
-          {headline}
-          <span className={css.send}>
-            <span className={cn(css.cap, 'mr-0.5')} title="Each goes through the Decision Inbox, not straight into the store it names.">
-              Send to
-            </span>
-            {send}
-          </span>
-        </div>
-      )}
       <div className={css.why}>
         {decisiveLine}
-        {pad ? null : (
+        {wideTall ? (
           <>
             <span className={css.rule} aria-hidden />
             {from}
           </>
-        )}
-        {chips}
-        {pad ? (
-          <span className={css.send} title="Send to — each goes through the Decision Inbox, not straight into the store it names.">
-            {send}
-          </span>
         ) : null}
+        {chips}
+        <span className={css.send} title="Send to — each goes through the Decision Inbox, not straight into the store it names.">
+          {send}
+        </span>
       </div>
       <div className={css.controls}>
         <PageFaceSwitch
@@ -360,15 +343,13 @@ export function SymbolIdentity({
           methodTo={`/research/lab/symbol?tab=${lab.tab}&symbol=${encodeURIComponent(sym)}`}
           methodTitle={`The method face — ${lab.why}. Same subject, same endpoint, shown open. Analysis only; no order can be placed there.`}
         />
-        {pad ? (
-          from
-        ) : (
+        {wideTall ? (
           <span
             title="The design lets you step the whole page back a day or a week. /research/exhibit takes no as_of parameter, so no prior reading can be requested; the Since-last-snapshot panel compares against the last reading this browser saw instead."
           >
             snapshot · today only
           </span>
-        )}
+        ) : null}
         {asof}
         <span className={css.verbs}>
           <span

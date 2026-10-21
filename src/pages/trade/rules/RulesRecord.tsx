@@ -14,6 +14,7 @@ import { positionsUi } from '@/components/positions/positionsUi'
 import { cn } from '@/lib/utils'
 import type { BoardSort } from './rulesFocus'
 import type { RecordModel } from './rulesRecordModel'
+import { Button } from '@/components/ui/button'
 
 export function RulesRecord({
   model,
@@ -27,6 +28,7 @@ export function RulesRecord({
   children?: ReactNode
 }) {
   const m = model
+  const scopeEdit = m.kind === 'opportunity' ? m.actions.find((a) => a.label === 'Edit') : undefined
   return (
     <section aria-label="Record" className="min-w-0 mat-card">
       <header className="flex flex-wrap items-baseline gap-2 px-3.5 pt-3 pb-2">
@@ -109,6 +111,12 @@ export function RulesRecord({
         <div className="flex flex-col gap-2 border-t border-[color-mix(in_srgb,var(--sk-ink)_6%,transparent)] px-3.5 py-2.5">
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <span className="text-dense-body font-semibold">Scope</span>
+            {scopeEdit ? (
+              <Button type="button" size="sm" variant="outline" onClick={scopeEdit.onClick}
+                disabled={scopeEdit.disabled} title="Add or remove symbols in the opportunity inspector">
+                Edit symbols
+              </Button>
+            ) : null}
             <span className="font-mono text-dense-micro text-muted-foreground">{m.board.count}</span>
             <span className="text-dense-micro text-muted-foreground">{m.board.hint}</span>
             <span className="ml-auto flex items-center gap-2">

@@ -11,7 +11,12 @@ import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { InspectorField } from '@bifrost/ui'
 import { Plus } from 'lucide-react'
-import { fetchOpportunityDetail, patchOpportunity, STRATEGY_WRITES, strategyWriteLabel } from '@/api/strategy'
+import {
+  fetchOpportunityDetail,
+  patchOpportunity,
+  STRATEGY_WRITES,
+  strategyWriteLabel,
+} from '@/api/strategy'
 import { CloseButton, SegmentControl } from '@/components/data-display'
 import { opportunityDetailKey } from '@/components/strategy/opportunityCopy'
 import {
@@ -19,8 +24,6 @@ import {
   opportunityFormToPayload,
   opportunityFormProblem,
   opportunityToForm,
-  symbolsToText,
-  textToSymbols,
   withScopeType,
   type OpportunityFormState,
 } from '@/components/strategy/opportunities/opportunityForm'
@@ -28,8 +31,14 @@ import { useGateSets, useStructures } from '@/hooks/useStrategies'
 import { useLiveEdit } from '@/hooks/useLiveEdit'
 import { cn } from '@/lib/utils'
 import type { EntryConditionInput } from '@/types/strategy'
-import { OPPORTUNITY_CONDITION_TYPES, getOpportunityConditionTypeLabel } from '@/utils/strategyFormUtils'
+import {
+  OPPORTUNITY_CONDITION_TYPES,
+  getOpportunityConditionTypeLabel,
+} from '@/utils/strategyFormUtils'
 import { FIELD, RuleInspector } from './RuleInspector'
+import { ScopeSymbolsEditor } from './ScopeSymbolsEditor'
+import { Button } from '@/components/ui/button'
+import { openTradeOperatorDialog, useTradeOperator } from '@/lib/auth/tradeOperator'
 
 /** The form's scope types (`OPPORTUNITY_SCOPE_TYPES`), labelled to fit the inspector. */
 const SCOPE_OPTIONS = [
@@ -58,7 +67,11 @@ export function OpportunityInspector({
   /** The page refreshes its chain. */
   onSaved: () => void
 }) {
-  const q = useQuery({ queryKey: opportunityDetailKey(id), queryFn: () => fetchOpportunityDetail(id), staleTime: 30_000 })
+  const q = useQuery({
+    queryKey: opportunityDetailKey(id),
+    queryFn: () => fetchOpportunityDetail(id),
+    staleTime: 30_000,
+  })
   return (
     <RuleInspector
       title={q.data ? `Opportunity · ${q.data.name}` : `Opportunity · ${id}`}
@@ -85,7 +98,8 @@ export function OpportunityInspector({
         />
       ) : (
         <p className="m-0 text-dense-meta text-[var(--color-loss)]">
-          Could not load the opportunity — {q.error instanceof Error ? q.error.message : 'unknown error'}
+          Could not load the opportunity —{' '}
+          {q.error instanceof Error ? q.error.message : 'unknown error'}
         </p>
       )}
     </RuleInspector>
@@ -107,27 +121,44 @@ function OpportunityFields({
   onSaved: () => void
 }) {
   const qc = useQueryClient()
+  const { token } = useTradeOperator()
+  const [saveState, setSaveState] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
   const structures = useStructures().data?.items ?? []
   const gates = (useGateSets().data?.items ?? []).filter(
-    (g) => g.is_active || String(g.gate_safety_strategy_id) === initial.gateSetId,
+    (g) => g.is_active || String(g.gate_safety_strategy_id) === initial.gateSetId
   )
-  const { draft, edit } = useLiveEdit<OpportunityFormState>({
+  const { draft, edit: editDraft } = useLiveEdit<OpportunityFormState>({
     initial,
     undoKey: `opp:${id}`,
     ready: (d) => opportunityFormProblem(d) == null,
-    write: (d) => patchOpportunity(id, opportunityFormToPayload(d)),
+    write: async (d) => {
+      setSaveState('Saving…')
+      setSaveError(null)
+      try {
+        await patchOpportunity(id, opportunityFormToPayload(d))
+        setSaveState('Saved')
+      } catch (error) {
+        setSaveState('Not saved')
+        setSaveError(error instanceof Error ? error.message : String(error))
+        throw error
+      }
+    },
     onSaved: () => {
       void qc.invalidateQueries({ queryKey: opportunityDetailKey(id) })
       onSaved()
     },
   })
 
-  // The symbols line as typed, kept while it is the text that produced the
-  // draft's list — so separators survive typing, and an undo shows its own list.
-  const [symText, setSymText] = useState<{ of: string[]; text: string } | null>(null)
-  const symbolsValue = symText && symText.of === draft.symbols ? symText.text : symbolsToText(draft.symbols)
+  const edit = (field: string, change: (d: OpportunityFormState) => OpportunityFormState) => {
+    setSaveState('Changes pending…')
+    setSaveError(null)
+    editDraft(field, change)
+  }
 
-  const structureListed = structures.some((s) => String(s.strategy_structure_id) === draft.structureId)
+  const structureListed = structures.some(
+    (s) => String(s.strategy_structure_id) === draft.structureId
+  )
   const gateListed = gates.some((g) => String(g.gate_safety_strategy_id) === draft.gateSetId)
 
   const setCondition = (idx: number, field: string, patch: Partial<EntryConditionInput>) =>
@@ -138,9 +169,42 @@ function OpportunityFields({
 
   return (
     <>
+      {!token ? (
+        <div className="text-dense-meta text-muted-foreground">
+          No operator token in this browser. Saving requires operator access.
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => openTradeOperatorDialog()}
+          >
+            Operator sign-in
+          </Button>
+        </div>
+      ) : null}
+      {saveState ? (
+        <p role="status" className="m-0 text-dense-meta">
+          {saveState}
+        </p>
+      ) : null}
+      {saveError ? (
+        <div role="alert" className="text-dense-meta text-destructive">
+          {saveError} Your draft is kept while this inspector stays open.
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => edit('retry', (d) => ({ ...d }))}
+          >
+            Retry save
+          </Button>
+        </div>
+      ) : null}
       <InspectorField
         label="Name"
-        hint={draft.name.trim() ? undefined : 'A name is required — nothing saves until it has one.'}
+        hint={
+          draft.name.trim() ? undefined : 'A name is required — nothing saves until it has one.'
+        }
       >
         <input
           className={FIELD}
@@ -197,17 +261,9 @@ function OpportunityFields({
                 : undefined
           }
         >
-          <input
-            className={cn(FIELD, 'font-mono')}
-            aria-label="Symbols"
-            placeholder="AMD · NVDA"
-            value={symbolsValue}
-            onChange={(e) => {
-              const text = e.target.value
-              const next = textToSymbols(text)
-              edit('symbols', (d) => ({ ...d, symbols: next }))
-              setSymText({ of: next, text })
-            }}
+          <ScopeSymbolsEditor
+            symbols={draft.symbols}
+            onChange={(symbols) => edit('symbols', (d) => ({ ...d, symbols }))}
           />
         </InspectorField>
       ) : null}
@@ -232,7 +288,9 @@ function OpportunityFields({
                 onChange={(e) => setCondition(idx, 'type', { condition_type: e.target.value })}
               >
                 {!(OPPORTUNITY_CONDITION_TYPES as readonly string[]).includes(c.condition_type) ? (
-                  <option value={c.condition_type}>{getOpportunityConditionTypeLabel(c.condition_type)}</option>
+                  <option value={c.condition_type}>
+                    {getOpportunityConditionTypeLabel(c.condition_type)}
+                  </option>
                 ) : null}
                 {OPPORTUNITY_CONDITION_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -264,7 +322,10 @@ function OpportunityFields({
                 label={`Remove condition ${idx + 1}`}
                 className="self-center"
                 onClick={() =>
-                  edit(`cond:remove:${idx}`, (d) => ({ ...d, conditions: d.conditions.filter((_, i) => i !== idx) }))
+                  edit(`cond:remove:${idx}`, (d) => ({
+                    ...d,
+                    conditions: d.conditions.filter((_, i) => i !== idx),
+                  }))
                 }
               />
             </span>
@@ -272,7 +333,12 @@ function OpportunityFields({
           <button
             type="button"
             className={ADD_BTN}
-            onClick={() => edit('cond:add', (d) => ({ ...d, conditions: [...d.conditions, newEntryCondition()] }))}
+            onClick={() =>
+              edit('cond:add', (d) => ({
+                ...d,
+                conditions: [...d.conditions, newEntryCondition()],
+              }))
+            }
           >
             <Plus className="h-3 w-3" aria-hidden />
             Add condition

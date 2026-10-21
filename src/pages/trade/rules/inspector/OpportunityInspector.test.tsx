@@ -19,7 +19,9 @@ const DETAIL: StrategyOpportunityDetail = {
   entry_conditions: [{ condition_type: 'dte_min', value_text: null, value_numeric: 21 }],
 }
 
-const patchOpportunity = vi.fn<(id: number, body: unknown) => Promise<{ ok: boolean }>>(() => Promise.resolve({ ok: true }))
+const patchOpportunity = vi.fn<(id: number, body: unknown) => Promise<{ ok: boolean }>>(() =>
+  Promise.resolve({ ok: true })
+)
 
 vi.mock('@/api/strategy', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/strategy')>()),
@@ -29,10 +31,35 @@ vi.mock('@/api/strategy', async (importOriginal) => ({
 
 vi.mock('@/hooks/useStrategies', () => ({
   useStructures: () => ({
-    data: { items: [{ strategy_structure_id: 3, name: 'Cash Secured Put', version: 1, is_active: true }] },
+    data: {
+      items: [{ strategy_structure_id: 3, name: 'Cash Secured Put', version: 1, is_active: true }],
+    },
   }),
   useGateSets: () => ({
-    data: { items: [{ gate_safety_strategy_id: 9, name: 'Example Gate', version: 2, is_active: true }] },
+    data: {
+      items: [{ gate_safety_strategy_id: 9, name: 'Example Gate', version: 2, is_active: true }],
+    },
+  }),
+}))
+
+vi.mock('@/hooks/useSymbolPickerUniverse', () => ({
+  useSymbolPickerUniverse: () => ({
+    allSuggestedSymbols: ['AAA', 'QQQ'],
+    watchlistSet: new Set(['AAA']),
+    holdingsSet: new Set(['QQQ']),
+  }),
+}))
+vi.mock('@/hooks/useSymbolSearch', () => ({
+  useSymbolSearch: (query: string) => ({
+    data:
+      query === 'QQQ' || query === 'INVESCO'
+        ? [{ symbol: 'QQQ', name: 'Invesco QQQ Trust' }]
+        : query === 'AAA'
+          ? [{ symbol: 'AAA', name: 'Example Company' }]
+          : [],
+    isFetching: false,
+    isPlaceholderData: false,
+    error: null,
   }),
 }))
 
@@ -51,19 +78,30 @@ function mount(tradeCount = 0) {
         onDuplicate={() => {}}
         onSaved={onSaved}
       />
-    </QueryClientProvider>,
+    </QueryClientProvider>
   )
   return { onSaved }
 }
 
 describe('OpportunityInspector', () => {
-  beforeEach(() => patchOpportunity.mockClear())
+  beforeEach(() => {
+    patchOpportunity.mockClear()
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      }
+    )
+    Element.prototype.scrollIntoView = vi.fn()
+  })
 
   it('writes the whole opportunity, conditions included, after an edit', async () => {
     const { onSaved } = mount()
     const name = await screen.findByLabelText('Name')
     expect(screen.getByText('Opportunity · Example Put Harvest')).toBeTruthy()
-    expect((screen.getByLabelText('Symbols') as HTMLInputElement).value).toBe('AAA · BBB')
+    expect(screen.getByLabelText('Scope symbols').textContent).toContain('AAA')
     fireEvent.change(name, { target: { value: 'Renamed' } })
     await waitFor(() => expect(patchOpportunity).toHaveBeenCalledTimes(1), { timeout: 2000 })
     expect(patchOpportunity).toHaveBeenCalledWith(41, {
@@ -93,20 +131,73 @@ describe('OpportunityInspector', () => {
     expect(patchOpportunity).not.toHaveBeenCalled()
   })
 
-  it('keeps separators while typing symbols', async () => {
+  it('adds complete symbols without saving partial input or replacing the existing scope', async () => {
     mount()
-    const sym = (await screen.findByLabelText('Symbols')) as HTMLInputElement
-    fireEvent.change(sym, { target: { value: 'AAA · BBB · ' } })
-    expect(sym.value).toBe('AAA · BBB · ')
-    fireEvent.change(sym, { target: { value: 'AAA · BBB · ccc' } })
+    const sym = (await screen.findByLabelText('Add symbols')) as HTMLInputElement
+    fireEvent.change(sym, { target: { value: 'q' } })
+    await new Promise((r) => setTimeout(r, 700))
+    expect(patchOpportunity).not.toHaveBeenCalled()
+    fireEvent.change(sym, { target: { value: 'qqq' } })
+    fireEvent.click(await screen.findByRole('option', { name: /QQQ.*Add/ }))
     await waitFor(() => expect(patchOpportunity).toHaveBeenCalledTimes(1), { timeout: 2000 })
-    expect((patchOpportunity.mock.calls[0][1] as { symbols: string[] }).symbols).toEqual(['AAA', 'BBB', 'CCC'])
+    expect((patchOpportunity.mock.calls[0][1] as { symbols: string[] }).symbols).toEqual([
+      'AAA',
+      'BBB',
+      'QQQ',
+    ])
+    expect(sym.value).toBe('')
+    expect(screen.getByRole('status').textContent).toBe('Saved')
+  })
+
+  it('keeps a refused draft and lets the user retry it after sign-in', async () => {
+    patchOpportunity.mockRejectedValueOnce(new Error('Operator access required'))
+    mount()
+    const sym = await screen.findByLabelText('Add symbols')
+    expect(screen.getByRole('button', { name: 'Operator sign-in' })).toBeTruthy()
+    fireEvent.change(sym, { target: { value: 'qqq' } })
+    fireEvent.click(await screen.findByRole('option', { name: /QQQ.*Add/ }))
+    await screen.findByRole('alert')
+    expect(screen.getByLabelText('Scope symbols').textContent).toContain('QQQ')
+    fireEvent.click(screen.getByRole('button', { name: 'Retry save' }))
+    await waitFor(() => expect(patchOpportunity).toHaveBeenCalledTimes(2), { timeout: 2000 })
+    expect((patchOpportunity.mock.calls[1][1] as { symbols: string[] }).symbols).toEqual([
+      'AAA',
+      'BBB',
+      'QQQ',
+    ])
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  })
+
+  it('matches a company name and identifies already included symbols', async () => {
+    mount()
+    const input = await screen.findByLabelText('Add symbols')
+    fireEvent.change(input, { target: { value: 'Invesco' } })
+    expect(await screen.findByRole('option', { name: /QQQ.*Invesco QQQ Trust.*Add/ })).toBeTruthy()
+    fireEvent.change(input, { target: { value: 'AAA' } })
+    const included = await screen.findByRole('option', { name: /AAA.*In scope/ })
+    expect(included.getAttribute('aria-disabled')).toBe('true')
+    fireEvent.click(included)
+    await new Promise((r) => setTimeout(r, 700))
+    expect(patchOpportunity).not.toHaveBeenCalled()
+  })
+
+  it('never saves unmatched search text on blur', async () => {
+    mount()
+    const input = await screen.findByLabelText('Add symbols')
+    fireEvent.change(input, { target: { value: 'NOT_A_SYMBOL' } })
+    expect(screen.getByText(/No matches/)).toBeTruthy()
+    fireEvent.blur(input)
+    await new Promise((r) => setTimeout(r, 700))
+    expect(patchOpportunity).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Scope symbols').textContent).toContain('BBB')
   })
 
   it('refuses Delete while the opportunity has trades', async () => {
     mount(2)
     await screen.findByLabelText('Name')
     const del = screen.getByRole('button', { name: 'Delete' })
-    expect(del.getAttribute('title')).toBe('It has 2 trades — deactivate instead; delete needs an empty history.')
+    expect(del.getAttribute('title')).toBe(
+      'It has 2 trades — deactivate instead; delete needs an empty history.'
+    )
   })
 })

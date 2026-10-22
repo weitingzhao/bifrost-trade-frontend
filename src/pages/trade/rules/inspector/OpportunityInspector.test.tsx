@@ -52,7 +52,7 @@ vi.mock('@/hooks/useSymbolPickerUniverse', () => ({
 vi.mock('@/hooks/useSymbolSearch', () => ({
   useSymbolSearch: (query: string) => ({
     data:
-      query === 'QQQ' || query === 'INVESCO'
+      query === 'INVESCO'
         ? [{ symbol: 'QQQ', name: 'Invesco QQQ Trust' }]
         : query === 'AAA'
           ? [{ symbol: 'AAA', name: 'Example Company' }]

@@ -26,15 +26,29 @@ export function ScopeSymbolsEditor({
   const universe = useSymbolPickerUniverse()
   const search = useSymbolSearch(query, expanded)
   const existing = new Set(symbols.map((s) => s.toUpperCase()))
-  const results = query
+  const knownSymbols = [...new Set([...symbols, ...universe.allSuggestedSymbols])]
+  const localResults = knownSymbols
+    .filter((symbol) => !query || symbol.toUpperCase().includes(query))
+    .map((symbol) => ({ symbol, name: null as string | null }))
+  const remoteResults = query
     ? (search.data ?? []).filter(
         (hit) => hit.symbol.toUpperCase().includes(query) || hit.name?.toUpperCase().includes(query)
       )
-    : universe.allSuggestedSymbols.slice(0, 8).map((symbol) => ({ symbol, name: null }))
+    : []
+  const results = query
+    ? [
+        ...new Map(
+          [...localResults, ...remoteResults].map((hit) => [hit.symbol.toUpperCase(), hit])
+        ).values(),
+      ].sort(
+        (a, b) =>
+          Number(b.symbol.toUpperCase() === query) - Number(a.symbol.toUpperCase() === query)
+      )
+    : localResults.filter((hit) => !existing.has(hit.symbol.toUpperCase())).slice(0, 8)
   const searching = Boolean(query && (search.isFetching || search.isPlaceholderData))
   const add = (raw: string) => {
     const symbol = raw.trim().toUpperCase()
-    if (existing.has(symbol) || searching) return
+    if (existing.has(symbol)) return
     onChange([...symbols, symbol])
     setText('')
   }
@@ -103,7 +117,7 @@ export function ScopeSymbolsEditor({
                     <CommandItem
                       key={symbol}
                       value={symbol}
-                      disabled={included || searching}
+                      disabled={included || (searching && !knownSymbols.includes(symbol))}
                       onSelect={() => add(symbol)}
                       onMouseDown={(e) => e.preventDefault()}
                     >

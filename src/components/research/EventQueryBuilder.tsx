@@ -1,3 +1,4 @@
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 /**
  * Event Query Builder (Wave RS-C4).
  *
@@ -12,7 +13,7 @@
  * Emits `onRun(response)` on successful mutation so the parent can render
  * a `BacktestRunResultCard`.
  */
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { ChevronDown, ChevronRight, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -99,8 +100,8 @@ export function EventQueryBuilder({
   defaultSymbols,
 }: EventQueryBuilderProps) {
   const [kind, setKind] = useState<BuilderKind>('earnings')
-  const [symbolsStr, setSymbolsStr] = useState(
-    (defaultSymbols ?? ['NVDA', 'AAPL', 'AMZN', 'MSFT']).join(', '),
+  const [symbols, setSymbols] = useState(
+    defaultSymbols ?? ['NVDA', 'AAPL', 'AMZN', 'MSFT'],
   )
   const [template, setTemplate] = useState<string>('long_stock_event')
   const [lookbackYears, setLookbackYears] = useState(3)
@@ -122,14 +123,6 @@ export function EventQueryBuilder({
   const hypothesesQ = useActiveHypotheses(50)
   const mutation = useRunEventQuery()
 
-  const symbols = useMemo(
-    () =>
-      symbolsStr
-        .split(/[,\s]+/)
-        .map((s) => s.trim().toUpperCase())
-        .filter(Boolean),
-    [symbolsStr],
-  )
 
   const disabled = mutation.isPending || symbols.length === 0
 
@@ -224,17 +217,11 @@ export function EventQueryBuilder({
             htmlFor="event-query-symbols"
             className="text-dense-meta font-semibold text-muted-foreground"
           >
-            Symbols (comma-separated)
+            Symbols
           </Label>
-          <Input
-            id="event-query-symbols"
-            value={symbolsStr}
-            onChange={(e) => setSymbolsStr(e.target.value)}
-            placeholder="NVDA, AAPL, AMZN"
-            className="h-8 text-dense-body"
-          />
+          <SymbolListEditor id="event-query-symbols" symbols={symbols} onChange={setSymbols} />
           <p className="text-dense-caption text-muted-foreground">
-            {symbols.length} symbol{symbols.length === 1 ? '' : 's'} parsed
+            {symbols.length} symbol{symbols.length === 1 ? '' : 's'} selected
           </p>
         </div>
 

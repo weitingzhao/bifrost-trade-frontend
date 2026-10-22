@@ -13,6 +13,7 @@ export function CloseButton({
   title,
   size = 'md',
   className,
+  disabled,
 }: {
   onClick: (e: React.MouseEvent) => void
   /** The accessible name — say what closes when it is not obvious ("Close explanation"). */
@@ -21,10 +22,12 @@ export function CloseButton({
   title?: string
   size?: 'md' | 'sm'
   className?: string
+  disabled?: boolean
 }) {
   return (
     <DsIconActionButton
       variant="close"
+      disabled={disabled}
       onClick={onClick}
       ariaLabel={label}
       title={title ?? label}

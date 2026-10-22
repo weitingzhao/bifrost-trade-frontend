@@ -36,7 +36,7 @@ import {
   getOpportunityConditionTypeLabel,
 } from '@/utils/strategyFormUtils'
 import { FIELD, RuleInspector } from './RuleInspector'
-import { ScopeSymbolsEditor } from './ScopeSymbolsEditor'
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 import { Button } from '@/components/ui/button'
 import { openTradeOperatorDialog, useTradeOperator } from '@/lib/auth/tradeOperator'
 
@@ -261,7 +261,7 @@ function OpportunityFields({
                 : undefined
           }
         >
-          <ScopeSymbolsEditor
+          <SymbolListEditor
             symbols={draft.symbols}
             onChange={(symbols) => edit('symbols', (d) => ({ ...d, symbols }))}
           />

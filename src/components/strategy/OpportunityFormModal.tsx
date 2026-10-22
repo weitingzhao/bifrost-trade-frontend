@@ -1,3 +1,5 @@
+import { appendSymbols } from '@/components/symbol/symbolList'
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 /* eslint-disable react-hooks/set-state-in-effect -- hydrates edit form from API when panel opens (Legacy parity) */
 import { useState, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -42,9 +44,6 @@ import {
   opportunitiesStructureCardSelectedClass,
   opportunitiesStructureCardTitleClass,
   opportunitiesStructureGridClass,
-  opportunitiesSymbolTagClass,
-  opportunitiesSymbolTagInputClass,
-  opportunitiesSymbolTagsClass,
   opportunitiesWatchlistActionsClass,
   opportunitiesWatchlistCheckClass,
   opportunitiesWatchlistCheckboxClass,
@@ -193,18 +192,6 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
   useEffect(() => {
     if (editDetailQuery.isError) setError('Failed to load opportunity details.')
   }, [editDetailQuery.isError])
-
-  function handleAddEmptySymbol() {
-    setSymbols((prev) => [...prev, ''])
-  }
-
-  function handleUpdateSymbol(index: number, value: string) {
-    setSymbols((prev) => prev.map((s, i) => (i === index ? value.toUpperCase() : s)))
-  }
-
-  function handleRemoveSymbol(index: number) {
-    setSymbols((prev) => prev.filter((_, i) => i !== index))
-  }
 
   function handleScopeChange(val: string) {
     setScopeType(val)
@@ -437,30 +424,7 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
                 />
 
                 {scopeType === 'explicit_symbols' && (
-                  <div className="space-y-2">
-                    <div className={opportunitiesSymbolTagsClass}>
-                      {symbols.map((sym, i) => (
-                        <span key={i} className={opportunitiesSymbolTagClass}>
-                          <Input
-                            className={opportunitiesSymbolTagInputClass}
-                            value={sym}
-                            onChange={(e) => handleUpdateSymbol(i, e.target.value)}
-                            placeholder="SYM"
-                          />
-                          <CloseButton
-                            size="sm"
-                            className="mr-1.5 self-center"
-                            label={`Remove ${sym || 'symbol'}`}
-                            onClick={() => handleRemoveSymbol(i)}
-                          />
-                        </span>
-                      ))}
-                    </div>
-                    <button type="button" className={opportunitiesAddBtnClass} onClick={handleAddEmptySymbol}>
-                      <Plus className="h-3 w-3" />
-                      Add symbol
-                    </button>
-                  </div>
+                  <SymbolListEditor symbols={symbols} onChange={setSymbols} />
                 )}
 
                 {scopeType === 'watchlist_stk' && (
@@ -475,9 +439,9 @@ export function OpportunityFormModal({ open, onClose, initial, prefill }: Props)
                           <button
                             type="button"
                             className={opportunitiesAddBtnClass}
-                            onClick={() => setSymbols([...watchlistStkSymbols])}
+                            onClick={() => setSymbols((prev) => appendSymbols(prev, watchlistStkSymbols))}
                           >
-                            Select all
+                            Add all
                           </button>
                           <button
                             type="button"

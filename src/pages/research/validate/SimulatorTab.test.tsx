@@ -7,9 +7,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BacktestRunRow } from '@/api/research/backtestEvent'
 import type { SimResponse } from '@/api/research/backtestSim'
+
+vi.mock('@/hooks/useSymbolPickerUniverse', () => ({
+  useSymbolPickerUniverse: () => ({ allSuggestedSymbols: ['AAPL', 'MSFT', 'NVDA', 'SPY', 'QQQ'], watchlistSet: new Set(), holdingsSet: new Set() }),
+}))
+vi.mock('@/hooks/useSymbolSearch', () => ({ useSymbolSearch: () => ({ data: [], isFetching: false, error: null }) }))
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
+  Element.prototype.scrollIntoView = vi.fn()
+})
 
 const fetchSimDetail = vi.fn()
 const postSim = vi.fn()

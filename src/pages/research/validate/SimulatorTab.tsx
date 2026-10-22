@@ -1,3 +1,4 @@
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 /**
  * Simulator tab — the option position simulator (research 0.170.0): one seller
  * structure opened on a schedule, managed every session (profit take, stop,
@@ -7,7 +8,7 @@
  * (vwap or close plus tiered slippage — option_daily has no bid/ask), and
  * every run says so. Historical only — nothing here places an order (D10).
  */
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Play } from 'lucide-react'
 import { ViewState } from '@bifrost/ui'
@@ -462,7 +463,7 @@ function SimBuilder({
   const auth = useResearchAuth()
   const basis = useSimEntryBasis()
   const { scripts: pineLib, rows: pineRows } = usePineLibrary()
-  const [symbolsStr, setSymbolsStr] = useState((defaultSymbols ?? ['SPY']).join(', '))
+  const [symbols, setSymbols] = useState(defaultSymbols ?? ['SPY'])
   const [structure, setStructure] = useState<SimStructure>('put_credit_spread')
   const [start, setStart] = useState(isoDaysAgo(365))
   const [end, setEnd] = useState(isoDaysAgo(0))
@@ -523,14 +524,6 @@ function SimBuilder({
   const failed = mutation.isError ? mutation : baselineMutation.isError ? baselineMutation : null
   const isSignal = entryMode !== 'schedule'
 
-  const symbols = useMemo(
-    () =>
-      symbolsStr
-        .split(/[,\s]+/)
-        .map((s) => s.trim().toUpperCase())
-        .filter(Boolean),
-    [symbolsStr]
-  )
   const tooMany = symbols.length > 10
   const noIdentity = !auth.token
   // A signal entry's offset depends on the server's basis; until it is read, wait.
@@ -602,13 +595,7 @@ function SimBuilder({
       <div className="space-y-3 px-3 py-3">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1.6fr)_minmax(0,.7fr)_minmax(0,.7fr)]">
           <SimField id="sim-symbols" label="Symbols (1–10)">
-            <Input
-              id="sim-symbols"
-              value={symbolsStr}
-              onChange={(e) => setSymbolsStr(e.target.value)}
-              placeholder="SPY, QQQ"
-              className="h-8 text-dense-body"
-            />
+            <SymbolListEditor id="sim-symbols" symbols={symbols} onChange={setSymbols} maxSymbols={10} />
           </SimField>
           <SimField id="sim-start" label="Start">
             <Input

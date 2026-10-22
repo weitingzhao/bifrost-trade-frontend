@@ -1,3 +1,4 @@
+import { appendSymbols } from '@/components/symbol/symbolList'
 import { useState } from 'react'
 import { Check, Plus } from 'lucide-react'
 import { CloseButton, DenseTag } from '@/components/data-display'
@@ -13,12 +14,20 @@ import { useSymbolSearch } from '@/hooks/useSymbolSearch'
 import { useSymbolPickerUniverse } from '@/hooks/useSymbolPickerUniverse'
 
 /** Search selects an addition; existing scope is never replaced by the search text. */
-export function ScopeSymbolsEditor({
+export function SymbolListEditor({
   symbols,
   onChange,
+  disabled = false,
+  id,
+  maxSymbols,
+  addOnly = false,
 }: {
-  symbols: string[]
+  symbols: readonly string[]
   onChange: (symbols: string[]) => void
+  disabled?: boolean
+  id?: string
+  maxSymbols?: number
+  addOnly?: boolean
 }) {
   const [text, setText] = useState('')
   const [expanded, setExpanded] = useState(false)
@@ -48,26 +57,31 @@ export function ScopeSymbolsEditor({
   const searching = Boolean(query && (search.isFetching || search.isPlaceholderData))
   const add = (raw: string) => {
     const symbol = raw.trim().toUpperCase()
-    if (existing.has(symbol)) return
-    onChange([...symbols, symbol])
+    if (disabled || existing.has(symbol) || (maxSymbols != null && symbols.length >= maxSymbols)) return
+    onChange(appendSymbols(symbols, [symbol]))
     setText('')
   }
   return (
     <span className="flex flex-col gap-2">
       <span className="text-dense-meta text-muted-foreground">In scope · {symbols.length}</span>
-      <span className="flex flex-wrap gap-1" aria-label="Scope symbols">
+      {!addOnly && <span className="flex flex-wrap gap-1" aria-label="Scope symbols">
         {symbols.map((symbol) => (
           <DenseTag key={symbol} variant="symbol" size="pill">
             {symbol}
             <CloseButton
+              disabled={disabled}
               size="sm"
               label={`Remove ${symbol} from scope`}
               onClick={() => onChange(symbols.filter((s) => s !== symbol))}
             />
           </DenseTag>
         ))}
-      </span>
+      </span>}
+      {maxSymbols != null && symbols.length >= maxSymbols ? (
+        <span role="status" className="text-dense-meta text-muted-foreground">Limit of {maxSymbols} symbols reached. Remove one before adding another.</span>
+      ) : null}
       <Command
+        label="Add symbols"
         shouldFilter={false}
         className="h-auto"
         onBlur={(e) => {
@@ -75,6 +89,8 @@ export function ScopeSymbolsEditor({
         }}
       >
         <CommandInput
+          id={id}
+          disabled={disabled}
           aria-label="Add symbols"
           placeholder="Add symbol — ticker or company"
           value={text}
@@ -117,7 +133,7 @@ export function ScopeSymbolsEditor({
                     <CommandItem
                       key={symbol}
                       value={symbol}
-                      disabled={included || (searching && !knownSymbols.includes(symbol))}
+                      disabled={disabled || included || (maxSymbols != null && symbols.length >= maxSymbols) || (searching && !knownSymbols.includes(symbol))}
                       onSelect={() => add(symbol)}
                       onMouseDown={(e) => e.preventDefault()}
                     >
@@ -159,7 +175,7 @@ export function ScopeSymbolsEditor({
         </CommandList>
       </Command>
       <span className="text-dense-meta text-muted-foreground">
-        Choose a match to add it. Existing symbols stay; × removes one. ↑ ↓ to choose, Enter to add.
+        Choose a match to add it. Existing symbols stay. {!addOnly && '× removes one. '}↑ ↓ to choose, Enter to add.
       </span>
     </span>
   )

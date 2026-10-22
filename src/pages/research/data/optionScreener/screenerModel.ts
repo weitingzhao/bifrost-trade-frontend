@@ -547,7 +547,7 @@ export function screenerFunnel(args: {
     {
       label: 'Underlyings',
       value: String(picked.length),
-      note: picked.length === 0 ? 'pick a source, or add a symbol' : (sourceLabel ?? 'added by hand'),
+      note: picked.length === 0 ? 'pick a source, or add a symbol' : (sourceLabel ?? 'custom selection'),
       tone: picked.length ? 'ok' : 'warn',
     },
     {

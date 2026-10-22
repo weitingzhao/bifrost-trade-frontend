@@ -1,3 +1,4 @@
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 import { useCallback, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -42,12 +43,6 @@ const KIND_OPTIONS: { value: ManualDraftKind; label: string; hint: string }[] = 
   },
 ]
 
-function parseSymbols(input: string): string[] {
-  return input
-    .split(/[\s,]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean)
-}
 
 export function NewDraftDialog() {
   const [open, setOpen] = useState(false)
@@ -55,7 +50,7 @@ export function NewDraftDialog() {
   const [title, setTitle] = useState('')
   const [summary, setSummary] = useState('')
   const [hypothesisId, setHypothesisId] = useState('')
-  const [symbolsStr, setSymbolsStr] = useState('')
+  const [symbols, setSymbols] = useState<string[]>([])
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const reset = useCallback(() => {
@@ -63,7 +58,7 @@ export function NewDraftDialog() {
     setTitle('')
     setSummary('')
     setHypothesisId('')
-    setSymbolsStr('')
+    setSymbols([])
     setErrorMsg(null)
   }, [])
 
@@ -79,7 +74,7 @@ export function NewDraftDialog() {
     }
     const hid = hypothesisId.trim()
     if (hid) body.hypothesis_id = hid
-    const syms = parseSymbols(symbolsStr)
+    const syms = symbols
     if (syms.length) body.symbols = syms
 
     mutation.mutate(body, {
@@ -180,13 +175,7 @@ export function NewDraftDialog() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="draft-symbols">Symbols (optional)</Label>
-                <Input
-                  id="draft-symbols"
-                  value={symbolsStr}
-                  onChange={(e) => setSymbolsStr(e.target.value)}
-                  placeholder="NVDA, AMD"
-                  disabled={submitting}
-                />
+                <SymbolListEditor id="draft-symbols" symbols={symbols} onChange={setSymbols} disabled={submitting} />
               </div>
             </div>
 

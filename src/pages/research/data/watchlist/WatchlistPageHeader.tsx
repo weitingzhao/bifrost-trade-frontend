@@ -1,7 +1,8 @@
 import { Plus } from 'lucide-react'
 import { PageHead, PageHeadLink } from '@/components/layout'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover'
 import type { ReactNode } from 'react'
 import type { PrimaryWorkflowTab } from '@/utils/watchlistHelpers'
 
@@ -11,12 +12,11 @@ const INFO_TEXT =
 interface Props {
   itemCount: number
   primaryTab: PrimaryWorkflowTab
-  addInput: string
+  symbols: string[]
   isAdding: boolean
   positionsNotInWatchlistCount: number
   showPositionPicker: boolean
-  onAddInputChange: (v: string) => void
-  onAdd: () => void
+  onAdd: (symbol: string) => void
   onTogglePositionPicker: () => void
   extraActions?: ReactNode
 }
@@ -24,11 +24,10 @@ interface Props {
 export function WatchlistPageHeader({
   itemCount,
   primaryTab,
-  addInput,
+  symbols,
   isAdding,
   positionsNotInWatchlistCount,
   showPositionPicker,
-  onAddInputChange,
   onAdd,
   onTogglePositionPicker,
   extraActions,
@@ -60,25 +59,17 @@ export function WatchlistPageHeader({
           )}
           {primaryTab === 'watching' && (
             <span data-sr-build="" className="contents">
-              <Input
-                value={addInput}
-                onChange={e => onAddInputChange(e.target.value.toUpperCase())}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') onAdd()
-                }}
-                placeholder="Add symbol → Watching…"
-                className="h-8 w-28 font-mono uppercase text-sm"
-                aria-label="Enter symbol to add as Watching"
-              />
-              <Button
-                type="button"
-                size="sm"
-                disabled={isAdding || !addInput.trim()}
-                onClick={onAdd}
-                aria-label="Add to Watching"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button type="button" size="sm"><Plus className="size-4" /> Add symbol</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80" align="end">
+                  <SymbolListEditor symbols={symbols} disabled={isAdding} addOnly onChange={(next) => {
+                    const added = next.find((symbol) => !symbols.includes(symbol))
+                    if (added) onAdd(added)
+                  }} />
+                </PopoverContent>
+              </Popover>
             </span>
           )}
           {showPositionPicker && positionsNotInWatchlistCount > 0 && (

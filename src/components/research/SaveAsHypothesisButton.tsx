@@ -1,3 +1,4 @@
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 import { useCallback, useMemo, useState } from 'react'
 import { BookmarkPlus, CheckCircle2 } from 'lucide-react'
 import { IconActionButton } from '@/components/data-display'
@@ -51,7 +52,7 @@ export function SaveAsHypothesisButton({
   const submitting = mutation.isPending
 
   const initialSymbols = useMemo(
-    () => (defaultSymbols ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean).join(', '),
+    () => (defaultSymbols ?? []).map((s) => s.trim().toUpperCase()).filter(Boolean),
     [defaultSymbols],
   )
   const initialTags = useMemo(
@@ -62,7 +63,7 @@ export function SaveAsHypothesisButton({
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(defaultTitle ?? '')
   const [thesis, setThesis] = useState(defaultThesis ?? '')
-  const [symbolsStr, setSymbolsStr] = useState(initialSymbols)
+  const [symbols, setSymbols] = useState(initialSymbols)
   const [tagsStr, setTagsStr] = useState(initialTags)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [savedFlash, setSavedFlash] = useState(false)
@@ -71,16 +72,13 @@ export function SaveAsHypothesisButton({
   const openDialog = useCallback(() => {
     setTitle(defaultTitle ?? '')
     setThesis(defaultThesis ?? '')
-    setSymbolsStr(initialSymbols)
+    setSymbols(initialSymbols)
     setTagsStr(initialTags)
     setErrorMsg(null)
     setOpen(true)
   }, [defaultTitle, defaultThesis, initialSymbols, initialTags])
 
-  const symbolsArray = symbolsStr
-    .split(/[,\s]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean)
+  const symbolsArray = symbols
   const tagsArray = tagsStr
     .split(/[,\s]+/)
     .map((t) => t.trim())
@@ -194,13 +192,7 @@ export function SaveAsHypothesisButton({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor="hypothesis-symbols">Symbols</Label>
-                <Input
-                  id="hypothesis-symbols"
-                  value={symbolsStr}
-                  onChange={(e) => setSymbolsStr(e.target.value)}
-                  placeholder="NVDA, AMD"
-                  disabled={submitting}
-                />
+                <SymbolListEditor id="hypothesis-symbols" symbols={symbols} onChange={setSymbols} disabled={submitting} />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="hypothesis-tags">Tags</Label>

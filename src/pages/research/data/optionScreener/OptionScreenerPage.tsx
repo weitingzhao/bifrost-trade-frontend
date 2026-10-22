@@ -1,3 +1,4 @@
+import { appendSymbols } from '@/components/symbol/symbolList'
 /**
  * Option screen — rebuilt 2026-09-23 against `Research Contract Screener.dc.html`
  * (page rev 2026-09-20.10), in the prototype's order: header, funnel, the
@@ -195,10 +196,11 @@ export default function OptionScreenerPage() {
   })()
 
   function pickSource(source: ScreenerSource) {
-    // Replace, never accumulate: the design's source buttons are exclusive.
+    // Source selection appends, just like adding an individual symbol.
     if (!source.symbols) return
-    setSourceId(source.id)
-    setSymbols(source.symbols)
+    const additions = source.symbols
+    setSourceId(null)
+    setSymbols((prev) => appendSymbols(prev, additions))
     setSelected(null)
   }
 
@@ -262,7 +264,7 @@ export default function OptionScreenerPage() {
               })
             }}
             onAdd={(add) => {
-              setSymbols((prev) => [...new Set([...prev, ...add])])
+              setSymbols((prev) => appendSymbols(prev, add))
               setSourceId(null)
             }}
           />

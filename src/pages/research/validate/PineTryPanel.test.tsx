@@ -2,8 +2,17 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HttpError } from '@/lib/http'
+
+vi.mock('@/hooks/useSymbolPickerUniverse', () => ({
+  useSymbolPickerUniverse: () => ({ allSuggestedSymbols: ['AAPL', 'MSFT', 'NVDA', 'SPY', 'QQQ'], watchlistSet: new Set(), holdingsSet: new Set() }),
+}))
+vi.mock('@/hooks/useSymbolSearch', () => ({ useSymbolSearch: () => ({ data: [], isFetching: false, error: null }) }))
+beforeEach(() => {
+  vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} })
+  Element.prototype.scrollIntoView = vi.fn()
+})
 
 const tryPineScript = vi.fn()
 vi.mock('@/api/research/pine', async (orig) => ({
@@ -62,7 +71,10 @@ describe('PineTryPanel', () => {
     tryPineScript.mockRejectedValue(new HttpError(400, 'the script has 1 problem; line 3: …', { detail: body.detail, body }))
     const onIssues = mount()
     await userEvent.click(screen.getByRole('button', { name: 'My list' }))
-    await userEvent.type(screen.getByLabelText('Symbols to try'), 'aapl, msft nvda')
+    for (const symbol of ['aapl', 'msft', 'nvda']) {
+      await userEvent.type(screen.getByRole('combobox', { name: 'Add symbols' }), symbol)
+      await userEvent.keyboard('{Enter}')
+    }
     await userEvent.click(screen.getByRole('button', { name: 'Try' }))
     expect(tryPineScript).toHaveBeenLastCalledWith(expect.objectContaining({ symbols: ['AAPL', 'MSFT', 'NVDA'] }))
     expect(await screen.findByText('The try did not run')).toBeTruthy()

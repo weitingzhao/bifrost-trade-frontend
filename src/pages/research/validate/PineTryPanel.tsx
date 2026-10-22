@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { ViewState } from '@bifrost/ui'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 import { SegmentControl } from '@/components/data-display'
 import { ResearchAuthGap } from '@/components/auth/ResearchAuthGap'
 import { cap, mono, td, th } from '@/components/research/labFaceUi'
@@ -33,7 +33,7 @@ type BasketChoice = PineBasket | 'custom'
 const BASKETS: { value: BasketChoice; label: string; title: string }[] = [
   { value: 'resident', label: 'Watchlist + SPY/QQQ/IWM', title: 'The option universe’s resident tier: your watchlist and the three index ETFs (about 21 names)' },
   { value: 'liquid50', label: 'Liquid 50', title: 'The 50 common stocks in the universe with the highest average dollar volume over the last 60 sessions' },
-  { value: 'custom', label: 'My list', title: 'Up to 50 symbols, separated by spaces or commas' },
+  { value: 'custom', label: 'My list', title: 'Choose up to 50 symbols' },
 ]
 const WINDOWS = [
   { value: '365', label: '1 y' },
@@ -125,21 +125,21 @@ export function PineTryPanel({
   onIssues: (issues: PineIssue[]) => void
 }) {
   const [basket, setBasket] = useState<BasketChoice>('resident')
-  const [custom, setCustom] = useState('')
+  const [custom, setCustom] = useState<string[]>([])
   const [days, setDays] = useState('730')
   const run = useMutation({
     mutationFn: () =>
       tryPineScript({
         source,
         ...(basket === 'custom'
-          ? { symbols: custom.split(/[\s,]+/).map((x) => x.trim().toUpperCase()).filter(Boolean).slice(0, 50) }
+          ? { symbols: custom }
           : { basket }),
         days: Number(days),
       }),
     onMutate: () => onIssues([]),
     onError: (e) => onIssues(pineIssuesOf(e)),
   })
-  const customCount = custom.split(/[\s,]+/).filter(Boolean).length
+  const customCount = custom.length
   const ready = canRun && source.trim() !== '' && (basket !== 'custom' || (customCount > 0 && customCount <= 50))
   const res = run.data
   const fired = res?.symbols.filter((s) => s.buy + s.sell > 0).length ?? 0
@@ -161,13 +161,7 @@ export function PineTryPanel({
         <SegmentControl ariaLabel="Window" options={WINDOWS} value={days} onChange={setDays} />
       </div>
       {basket === 'custom' ? (
-        <Input
-          aria-label="Symbols to try"
-          placeholder="AAPL MSFT NVDA … (up to 50)"
-          value={custom}
-          onChange={(e) => setCustom(e.target.value)}
-          className="h-8 font-mono text-dense-body"
-        />
+        <SymbolListEditor symbols={custom} onChange={setCustom} maxSymbols={50} disabled={run.isPending} />
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" disabled={!ready || run.isPending} title={!canRun ? blockedWhy : undefined} onClick={() => run.mutate()}>

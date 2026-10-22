@@ -58,6 +58,7 @@ export default function StockWatchlistPage() {
     () => Array.from(new Set(items.map(i => i.symbol?.toUpperCase()).filter(Boolean) as string[])),
     [items],
   )
+  const stockSymbols = items.filter((item) => item.sec_type === 'STK').map((item) => item.symbol?.toUpperCase()).filter((symbol): symbol is string => Boolean(symbol))
   const allContractKeys = useMemo(() => items.map(i => i.contract_key), [items])
   const { quotesMap } = useQuoteStream(allSymbols, allContractKeys)
 
@@ -82,7 +83,6 @@ export default function StockWatchlistPage() {
   }, [quotesMap])
 
   const [primaryTab, setPrimaryTab] = useState<PrimaryWorkflowTab>('watching')
-  const [addInput, setAddInput] = useState('')
   const [showPositionPicker, setShowPositionPicker] = useState(false)
   const [inspector, setInspector] = useState<InspectorState>({ type: null })
 
@@ -245,9 +245,9 @@ export default function StockWatchlistPage() {
     [workflow.sizingStockRows, selectedSizingSymbol, handleSizeCompute],
   )
 
-  const handleAddSymbol = useCallback(async () => {
-    const { contract_key, symbol, sec_type } = normalizeToContractKey(addInput)
-    if (!contract_key) return
+  const handleAddSymbol = useCallback(async (selected: string) => {
+    const { contract_key, symbol, sec_type } = normalizeToContractKey(selected)
+    if (!contract_key || !symbol || items.some((item) => item.contract_key === contract_key)) return
     await addItem.mutateAsync({
       contract_key,
       symbol,
@@ -255,8 +255,7 @@ export default function StockWatchlistPage() {
       source: 'manual',
       category_id: watchingId ?? undefined,
     })
-    setAddInput('')
-  }, [addInput, watchingId, addItem])
+  }, [items, watchingId, addItem])
 
   const handleAddFromPosition = useCallback(
     async (p: (typeof workflow.positions)[number]) => {
@@ -340,18 +339,17 @@ export default function StockWatchlistPage() {
       <WatchlistPageHeader
         itemCount={items.length}
         primaryTab={primaryTab}
-        addInput={addInput}
+        symbols={stockSymbols}
         isAdding={addItem.isPending}
         positionsNotInWatchlistCount={workflow.positionsNotInWatchlist.length}
         showPositionPicker={showPositionPicker}
-        onAddInputChange={setAddInput}
-        onAdd={() => void handleAddSymbol()}
+        onAdd={(symbol) => void handleAddSymbol(symbol)}
         onTogglePositionPicker={() => setShowPositionPicker(v => !v)}
         extraActions={
           <AskCopilotButton
             originPage="watchlist"
             originLabel="Stock Watchlist"
-            symbol={addInput.trim().toUpperCase() || allSymbols[0]}
+            symbol={allSymbols[0]}
             snapshot={compactSnapshot({
               tab: primaryTab,
               item_count: items.length,

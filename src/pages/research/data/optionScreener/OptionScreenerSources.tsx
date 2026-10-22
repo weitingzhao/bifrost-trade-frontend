@@ -1,33 +1,13 @@
-/**
- * `1 · Underlyings` — the design's first rail step.
- *
- * A source click *replaces* the list rather than adding to it: the design's
- * own buttons are exclusive, and a picker that accumulates leaves you unable
- * to say what you are screening. The chips below are the list itself, each
- * droppable; `＋ symbol` adds a name no source offers.
- *
- * The dot on each source is the design's, with one change: the Option Scan's
- * is amber rather than the prototype's red. Red is kept for a real fault in
- * this app (§1), and "IV-rich today" is a reading, not a failure.
- */
-import { useState } from 'react'
+import { SymbolListEditor } from '@/components/symbol/SymbolListEditor'
 import { cn } from '@/lib/utils'
 import { RailPanel } from './OptionScreenerRail'
 import type { ScreenerSource } from './useScreenerSources'
-import { CloseButton } from '@/components/data-display'
 
 const DOT: Record<string, string> = {
   scan: 'bg-warning',
   explorer: 'bg-primary',
   book: 'bg-[var(--sk-line2)]',
   watch: 'bg-[var(--sk-line2)]',
-}
-
-function parseSymbols(text: string): string[] {
-  return text
-    .split(/[\s,]+/)
-    .map((s) => s.trim().toUpperCase())
-    .filter(Boolean)
 }
 
 export function OptionScreenerSources({
@@ -45,16 +25,6 @@ export function OptionScreenerSources({
   onDrop: (symbol: string) => void
   onAdd: (symbols: string[]) => void
 }) {
-  const [adding, setAdding] = useState(false)
-  const [draft, setDraft] = useState('')
-
-  const commit = () => {
-    const next = parseSymbols(draft)
-    if (next.length) onAdd(next)
-    setDraft('')
-    setAdding(false)
-  }
-
   return (
     <RailPanel
       step={1}
@@ -70,7 +40,7 @@ export function OptionScreenerSources({
               key={s.id}
               type="button"
               disabled={dead}
-              title={s.absent ?? `Screen the ${n} names this list holds`}
+              title={s.absent ?? `Add ${n} names from this list; keep existing symbols`}
               onClick={() => onPickSource(s)}
               className={cn(
                 'flex items-center gap-2 rounded-md border px-2 py-1.5 text-left text-dense-meta',
@@ -89,44 +59,11 @@ export function OptionScreenerSources({
             </button>
           )
         })}
-        <div className="flex flex-wrap items-center gap-1 pt-0.5">
-          {symbols.map((sym) => (
-            <span
-              key={sym}
-              className="inline-flex h-5 items-center gap-1 border px-1.5 font-mono text-dense-caption mat-tag"
-            >
-              {sym}
-              <CloseButton size="sm" onClick={() => onDrop(sym)} label={`Drop ${sym}`} />
-            </span>
-          ))}
-          {adding ? (
-            <input
-              // Opened by the reader's own click, so focusing it is what they asked for.
-              autoFocus
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') commit()
-                if (e.key === 'Escape') {
-                  setDraft('')
-                  setAdding(false)
-                }
-              }}
-              onBlur={commit}
-              placeholder="ANET, CAVA"
-              aria-label="Add symbols"
-              className="mat-field h-5 w-28 border px-1.5 font-mono text-dense-caption placeholder:text-muted-foreground"
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className="mat-btn inline-flex h-5 items-center border px-1.5 text-dense-caption"
-            >
-              ＋ symbol
-            </button>
-          )}
-        </div>
+        <SymbolListEditor symbols={symbols} onChange={(next) => {
+          const removed = symbols.find((symbol) => !next.includes(symbol))
+          if (removed) onDrop(removed)
+          else onAdd(next.filter((symbol) => !symbols.includes(symbol)))
+        }} />
       </div>
     </RailPanel>
   )

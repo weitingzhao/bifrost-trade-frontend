@@ -21,7 +21,7 @@ function own(fn: () => void) {
 /**
  * The folded row's right side (Rev .144), pending cards only. Dismiss on every
  * kind; a call adds Record answer, which writes nothing (D10) and is held
- * behind the toast like Dismiss (Owner 2026-10-04 #9). Every other kind gets no
+ * behind the toast like Dismiss (决定 2026-10-04 #9). Every other kind gets no
  * Approve here — accepting anything means having looked at it — only where it
  * would write, in grey mono, so the consequence reads without opening.
  */

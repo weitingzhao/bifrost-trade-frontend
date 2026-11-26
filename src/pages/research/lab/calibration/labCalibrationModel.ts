@@ -8,7 +8,7 @@
  * that has to be redone every round, and it had already drifted from its
  * source — condensed evidence, and two "smallest change" lines reworded. So
  * the page reads the two documents the research API serves and parses them
- * (Owner 2026-09-25, when Calibration moved to System › Alignment):
+ * (ISSUE-16, when Calibration moved to System › Alignment):
  *
  *   - RESEARCH_BLUEPRINT.md: `| C-F1 | contract |` — the contract's wording
  *   - RESEARCH_CALIBRATION.md §2: `| C-F1 | ⚠️ | evidence |`, one table per

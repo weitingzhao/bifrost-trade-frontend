@@ -50,7 +50,7 @@ export const positionsUi = {
     'font-mono text-xs text-foreground outline-none',
   ),
 
-  // §17.2 (Rev .51, Owner 2026-09-25): 11px, mute — and since the list grammar
+  // §17.2 (Rev .51, ISSUE-16): 11px, mute — and since the list grammar
   // went site-wide (Rev .153–.154, batch 3; `data-sr-list` on every page host)
   // sentence case with no tracking, one hairline under the head and no row
   // rules: rows part by the scope's 3% zebra, hover and selection are its

@@ -1,7 +1,7 @@
 import { readGexLevels, gexRegimeStreak } from './gexReading'
 /**
  * The Dealer face's two history panels — the ones its first walk seated as
- * «unmeasured» and the stores answer (Owner 2026-09-26, DESIGN_CONTRACTS
+ * «unmeasured» and the stores answer (ISSUE-76, DESIGN_CONTRACTS
  * §15.6):
  *
  * - Regime timeline — `/research/gex/levels` answers any past trade date, one

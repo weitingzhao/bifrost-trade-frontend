@@ -2,7 +2,7 @@
  * The Research group and the one badge still riding on the tree.
  *
  * It no longer reads the objective list. The Objectives fold was cancelled
- * (Owner 2026-09-21, design Rev 2026-09-20.1) because it was the one row that
+ * (ISSUE-16, design Rev 2026-09-20.1) because it was the one row that
  * made data rows into menu rows, so the tree is the same for every reader.
  *
  * And since §5a.8 it is barely a Research badge at all: the Decision Inbox

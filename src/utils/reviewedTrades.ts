@@ -1,6 +1,6 @@
 /**
  * Trade review reviews an **instance**, not a contract (design Rev .104,
- * Owner 2026-09-29): every leg the instance traded is one P&L line, a roll is
+ * 决定 2026-09-29): every leg the instance traded is one P&L line, a roll is
  * a seam in it, and an instance still open is reviewable as an interim read.
  *
  * Built from the same fills the contract-level review reads, sliced per

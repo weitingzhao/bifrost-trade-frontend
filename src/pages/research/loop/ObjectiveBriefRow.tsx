@@ -101,7 +101,7 @@ export function ObjectiveRows({
             <DenseTag variant="neutral" size="cell">
               {row.schedule}
             </DenseTag>
-            {/* The dial as a reading (Vision §8 · §22.2; Owner 2026-09-28): the
+            {/* The dial as a reading (Vision §8 · §22.2; ISSUE-94): the
                 auto-approve path is unchanged — see lib/harness/objectiveOrigin. */}
             <span title={dial.why}>
               <DenseTag variant={dial.dial === 'L1' ? 'info' : 'neutral'} size="cell">

@@ -23,7 +23,7 @@ import { objectivePath } from '@/lib/harness/objectivePolicy'
  *
  * `policy_suggestion` reads its scope, as `writesTo` does: an objective's
  * policy is a patch, anything else a rule. A playbook note files into the
- * Playbook beside the rules, so it reads `rule` (Owner 2026-10-04 #10).
+ * Playbook beside the rules, so it reads `rule` (决定 2026-10-04 #10).
  *
  * Briefings are not one of the five — they are read, not decided — and keep
  * their own name, lowercased the way the prototype's Briefings list writes it.

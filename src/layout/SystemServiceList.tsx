@@ -10,7 +10,7 @@
  * service and which zone it belongs to, and `usePlatformPlugins` knows the Ops
  * plugins; a hand-written list here would be a second inventory.
  *
- * Since the Runtime pages retired (Owner 2026-09-25), a row opens the Ops
+ * Since the Runtime pages retired (ISSUE-24), a row opens the Ops
  * Console view that can say more — diagnosis is the control plane's — and the
  * foot of the panel opens System Status, the trader's own reading.
  */

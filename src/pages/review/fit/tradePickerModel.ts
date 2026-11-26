@@ -1,5 +1,5 @@
 /**
- * Trade review's picker (design Rev .104, Owner 2026-09-29: a row of
+ * Trade review's picker (design Rev .104, 决定 2026-09-29: a row of
  * "#id SYM" pills was too thin to choose from). The choice is a closed trade,
  * not a symbol — the same name appears once per trade — so the list carries
  * what a review is picked by: when it closed, what it made, and where it sat.

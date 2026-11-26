@@ -361,7 +361,7 @@ export function nameIv(g: ScreenerSymbolGroup, warning: string | undefined): Nam
 export function nameIvLabel(iv: NameIv): { text: string; title: string; warn: boolean } {
   const iv30 = iv.iv30 == null ? '' : ` · IV30 ${(iv.iv30 * 100).toFixed(0)}%`
   if (iv.pct != null) {
-    // Said plainly (Owner, 2026-09-27): what share of the year sat at or below
+    // Said plainly (决定 2026-09-27): what share of the year sat at or below
     // today, and what share above — the reader sees at once whether the name's
     // vol is low or high for it, with no threshold invented here.
     const at = Number(iv.pct.toFixed(1))

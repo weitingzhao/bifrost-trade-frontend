@@ -169,7 +169,7 @@ export function SymbolChainFace({ symbol }: { symbol: string }) {
       : (expiries.find((e) => fitByExpiry.has(e)) ?? expiries[0] ?? null)
   const chain = expiry ? (chains.get(expiry) ?? []) : []
   const fitRow = expiry ? fitByExpiry.get(expiry) : null
-  // DTE from New York's today, as the Option screen counts it (Owner 2026-09-27) —
+  // DTE from New York's today, as the Option screen counts it (决定 2026-09-27) —
   // not the fit's DTE, which counts from the session the surface was fitted on.
   const dte = expiry ? daysToExpiry(expiry, today) : null
   // Only the smile keeps the fit's T: its IVs are √(w(k)/T) at the T it fitted with.

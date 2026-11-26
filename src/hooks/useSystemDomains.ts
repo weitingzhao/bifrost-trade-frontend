@@ -29,7 +29,7 @@ export function useSystemDomains({ live }: { live: boolean }): DomainStanding[] 
     queryFn: fetchSignalHealth,
     staleTime: 60_000,
   })
-  // The plugin's own verdict over the watchlist (Owner 2026-09-25).
+  // The plugin's own verdict over the watchlist (ISSUE-83).
   const quality = useCoverageQuality()
   // The streams the monitor says are subscribed — the same list Live asks for.
   const streamKeys = live ? (status?.live_ui?.subscribed_tickers ?? []) : []

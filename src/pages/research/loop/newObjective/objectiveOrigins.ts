@@ -1,6 +1,6 @@
 /**
  * New objective — three origins, no blank form (design Rev .100 Console,
- * Vision §16.1; Owner 2026-09-29). Ordered by how much evidence each carries:
+ * Vision §16.1; ISSUE-94). Ordered by how much evidence each carries:
  * Promote transcribes something already run by hand, Fork copies a standing
  * objective that is already earning, a Template is a better-informed guess.
  *

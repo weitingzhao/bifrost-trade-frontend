@@ -13,7 +13,7 @@
  *
  * **Which pages read it** is a flag in the route table (`accountScope`), the
  * way `symbolScope` is. The first round wires Positions, Desk and Plans
- * (Owner 2026-09-25); every other page shows the whole book and the control
+ * (ISSUE-16); every other page shows the whole book and the control
  * says so.
  *
  * A wired page's own account toggles stay (a link can still carry `?acct=` or

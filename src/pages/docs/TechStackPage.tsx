@@ -6,7 +6,7 @@
  * said React 18 and "Phase 1: New Frontend → Legacy API" long after D8
  * retired the Legacy stack. The file is the source (it is what agents and the
  * repo read); the page now renders it, so there is one copy to keep true
- * (Owner 2026-09-25).
+ * (ISSUE-16).
  *
  * Laid out as the design's reader (Rev .53): the file's `## n.` sections in a
  * contents rail that follows the scroll, the document centred beside it.

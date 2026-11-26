@@ -23,7 +23,7 @@
  * - **`open`** — this surface is open, in the float or in the panel. Dock
  *   semantics: an open surface rides across navigation until you close it,
  *   and it carries a running dot the whole time. **Lit is only the one you
- *   are looking at** (Owner 2026-09-26, Rev .97): two filled tiles for one
+ *   are looking at** (ISSUE-53, Rev .97): two filled tiles for one
  *   visible tab read as "which is open?", so a surface behind another panel
  *   tab keeps the dot and loses the fill, like a Dock app that isn't
  *   frontmost.
@@ -347,7 +347,7 @@ function ListsButton() {
 
 /** The feed's dot on the Market head — the sidebar Live lamp, moved with its row. */
 /**
- * The Pilot capsule (design Rev .100, Owner 2026-09-27, Vision §22.1):
+ * The Pilot capsule (design Rev .100, ISSUE-94, Vision §22.1):
  * Autopilot and Copilot are one Pilot at two autonomy dials, so their
  * containers merge the way Market's did — both heads stay, controls unchanged,
  * a rule between them. The outline lights when either module is open or
@@ -385,7 +385,7 @@ function PilotCapsule({ activePath, children }: { activePath: string; children: 
 }
 
 /**
- * Loop Run (design `_Shell TopBar` drawer-kind companion; Owner 2026-09-29).
+ * Loop Run (design `_Shell TopBar` drawer-kind companion; ISSUE-16).
  * A run is a reading, never a page: the icon brings forward the run already
  * open, closes it when it is the one in front, and otherwise opens the newest
  * run the loop made. With no run yet it says so and does nothing.

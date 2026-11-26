@@ -1,6 +1,6 @@
 /**
  * The Console's New objective panel (design Rev .100 `Autopilot Console`,
- * Owner 2026-09-29): three origins side by side instead of a blank form.
+ * ISSUE-94): three origins side by side instead of a blank form.
  * Promote a hand-run draft by giving it a schedule, or a saved screen into a
  * draft; Fork a standing objective with its policy copied and its lineage
  * kept; or start from a Template. Every path but the draft promotion ends in

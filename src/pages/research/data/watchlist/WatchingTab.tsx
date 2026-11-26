@@ -15,7 +15,7 @@
  * Nothing was removed to make room. The list-keeping the design does not draw
  * — categories, the option add, the removal — moved into a trailing cell
  * behind the two promotions the design leads with, because absence from the
- * design is not deletion (Owner, 2026-09-18). The Sizing and Positions tabs
+ * design is not deletion (ISSUE-16). The Sizing and Positions tabs
  * are untouched: the design's own footer says the production page's inline
  * sizing and order workflow stays where it is under D10, and that this page
  * watches and promotes rather than places.

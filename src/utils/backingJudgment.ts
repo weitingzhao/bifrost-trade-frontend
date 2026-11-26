@@ -1,6 +1,6 @@
 /**
  * House backing gate (85% of pool) versus the pressure ceiling (default 50% of
- * 1 − Cushion). Owner 2026-09-15: both stand. They are not the same quantity.
+ * 1 − Cushion). Both stand (决定 2026-09-15). They are not the same quantity.
  *
  * Used / pool come from the same slices BackingPoolCard draws — one compute,
  * the strip and the ring both cite. Income ETFs sit in the pool and do not

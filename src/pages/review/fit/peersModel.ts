@@ -1,6 +1,6 @@
 /**
- * Trade review · Compared with (design Rev .104, Owner 2026-09-29: "can I
- * compare it with the trades I have already made?").
+ * Trade review · Compared with (design Rev .104, 决定 2026-09-29): the trade
+ * read against the trades already made.
  *
  * The peer set is closed instances sharing this one's symbol (default), rule
  * or structure — only those opened before it (default) or every closed one —

@@ -5,7 +5,7 @@
  * the design's option (b) for the three inputs this data plan does not carry,
  * and on the Owner's answer to where the structures come from.
  *
- * ## Where the rows come from (Owner 2026-09-23)
+ * ## Where the rows come from (决定 2026-09-23)
  *
  * The prototype's view reads "from Symbol verdict". Verdicts here are prose
  * claims with no stance, level or horizon, so the view is typed on this page

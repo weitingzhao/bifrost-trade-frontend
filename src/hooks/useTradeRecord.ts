@@ -13,7 +13,7 @@
  * - **spot**: the underlying's quote now, or its close on the day an instance
  *   closed;
  * - **covering shares**: an open covered call is drawn with the account's
- *   current shares at their current average cost (Owner 2026-09-28) — stock
+ *   current shares at their current average cost (决定 2026-09-28) — stock
  *   legs are never attributed to an instance, so a closed one has none;
  * - **TWS client rows**, matched by contract key (they carry no attribution).
  */

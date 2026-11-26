@@ -44,7 +44,7 @@ describe('registry-derived redirects', () => {
 
 describe('the front door', () => {
   it('opens on Today, and Today is a page rather than another redirect', async () => {
-    // Owner, 2026-09-17: the app opens on the action surface. Pinned here
+    // 决定 2026-09-17: the app opens on the action surface. Pinned here
     // because a front door that quietly moves is the kind of change nobody
     // notices until they are looking for a page that used to be first.
     expect(INDEX_ROUTE).toBe('/home')

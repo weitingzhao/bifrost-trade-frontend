@@ -6,7 +6,7 @@ import type { TerrainIntraday } from '@/api/researchEngine'
 import type { DenseTagVariant } from '@/components/data-display'
 
 // Rangy green, Bull state blue, Bear red, Squeeze amber — the leading branch is
-// bolded, never recoloured. Bull was the ticker lime; §14.4.6 keeps lime for the name (Owner 2026-09-27).
+// bolded, never recoloured. Bull was the ticker lime; §14.4.6 keeps lime for the name (ISSUE-16).
 export const BRANCHES = [
   { key: 'rangy', label: 'Rangy', text: 'text-success', bar: 'bg-success' },
   { key: 'bull', label: 'Bull', text: 'text-[var(--sk-state-blue)]', bar: 'bg-[var(--sk-state-blue)]' },

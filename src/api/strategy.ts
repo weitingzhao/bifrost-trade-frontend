@@ -413,7 +413,7 @@ export function setActiveAllocation(
 
 /**
  * Delete a Desk rule object (api 0.1.9, design Rev .140). The Desk calls these
- * only once its Undo toast has closed (Owner 2026-10-01: held delete). An
+ * only once its Undo toast has closed (held delete, 决定 2026-10-01). An
  * object still in use is refused with a 409 whose reason is the error's text;
  * one already gone (another tab, a second ⌘Z) resolves as `deleted: 'gone'`.
  */

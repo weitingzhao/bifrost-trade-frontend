@@ -1,5 +1,5 @@
 /**
- * Proposed · from memory (design Rev .100, Vision §22.4; Owner 2026-09-28:
+ * Proposed · from memory (design Rev .100, Vision §22.4; 决定 2026-09-28:
  * derived on this side, no proposal store).
  *
  * The outer loop's last arc: a memory that says something went wrong — a

@@ -82,7 +82,7 @@ export function ControlCenter() {
   const worse = RANK[dataLamp] >= RANK[sysLamp] ? dataLamp : sysLamp
   const tile: Tile = picked ?? (RANK[sysLamp] > RANK[dataLamp] ? 'system' : 'data')
 
-  // The verdict (Owner 2026-09-26, Rev .97): "Can I trade" left the user menu
+  // The verdict (ISSUE-16, Rev .97): "Can I trade" left the user menu
   // for this popup's first row — one business fact in one place, derived from
   // the same rows drawn below by taking the worst. Grey is unprobed and never
   // changes the answer (§11.3.1).

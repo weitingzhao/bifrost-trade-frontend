@@ -1,5 +1,5 @@
 /**
- * Pine library › Try on a basket (ledger S13, Owner 2026-10-06; research
+ * Pine library › Try on a basket (ledger S13, ISSUE-102; research
  * 0.200.0 POST research/pine/try). The source in the editor runs now over a
  * basket of names and its buy / sell sessions are measured the way Signal Decay
  * measures a saved script — next-open entry, net of cost, cooldown, baseline of

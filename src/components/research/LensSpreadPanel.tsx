@@ -56,7 +56,7 @@ export function LensSpreadPanel({
   caption: React.ReactNode
   /**
    * The hot / cold segments' fills. The two ratings pages colour the same bar
-   * in opposite pairs (Owner 2026-09-27): Stocks reads hot as strength (green,
+   * in opposite pairs (决定 2026-09-27): Stocks reads hot as strength (green,
    * the default); Vol ratings reads hot as rich premium (red).
    */
   hotFill?: string

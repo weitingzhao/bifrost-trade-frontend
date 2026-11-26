@@ -1,6 +1,6 @@
 /**
  * Where an objective came from, and the dial it runs at (design Rev .100,
- * Vision §22.2 · §22.4; Owner 2026-09-28).
+ * Vision §22.2 · §22.4; ISSUE-94).
  *
  * **Origin.** An objective drafted from a memory proposal records the memory
  * in `policy_json.origin` — the create endpoint keeps unknown top-level policy

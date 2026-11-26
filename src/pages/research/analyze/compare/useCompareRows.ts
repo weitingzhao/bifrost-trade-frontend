@@ -33,7 +33,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys'
 
 /**
  * The series each row draws in, in rulebook order — Performance's 1b scheme
- * (Owner 2026-09-26, design Rev .87): ink solid, contract sky solid, pastel
+ * (ISSUE-16, design Rev .87): ink solid, contract sky solid, pastel
  * violet dashed, mute2 dotted. All four rows are option structures, so none
  * wears an entity's identity (the ticker's lime was the first) and none the
  * degraded lamp's yellow (the fourth was). The dash repeats the distinction,

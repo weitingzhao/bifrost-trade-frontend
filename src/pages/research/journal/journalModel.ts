@@ -136,7 +136,7 @@ const MACHINE_ORIGIN: Record<string, JournalOperator> = {
 }
 
 /**
- * The New York day an artifact belongs to (Owner 2026-10-04): the day the
+ * The New York day an artifact belongs to (决定 2026-10-04): the day the
  * Notes, the Day view's server read and the Calendar use. Cutting the stamp
  * at ten characters filed anything written after 20:00 ET a day late.
  */

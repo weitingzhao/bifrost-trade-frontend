@@ -1,5 +1,5 @@
 /**
- * The one option `contract_key` the frontend builds (TD-25, Owner 2026-10-03).
+ * The one option `contract_key` the frontend builds (TD-25).
  *
  * `SYM|OPT|YYYYMMDD|STRIKE|R` in core's positions format
  * (`bifrost_core/portfolio/contract_key.opt_key` over a float strike): the

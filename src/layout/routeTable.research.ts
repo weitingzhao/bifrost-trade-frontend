@@ -389,7 +389,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    // App-side page (Owner 2026-10-06): the Pine library under its own menu row
+    // App-side page (ISSUE-102): the Pine library under its own menu row
     // so it can be found; the design draws it as Backtest's third tab (Rev
     // .158 B5), which stays. Receipt for Design:
     // design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.
@@ -407,7 +407,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    // App-side page (ledger B7, Owner 2026-10-06 option B): one script's
+    // App-side page (ledger B7, 决定 2026-10-06 option B): one script's
     // report, reached from the library's Report ↗ — in no menu, like an
     // objective's detail. Same receipt.
     path: '/research/pine/:scriptId',
@@ -615,7 +615,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     crumbs: MARKET,
     // Package .70 (2026-10-18): Rev .175 (RESPONSE to the P67 receipt) re-walked, waiting for a look.
     design: {
-      // Signed by the Owner 2026-09-24, after the fed rounds (macro lane,
+      // Signed off (决定 2026-09-24) after the fed rounds (macro lane,
       // themes stack, forward calendar).
       // Rev .88–.89 §16 refinement built in batch J4, waiting for a look.
       state: 'reviewing',

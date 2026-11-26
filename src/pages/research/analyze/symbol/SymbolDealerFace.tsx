@@ -706,7 +706,7 @@ export function SymbolDealerFace({ symbol }: { symbol: string }) {
           </div>
         ) : null}
         </div>
-        {/* Owner 2026-09-26: keep the retired OpEx section's map, named for
+        {/* ISSUE-76: keep the retired OpEx section's map, named for
             what it is — the strike map carries OI and GEX, not vanna, so the
             bars are OI-weighted shapes, not the store's exposure. */}
         <div className="border-t border-border/60 px-3 pb-1 pt-2">

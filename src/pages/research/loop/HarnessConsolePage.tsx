@@ -419,11 +419,11 @@ export default function HarnessConsolePage() {
           </Button>
         </span>
       </div>
-      {/* Three origins, no blank form (Rev .100, Owner 2026-09-29). */}
+      {/* Three origins, no blank form (Rev .100, ISSUE-94). */}
       {newOpen ? <NewObjectiveOrigins onClose={() => setNewOpen(false)} /> : null}
 
       {/* The design's context strip. It said "seat" until the seat model was
-          retired (Owner 2026-09-19) — what the tag is actually for is naming
+          retired (ISSUE-24) — what the tag is actually for is naming
           which operator writes here, so it reads "the engine" now, the same
           words the Decision Inbox uses over the queue this page fills. The
           sentence is the cap's title (Rev .83), and the tag is soft: it names
@@ -662,7 +662,7 @@ export default function HarnessConsolePage() {
         />
       </section>
 
-      {/* Merged from the Copilot Desk (Rev .100, Owner 2026-09-27/28). */}
+      {/* Merged from the Copilot Desk (Rev .100, ISSUE-94). */}
       <PilotConversations />
       <PilotToday />
 

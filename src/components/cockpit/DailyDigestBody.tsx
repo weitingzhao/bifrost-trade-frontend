@@ -36,7 +36,7 @@ export function DailyDigestBody({
    * them, so one long digest must not push the rest off the screen. Wrong in
    * a page panel: the design's digest has no inner scroller, and a scrollbar
    * inside a panel on a page that already scrolls is two scrollers for one
-   * gesture (Owner, 2026-09-21: «纵向滚动条好丑»).
+   * gesture (ISSUE-25).
    */
   clampProse?: boolean
   /**

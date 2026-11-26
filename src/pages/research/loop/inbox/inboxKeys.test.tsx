@@ -97,7 +97,7 @@ describe('useInboxKeys', () => {
     expect(e.defaultPrevented).toBe(true)
   })
 
-  it('is enabled by the page only outside a surface (Owner 2026-10-04 #13)', () => {
+  it('is enabled by the page only outside a surface (决定 2026-10-04 #13)', () => {
     const src = readFileSync('src/pages/research/loop/DecisionInboxPage.tsx', 'utf8')
     expect(src).toMatch(/useInboxKeys\(\{\s*enabled: !inSurface && showDecisions/)
   })

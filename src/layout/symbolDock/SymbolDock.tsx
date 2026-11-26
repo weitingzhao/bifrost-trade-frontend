@@ -255,7 +255,7 @@ export function SymbolDock({
 
   return (
     <aside aria-label="Symbol lists" data-vt="dock" className={cn(css.aside, isFloat ? css.float : css.edge)}>
-      {/* Lists as tags (Owner 2026-09-25): a click toggles one; several on
+      {/* Lists as tags (ISSUE-16): a click toggles one; several on
           stack as groups, each with its own third-column head, so the row
           grammar never has to average two meanings. ⌥-click = only this. */}
       <header className={css.head}>
@@ -318,7 +318,7 @@ export function SymbolDock({
         </span>
       </header>
       {/* Tags pick which lists; this line cycles how they are laid out
-          (Owner 2026-09-25, after Market Live's TWS-style Symbol sort). */}
+          (ISSUE-16, after Market Live's TWS-style Symbol sort). */}
       <button type="button" className={css.sortLine} onClick={cycleSort} onContextMenu={cycleSortBack} title={sortTitle}>
         <span className="whitespace-nowrap">Sort</span>
         <span className={cn('font-semibold whitespace-nowrap', sort.accent)}>{sort.name}</span>

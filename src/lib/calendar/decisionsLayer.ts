@@ -7,7 +7,7 @@
  * lands on the day its drafts were written.
  *
  * Day: New York, from `created_at` — the day the Journal files the same
- * artifact under (`journalModel.dayOf` = `etDayOf`, Owner 2026-10-04), so a
+ * artifact under (`journalModel.dayOf` = `etDayOf`, 决定 2026-10-04), so a
  * Decisions item's `?view=day&day=` opens the Journal on its own day.
  *
  * Pending drafts are not decisions; expired drafts are not read (the Journal

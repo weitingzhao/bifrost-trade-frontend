@@ -123,7 +123,7 @@ const SHOW_OPTIONS = [
 /** The four lenses the table gives a bar. Terrain wears its regime tag instead. */
 const BAR_LENSES = VOL_LENSES.filter((l) => l.key !== 'terrain')
 
-// Hot reads red and cold green — the prototype's inks (Owner 2026-09-27): hot
+// Hot reads red and cold green — the prototype's inks (决定 2026-09-27): hot
 // premium is rich, a cost to the buyer, not a gain. Stock ratings keeps the
 // opposite pair; the two pages say opposite things with the same words.
 function lensInk(flag: string | undefined): string {

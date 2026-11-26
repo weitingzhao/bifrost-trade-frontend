@@ -1,9 +1,9 @@
 /**
  * What the Pilot Console took in from the retired Copilot Desk (design Rev
- * .100, Owner 2026-09-27, Vision §22.1: one Pilot, one console).
+ * .100, ISSUE-94, Vision §22.1: one Pilot, one console).
  *
- * The design moved two things — Conversations and the bench strip. The Owner
- * chose (2026-09-28) to move everything the Desk had data for, business
+ * The design moved two things — Conversations and the bench strip. Everything
+ * the Desk had data for moved too (决定 2026-09-28), business
  * first: the chat's writes, the scheduled agents that ran today and the
  * daily digest land here too. Waiting on you did not move: it is the Decision
  * Inbox's own queue, one click away on the toolbar.

@@ -18,7 +18,7 @@ export type WritesTo = 'rules' | 'policy' | 'book' | 'pool' | 'nothing'
  *
  * `policy_suggestion` is not here: it splits by scope (Rev .143 #3), see
  * `writesTo`. `playbook_note` writes to the Playbook exactly as a
- * `playbook_rule` does, so it sits in Rules with it (Owner 2026-10-04 #10) —
+ * `playbook_rule` does, so it sits in Rules with it (决定 2026-10-04 #10) —
  * before that it was in no place at all and only `Any` showed it.
  */
 const BY_KIND: Partial<Record<DraftKind, WritesTo>> = {

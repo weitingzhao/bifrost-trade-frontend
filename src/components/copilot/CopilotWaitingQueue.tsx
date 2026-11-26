@@ -88,7 +88,7 @@ export function CopilotWaitingQueue({ className }: { className?: string }) {
   }
 
   // The newest run covers the earlier ones: they leave with it and, once the
-  // write lands, stay folded away (Owner 2026-10-04 #11) — as on the Inbox.
+  // write lands, stay folded away (决定 2026-10-04 #11) — as on the Inbox.
   const foldAway = (card: InboxCard) =>
     card.shape === 'objective' && card.folded.length > 0
       ? {

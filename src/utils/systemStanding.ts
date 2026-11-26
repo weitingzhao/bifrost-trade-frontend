@@ -194,7 +194,7 @@ const MASSIVE = { view: 'market-data-manage', label: 'Massive' }
  * raw data land for the names you hold and watch.
  *
  * It is the one conclusion the retired Coverage page carried that a trader
- * needs (Owner 2026-09-25); the rest of that page was ingest diagnosis and
+ * needs (ISSUE-53); the rest of that page was ingest diagnosis and
  * lives in Ops · Massive. Read as the plugin gives it: `summary` PASS / FAIL
  * over its own checks. Nothing here re-judges a check.
  */

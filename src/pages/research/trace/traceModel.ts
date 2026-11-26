@@ -6,7 +6,7 @@
  * What DEV answers, measured 2026-09-28 (research 0.150.0 and local 0.145.0):
  * a memory carries its evidence (source · date · text · route) and its
  * first/last distill; the portrait's axes name the memories that back them.
- * Downstream (batch V4, Owner 2026-09-28): the Console proposes from a
+ * Downstream (batch V4, ISSUE-94): the Console proposes from a
  * tension or weak-spot memory, and an objective drafted from one records it in
  * `policy_json.origin` — so PROPOSAL, OBJECTIVE, RUNS and VERDICT light from
  * that edge, and stay dashed with the reason where it is absent.

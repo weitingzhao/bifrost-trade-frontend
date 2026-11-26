@@ -10,7 +10,7 @@
  * `Size →` and `Dossier →` are the design's two promotions. The trailing cell
  * is this side's own: the categories, the option add and the removal are how
  * the list is *kept*, and the design draws no list-keeping because its rows
- * are a fixture. They are not dropped for that (Owner, 2026-09-18: absence
+ * are a fixture. They are not dropped for that (ISSUE-16: absence
  * from the design is not deletion); they are moved behind the two the design
  * leads with.
  */

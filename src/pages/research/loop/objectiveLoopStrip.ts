@@ -1,5 +1,5 @@
 /**
- * The Console card's Loop line (design Rev .100/.102, Owner 2026-09-28,
+ * The Console card's Loop line (design Rev .100/.102, ISSUE-94,
  * Vision §22.2): this objective's walk around the two loops — belief
  * borrowed, runs, settles, the memory, the proposal. Lit segments happened and
  * open their landing; dashed ones have not, and say why. Same grammar as

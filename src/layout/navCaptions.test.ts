@@ -1,7 +1,7 @@
 /**
  * A caption names the rows after it, and folding it takes them away.
  *
- * Shell Spec §5a.7 (Owner 2026-09-21). The helper lives in `@bifrost/ui`
+ * Shell Spec §5a.7 (ISSUE-16). The helper lives in `@bifrost/ui`
  * because the sidebar renders it, and it is tested here because this is where
  * a test runner exists — `bifrost-ui` has none, and adding one is a decision
  * about that repo rather than a side effect of this change.

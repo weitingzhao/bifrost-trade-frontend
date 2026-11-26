@@ -12,14 +12,14 @@
  *   four unrelated calls.
  * - **objective** — a `candidate_batch` or an objective `patch` from the same
  *   objective: the newest run covers the earlier ones, whatever names they
- *   proposed (#5; patches by Owner 2026-10-04 #12). The earlier ones fold
+ *   proposed (#5; patches by 决定 2026-10-04 #12). The earlier ones fold
  *   under it. This replaces the 09-01 rule that merged only identical symbol
  *   sets, which on DEV left 39 batches as 19 cards for 2 objectives.
  * - **single** — everything else, one draft per card.
  *
  * Earlier runs the reader hid in this browser (`hidden`) leave the fold. They
  * stay pending on the server: "Dismiss earlier" collapses them here and sends
- * nothing (Owner 2026-10-04 #11), because a server dismiss of a batch also
+ * nothing (决定 2026-10-04 #11), because a server dismiss of a batch also
  * marks its open names dismissed in the candidate pool, and those are names
  * the reader never looked at.
  */

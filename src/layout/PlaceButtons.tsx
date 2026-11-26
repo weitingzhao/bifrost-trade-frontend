@@ -27,7 +27,7 @@ import css from './equipSurface.module.css'
 import { CloseButton } from '@/components/data-display/CloseButton'
 
 /**
- * Icons, not words (Owner 2026-09-26, Rev .97): the words cost the tab strip
+ * Icons, not words (ISSUE-53, Rev .97): the words cost the tab strip
  * about 100px. Float = a window lifted off the page, Side = a window with its
  * right column ruled off, Page = the full-page corners — the design's own three
  * shapes; the names stay in the tooltip and the aria-label.

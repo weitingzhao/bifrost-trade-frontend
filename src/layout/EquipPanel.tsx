@@ -104,7 +104,7 @@ function dragOut(e: ReactPointerEvent<HTMLButtonElement>, tab: PanelTab): void {
 }
 
 /**
- * Icon-only (Owner 2026-09-26, Rev .97): a 440 strip cannot hold names —
+ * Icon-only (ISSUE-53, Rev .97): a 440 strip cannot hold names —
  * "J." / "S…" named nothing. The name is the hover label; the lit tab is the
  * one on screen; close is the header × or a middle-click, so the strip holds
  * nine before anything folds.

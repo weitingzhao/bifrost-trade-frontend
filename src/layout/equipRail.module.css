@@ -11,7 +11,7 @@
  * The first build of this rail dropped the **whole group** to 40% at rest and
  * switched `backdrop-filter` on and off. Both were wrong, and the design had
  * already said so: *"the BOX is what stays translucent — the ICONS keep full
- * ink; dimming the whole group made them unreadable (Owner 2026-09-21)"*. A
+ * ink; dimming the whole group made them unreadable (ISSUE-25)"*. A
  * hard `none` → `blur(18px)` switch is the other half of why it felt stiff:
  * the design's idle state is already glass (5px, 1.15 saturate) and hover only
  * deepens it.

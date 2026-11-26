@@ -10,9 +10,9 @@
  * the header chip and the `?seat=` deep link retired with the split.
  *
  * History, because the shape keeps its reasons: the menu once carried all
- * twenty-seven pages in every posture (Owner 2026-09-08: "why do the Copilot
- * and Workbench menus appear under the Autopilot view?"); the seats fixed
- * that by splitting, at the cost the Owner then caught — the two homes could
+ * twenty-seven pages in every posture (ISSUE-53: the Copilot
+ * and Workbench menus appeared under the Autopilot view); the seats fixed
+ * that by splitting, at a cost found later — the two homes could
  * never be seen at once.
  *
  * There are no section headings either. A heading you cannot click costs a
@@ -99,7 +99,7 @@ export const BOOK_ITEM: ShellNavItem = {
 
 /**
  * The conversation's sediment — pages, where the conversation itself is not
- * one (Owner 2026-09-14, §11.0). "Ask the Copilot" is a command (⌘J, the
+ * one (ISSUE-53, §11.0). "Ask the Copilot" is a command (⌘J, the
  * top-bar button, a page's Ask — `?copilot=open` stays as the deep-link
  * convention), and the Trading Copilot is a prompt catalogue reached from the
  * empty state's "The book" group, its route kept as a deep-link alias.
@@ -209,7 +209,7 @@ export const BENCHES: Bench[] = [
     id: 'validate',
     label: 'Validate',
     icon: foldGlyph('Validate') ?? History,
-    // Pine library is app-side (Owner 2026-10-06): the design keeps it as
+    // Pine library is app-side (ISSUE-102): the design keeps it as
     // Backtest's third tab, which had no menu row of its own.
     items: [
       route('Signal Decay', '/research/signal-decay', Activity),
@@ -258,7 +258,7 @@ export function staticResearchSubGroups(): ShellNavSubGroup[] {
 // headings.
 
 /**
- * A group heading, not a row (§5a.7, Owner 2026-09-21).
+ * A group heading, not a row (§5a.7, ISSUE-16).
  *
  * Discover · Analyze · Validate carried nothing of their own: each row's
  * destination was an alias of the page directly beneath it, so clicking the
@@ -307,8 +307,8 @@ export function researchItems(): ShellNavItem[] {
     ...analyze.items,
     caption(validate.id, validate.label),
     ...validate.items,
-    // The Book's signpost row (Owner 2026-09-22) left on 2026-09-29, again on
-    // the Owner's call: the design leaves it out on purpose (§5a.8 — every
+    // The Book's signpost row (ISSUE-16) left on 2026-09-29
+    // (决定 2026-09-29): the design leaves it out on purpose (§5a.8 — every
     // pixel of a tree says "place"), and the question it answered — where is
     // the Watchlist — is the sidebar's Filter pages field's now, which names
     // every Book page as «Toolbar · The Book».

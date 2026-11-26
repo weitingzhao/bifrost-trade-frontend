@@ -67,7 +67,7 @@ describe('call cards (Rev .143 #2)', () => {
   })
 })
 
-describe('one card per objective (Rev .143 #5 · Owner 2026-10-04 #12)', () => {
+describe('one card per objective (Rev .143 #5 · 决定 2026-10-04 #12)', () => {
   it('lets the newest batch cover earlier ones whatever names they proposed', () => {
     const b1 = batch('obj-x', ['AAA', 'BBB'], '01')
     const b2 = batch('obj-x', ['CCC'], '03')

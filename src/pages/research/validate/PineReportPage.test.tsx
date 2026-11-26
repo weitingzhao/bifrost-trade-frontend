@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** One Pine script's report (B7) and Run now (S14), Owner 2026-10-06. */
+/** One Pine script's report (B7) and Run now (S14), ISSUE-102. */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'

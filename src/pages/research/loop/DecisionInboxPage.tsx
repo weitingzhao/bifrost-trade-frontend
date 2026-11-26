@@ -315,7 +315,7 @@ export default function DecisionInboxPage() {
     setCur('')
   }
   // Deciding a run also folds away the runs it covered, here only: they stay
-  // pending on the server (Owner 2026-10-04 #11).
+  // pending on the server (决定 2026-10-04 #11).
   const hideFolded = (card: InboxCard) => setHidden(card.folded.map((d) => d.id), true)
   const recordCard = (card: InboxCard) => {
     record(
@@ -326,7 +326,7 @@ export default function DecisionInboxPage() {
     settle()
   }
   // An objective's newest run covers the earlier ones: they leave with it, and
-  // once the write lands they stay folded away here (Owner 2026-10-04 #11).
+  // once the write lands they stay folded away here (决定 2026-10-04 #11).
   const foldAway = (card: InboxCard) =>
     card.shape === 'objective' && card.folded.length > 0
       ? { alsoHide: card.folded.map((d) => d.id), onCommitted: () => hideFolded(card) }
@@ -360,7 +360,7 @@ export default function DecisionInboxPage() {
     setOpenId(openKey === key ? '' : key)
   }
 
-  // ── Keys (Rev .144) — the route page only (Owner 2026-10-04 #13) ─────────
+  // ── Keys (Rev .144) — the route page only (决定 2026-10-04 #13) ─────────
   const onKey = (a: InboxKeyAction) => {
     const target = itemByKey.get(a.type === 'move' ? a.to : a.id)
     if (!target) return

@@ -20,7 +20,7 @@ describe('the companion rail', () => {
     // where you stand, the right rail is what you glance at beside the page —
     // and both change without your hand, which is what earns the group its
     // feed dot and its amber fired-today count.
-    // Bar order (Owner 2026-09-26, Rev .96): Lists · Live · Book · Autopilot ·
+    // Bar order (ISSUE-16, Rev .96): Lists · Live · Book · Autopilot ·
     // Copilot — ⌥1–4 follow the positions, so the order IS the keymap.
     expect(EQUIP_GROUPS.map((g) => g.id)).toEqual(['market', 'book', 'autopilot', 'copilot'])
     // Rev .100: the last two share the Pilot capsule — one Pilot, two heads.

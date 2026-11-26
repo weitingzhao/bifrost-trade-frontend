@@ -3,7 +3,7 @@
  *
  * The plugin answers "did last night's raw data land for the watchlist" as a
  * set of checks and one PASS / FAIL. System Status reads it as a line under
- * Nightly data (Owner 2026-09-25); the rest of the coverage surface — the
+ * Nightly data (ISSUE-83); the rest of the coverage surface — the
  * inventory, the per-symbol option rows, the table census — lives in the Ops
  * Console (Massive › Coverage) since the System › Data coverage page retired.
  *

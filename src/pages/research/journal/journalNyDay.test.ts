@@ -1,5 +1,5 @@
 /**
- * The Journal's day is New York's (Owner 2026-10-04), and the Calendar's
+ * The Journal's day is New York's (决定 2026-10-04), and the Calendar's
  * Decisions layer dates the same artifacts the same way — so its «Open the
  * day in Journal» lands on the day it was clicked from. Fixtures invented.
  */

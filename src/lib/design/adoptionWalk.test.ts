@@ -12,11 +12,11 @@ const counts = adoptionCounts(rows)
 describe('the design walk, as it stands', () => {
   it('reads the walk as it stands', () => {
     // Replace these as pages are walked — they are the numbers the Owner reads.
-    // Owner list 2026-09-15: all five at Rev 2026-09-15.5. Owner 2026-09-16:
+    // Sign-off list 2026-09-15: all five at Rev 2026-09-15.5. 2026-09-16:
     // Accounts and Transfer & Pay signed off at their page rev 2026-09-16.9.
     // Rev .11 moved Accounts to .11 (the role word and the Data from string,
     // both already built that way); the Owner re-signed it at .11 the same day.
-    // Owner 2026-09-17: Ledger signed off at page rev 2026-09-16.9, then
+    // 2026-09-17: Ledger signed off at page rev 2026-09-16.9, then
     // Performance at its page rev 2026-09-16.11 (nine walked).
     // Rev 2026-09-17.1 (§14.7, colour tokens only) moved Accounts, Ledger,
     // Transfer & Pay, Symbol and Performance, so those five read stale until the

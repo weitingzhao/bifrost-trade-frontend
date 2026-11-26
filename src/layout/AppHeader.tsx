@@ -177,7 +177,7 @@ export function AppHeader({
         )}
       </nav>
       {/* The search entry is a button that says what it opens (design Rev
-          .104, Owner 2026-09-29: a 440px bar that is not a field read as
+          .104, ISSUE-25: a 440px bar that is not a field read as
           broken): ⌕ · the carried symbol · Search · ⌘K, as wide as its
           content. A glass capsule 32 high (Rev .136), an accent ring while the
           Spotlight is open. Under 980 of header it folds to the glass and the

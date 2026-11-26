@@ -139,8 +139,8 @@ export const REDIRECTS: readonly RouteEntry[] = [
   { path: '/research/lab/today', label: 'Stock screen · method', crumbs: DISCOVER, redirect: '/research/lab/stocks?tab=queue' },
   { path: '/research/lab/screener', label: 'Stock screen · method', crumbs: DISCOVER, redirect: '/research/lab/stocks?tab=conditions' },
   { path: '/research/risk', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/trade/desk' },
-  // The Copilot Desk merged into the Pilot Console (design Rev .100, Owner
-  // 2026-09-27; everything it had data for moved with it, Owner 2026-09-28).
+  // The Copilot Desk merged into the Pilot Console (design Rev .100, ISSUE-94;
+  // everything it had data for moved with it, ISSUE-76).
   // The design keeps `/research/copilot` as an alias of the Console.
   { path: '/research/copilot', label: 'Copilot', redirect: '/research/loop/harness' },
   { path: '/research/iv-radar', label: 'IV Radar', crumbs: ANALYZE, redirect: '/research/symbol' },
@@ -367,7 +367,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
   },
   { path: '/settings/tech-stack', label: 'Tech Stack', crumbs: DOCS, redirect: '/docs/tech-stack' },
   // The calibration document's text became the Calibration page's Source view
-  // when System › Alignment was made (Owner 2026-09-25): one document, one row.
+  // when System › Alignment was made (ISSUE-24): one document, one row.
   {
     path: '/docs/research-calibration',
     label: 'Research Calibration',

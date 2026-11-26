@@ -29,7 +29,7 @@
  * and so does this: the rail reads it to draw, `equipSurface.ts` reads it to
  * decide what a route opens as.
  *
- * **Loop Run** (Owner 2026-09-29: draw it, as the design does). In the design
+ * **Loop Run** (ISSUE-16: draw it, as the design does). In the design
  * it is a drawer-kind companion (`/research/loop/runs`) opened with no run in
  * mind. Here a run is never a page — it is a reading opened *from a run*
  * (`runSurface`) — so the icon is not an `EquipPage` of the group: it opens
@@ -152,7 +152,7 @@ export const LOOP_RUN = {
   icon: railIcon(LOOP_RUN_KEY, History),
 } satisfies EquipPage
 
-// Bar order (Owner 2026-09-26, Rev .96): Lists · Live · Book · Autopilot ·
+// Bar order (ISSUE-16, Rev .96): Lists · Live · Book · Autopilot ·
 // Copilot, and ⌥1–4 follow the positions — the keybinds read this array.
 export const EQUIP_GROUPS: readonly EquipGroup[] = [
   {

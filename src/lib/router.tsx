@@ -77,7 +77,7 @@ function RedirectKeepingQuery({ to }: { to: string }) {
 }
 
 /**
- * Where the app opens (Owner, 2026-09-17).
+ * Where the app opens (决定 2026-09-17).
  *
  * The design files Home first because it belongs to no layer: it says what
  * needs a decision now, and every row on it leads into the layer that owns the

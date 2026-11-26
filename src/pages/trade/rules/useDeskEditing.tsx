@@ -5,7 +5,7 @@
  * - The picked structure / opportunity / allocation opens its inspector; the
  *   allocation's Edit gate opens the gate's in its place. One at a time.
  * - Delete holds: the object leaves the chain at once and DELETE goes when the
- *   toast leaves without Undo (Owner 2026-10-01). An object in use is refused
+ *   toast leaves without Undo (决定 2026-10-01). An object in use is refused
  *   before anything is held, in the server's words — an opportunity with
  *   trades, the allocation the daemon runs, a gate set in use; a deleted
  *   opportunity also leaves its allocations, and Undo puts both back.

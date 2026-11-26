@@ -1,5 +1,5 @@
 /**
- * The row editors Settings opens in place (Owner 2026-09-25: the IB Connection
+ * The row editors Settings opens in place (决定 2026-09-25: the IB Connection
  * page's writes move here and the page retires).
  *
  * Each editor saves only its own part, through the two writes the retired page

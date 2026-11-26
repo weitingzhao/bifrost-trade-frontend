@@ -1,6 +1,6 @@
 /**
  * Pine Script (v5/v6) highlighting for the Pine library editor (ledger S12,
- * Owner 2026-10-06). A stream tokenizer, not a parser: it names what a reader
+ * ISSUE-102). A stream tokenizer, not a parser: it names what a reader
  * scans for — keywords, the built-in namespaces (ta., math., request.…),
  * strings, numbers, comments, `//@version` — and the option context series
  * a script reads with request.security (IV_30, VRP_20, … are strings there,

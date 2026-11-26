@@ -5,7 +5,7 @@
  * only opens, because accepting anything means having looked at it), D
  * dismisses.
  *
- * Scoped to the page as the route (Owner 2026-10-04 #13). The Inbox is also a
+ * Scoped to the page as the route (决定 2026-10-04 #13). The Inbox is also a
  * surface — the side panel and the float render it into the same document —
  * and a window listener there would answer keys pressed on another page: D on
  * Positions would dismiss a draft. So a surfaced Inbox binds nothing.

@@ -6,7 +6,7 @@
  * *kind* of thing ("Objective"), and the reader standing on one wants the
  * name of the thing.
  *
- * It matters more since the Objectives fold was cancelled (Owner 2026-09-21):
+ * It matters more since the Objectives fold was cancelled (ISSUE-16):
  * the menu no longer says which objective you are in, so the crumb is the
  * only place left that can.
  *

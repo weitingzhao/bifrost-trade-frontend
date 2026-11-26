@@ -3,7 +3,7 @@
  * §14.4): one record wherever an instance is opened — inline as Trading › Rules'
  * record, or a right sheet over any page (the list behind it stays live, ‹ ›
  * and [ ] step the rows it came from, Esc closes). It replaces the old
- * five-box instance detail (Owner 2026-09-28).
+ * five-box instance detail (决定 2026-09-28).
  *
  * Every figure is the instance's own fills (`useInstanceRecord`); where a
  * reading has no source it says so rather than drawing a number.

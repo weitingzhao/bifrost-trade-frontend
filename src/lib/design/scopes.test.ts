@@ -50,7 +50,7 @@ describe('objectiveScopeState', () => {
 
 describe('symbolPlannedHere', () => {
   it('is the ruled reach, not what the app scopes today', () => {
-    // The Bloomberg test (Owner, 2026-09-20): load a name, see that name's
+    // The Bloomberg test (决定 2026-09-20): load a name, see that name's
     // share of everything, everywhere. Positions is ruled into that reach.
     expect(symbolPlannedHere('/portfolio/outcome')).toBe(true)
     expect(symbolPlannedHere('/risk/margin')).toBe(false)

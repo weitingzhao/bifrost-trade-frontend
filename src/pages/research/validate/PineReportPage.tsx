@@ -1,6 +1,6 @@
 /**
  * Research › Validate › Pine library › one script (`/research/pine/<id>`,
- * ledger B7, Owner 2026-10-06 option B): everything the app knows about one
+ * ledger B7, 决定 2026-10-06 option B): everything the app knows about one
  * script on one page — what the build stored, the edge after its signals on
  * both sides, when and where it fired, its latest signals, and the simulator
  * runs that entered on it. Before this the same answers were spread over

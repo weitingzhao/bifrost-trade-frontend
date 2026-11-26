@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Record answer (Owner 2026-10-04 #9) and Approve (batch 4 follow-up) wait
+ * Record answer (决定 2026-10-04 #9) and Approve (batch 4 follow-up) wait
  * behind the toast like Dismiss:
  * nothing is sent until the toast leaves, Undo sends nothing, and when some of
  * a call's drafts land and some do not, the ones that did not stay on the card

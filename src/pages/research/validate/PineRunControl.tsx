@@ -1,5 +1,5 @@
 /**
- * Run now (ledger S14, Owner 2026-10-06): build one saved script's signals
+ * Run now (ledger S14, ISSUE-102): build one saved script's signals
  * without waiting for the 22:30 ET batch. A new or edited script is rebuilt
  * over its whole history, an unchanged one rewrites its recent sessions; the
  * line beside the button says where the latest run is.

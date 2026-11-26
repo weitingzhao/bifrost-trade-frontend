@@ -4,7 +4,7 @@
  * on a ruler and the gamma zone behind it, then the design's own two panels:
  * Forecast sessions (how the paths settled) and the Intraday playbook
  * (scenario fan · LIVE bias). The retired SessionsSection's per-session
- * drilldown opens from the Forecast sessions table (Owner 2026-09-26: what
+ * drilldown opens from the Forecast sessions table (ISSUE-76: what
  * the stores answer goes on the page, DESIGN_CONTRACTS §15.6).
  *
  * The terrain's own history (`/research/forecast/terrain/history`, 30

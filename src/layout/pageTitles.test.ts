@@ -1,7 +1,7 @@
 /**
  * A page's h1 is the name its menu row promised.
  *
- * Shell Spec §5a.5 (Owner 2026-09-21): *the page's h1 = that route's `label`
+ * Shell Spec §5a.5 (ISSUE-16): *the page's h1 = that route's `label`
  * in ROUTES = the last crumb*. A menu row is a promise and the page header is
  * where it is kept; clicking **Personas** and landing on a page headed
  * **Copilot** is the page contradicting a shell that already had it right.

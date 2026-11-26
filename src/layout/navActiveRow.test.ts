@@ -1,7 +1,7 @@
 /**
  * Which row lights, and which row owns a page that has none.
  *
- * Both came out of cancelling the Objectives fold (Owner 2026-09-21, design
+ * Both came out of cancelling the Objectives fold (ISSUE-16, design
  * Rev 2026-09-20.1): once an objective had no menu row of its own, the
  * question "what lights while I stand here" had no answer, and chasing it
  * turned up a second page with the same problem for a different reason.

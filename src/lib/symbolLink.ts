@@ -49,14 +49,14 @@ export function pineChartSignalOf(id: string): string {
 
 /**
  * A Pine script's home: the Pine library page with that script selected
- * (`/research/pine?script=<id>`, Owner 2026-10-06; it was Backtest's
+ * (`/research/pine?script=<id>`, ISSUE-102; it was Backtest's
  * `?tab=pine`, which still works). No id opens the library on its first script.
  */
 export function pineLibraryPath(id?: string | null): string {
   return `/research/pine${id ? `?script=${encodeURIComponent(id)}` : ''}`
 }
 
-/** One Pine script's report (`/research/pine/<id>`, ledger B7, Owner 2026-10-06). */
+/** One Pine script's report (`/research/pine/<id>`, ledger B7, ISSUE-102). */
 export function pineReportPath(id: string): string {
   return `/research/pine/${encodeURIComponent(id)}`
 }

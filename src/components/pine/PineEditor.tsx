@@ -1,5 +1,5 @@
 /**
- * The Pine library's source editor (ledger S12, Owner 2026-10-06): CodeMirror 6
+ * The Pine library's source editor (ledger S12, ISSUE-102): CodeMirror 6
  * with Pine highlighting, line numbers, undo, find, bracket matching — and the
  * problems Research returns (`issues`: line, col, message) marked on their lines
  * with the message on hover. `jumpTo` scrolls a line into view and puts the

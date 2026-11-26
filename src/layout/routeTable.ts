@@ -51,7 +51,7 @@ export interface RouteEntry {
   symbolScope?: boolean
   /**
    * The page follows the shell's account scope (`lib/accountScope.ts`). The
-   * first round wires three (Owner 2026-09-25); the top bar's Account control
+   * first round wires three (ISSUE-16); the top bar's Account control
    * tells every other page's reader that it shows the whole book.
    */
   accountScope?: boolean
@@ -548,7 +548,7 @@ export const ROUTES: readonly RouteEntry[] = [
   },
 
   // ── System · Alignment ─────────────────────────────────────────────────
-  // Target against actual (Owner 2026-09-25): the UI against the design, and
+  // Target against actual (ISSUE-16): the UI against the design, and
   // Research against its blueprint. Calibration itself is a Research route.
   { path: '/docs/design-adoption', label: 'Design Adoption', crumbs: SYSTEM_ALIGNMENT },
   {

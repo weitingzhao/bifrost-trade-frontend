@@ -11,7 +11,7 @@ describe('kindTag', () => {
     expect(kindTag('hypothesis_draft')).toBe('hypothesis')
     expect(kindTag('hypothesis_suggestion')).toBe('hypothesis')
     expect(kindTag('playbook_rule')).toBe('rule')
-    // Owner 2026-10-04 #10: a playbook note files beside the rules.
+    // 决定 2026-10-04 #10: a playbook note files beside the rules.
     expect(kindTag('playbook_note')).toBe('rule')
     expect(kindTag('rule')).toBe('rule')
     expect(kindTag('some_future_kind')).toBe('some future kind')

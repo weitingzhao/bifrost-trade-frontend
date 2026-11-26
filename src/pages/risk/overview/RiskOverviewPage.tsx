@@ -168,7 +168,7 @@ export default function RiskOverviewPage() {
 
   return (
     <PageShell padding="compact" className="space-y-3">
-      {/* §16.10 with §17 (Owner 2026-09-25: one pass per page): the lead is
+      {/* §16.10 with §17 (ISSUE-53: one pass per page): the lead is
           behind ⓘ, the scope is meta, and the account switch — a filter —
           sits in the toolbar under the head. */}
       <PageHead

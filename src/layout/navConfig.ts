@@ -272,7 +272,7 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
         // its page landed — a nav row must navigate.
         route('Discover model', '/research/lab/discover-model', BookOpen),
       ]),
-      // Target against actual (Owner 2026-09-25): the UI against the design
+      // Target against actual (ISSUE-16): the UI against the design
       // package, and Research against its blueprint, contract by contract —
       // the instruments for keeping the three aligned. Calibration left Data
       // and the two documents left Reference; every path is unchanged.

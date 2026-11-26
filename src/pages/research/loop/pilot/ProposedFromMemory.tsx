@@ -1,7 +1,7 @@
 /**
  * Proposed · from memory — the Console block (design Rev .100/.102, Vision
  * §22.4). Each row cites the memory it rests on; Draft objective opens a
- * pre-filled draft in place (Owner 2026-09-28: no dead-end toast), Create
+ * pre-filled draft in place (决定 2026-09-28: no dead-end toast), Create
  * writes it with the origin edge, and the row turns into ✓ Drafted with Undo.
  * Not now counts in the memory store (§20.6) and three go quiet.
  */

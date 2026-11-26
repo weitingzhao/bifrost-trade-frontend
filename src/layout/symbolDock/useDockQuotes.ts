@@ -1,6 +1,6 @@
 /**
  * Last and day change for the Symbol list — quotes for the rows on screen only
- * (Owner 2026-09-25: "只订阅可见行").
+ * (ISSUE-74).
  *
  * Two readings, two costs:
  *

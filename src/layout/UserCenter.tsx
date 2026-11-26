@@ -4,7 +4,7 @@
  * One row: the avatar with a summary lamp in its corner · Operator · how many
  * readings are degraded (or all normal) — and one square on the right, the
  * bottom-toolbar switch. The System gear that used to sit beside it retired
- * with the design (Owner 2026-09-25): the menu's first row already is Enter
+ * with the design (ISSUE-16): the menu's first row already is Enter
  * System / Back to Trade, and two doors to one place is one too many. The
  * row opens a glass card upward (Rev .118): what is degraded, who is operating over which accounts,
  * Appearance, and the shell's doors — including the feedback pair the Owner
@@ -171,7 +171,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
   const items = [
     { label: door.label, to: door.to, Icon: door.Icon },
     { label: 'Settings', to: '/settings', Icon: SlidersHorizontal },
-    // Owner 2026-09-26: the menu's feedback pair, for people who don't use ⌘K.
+    // ISSUE-16: the menu's feedback pair, for people who don't use ⌘K.
     {
       label: 'Send feedback',
       Icon: Flag,
@@ -210,7 +210,7 @@ function UserCard({ onClose, degraded }: { onClose: () => void; degraded: readon
 
       {degraded.length > 0 ? <DegradedBlock items={degraded} onClose={onClose} /> : null}
 
-      {/* The "Can I trade" card left this menu (Owner 2026-09-26, Rev .97):
+      {/* The "Can I trade" card left this menu (ISSUE-16, Rev .97):
           three rows written here could contradict the top bar's own live
           readings. One business fact shows in one place — the verdict is the
           Control Center's first row now, derived from the same rows it draws. */}
@@ -420,7 +420,7 @@ export function SidebarUserCenter() {
               </span>
             </button>
           </PopoverTrigger>
-          {/* The System gear retired here (Owner 2026-09-25): the menu's
+          {/* The System gear retired here (ISSUE-16): the menu's
               first row already is Enter System / Back to Trade. */}
           {/* The bottom toolbar floats over the page, so it can cover the last
               rows — this square hides and shows it (design Rev .57). */}

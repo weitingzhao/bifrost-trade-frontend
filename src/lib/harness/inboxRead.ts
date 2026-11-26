@@ -79,7 +79,7 @@ export function resetStoredDraftIds(): void {
  * A set of draft ids kept in this browser, pruned to the drafts still pending.
  *
  * Two sets live this way: the briefings you marked read, and the earlier runs
- * you hid under their card (`Dismiss earlier`, Owner 2026-10-04 #11 — local,
+ * you hid under their card (`Dismiss earlier`, 决定 2026-10-04 #11 — local,
  * nothing is sent).
  */
 export function useStoredDraftIds(key: StoredKey, pendingIds: readonly string[] | null) {
@@ -120,7 +120,7 @@ export function useStoredDraftIds(key: StoredKey, pendingIds: readonly string[] 
   return { ids: current, setMany }
 }
 
-/** The earlier runs hidden under their card, in this browser (Owner 2026-10-04 #11). */
+/** The earlier runs hidden under their card, in this browser (决定 2026-10-04 #11). */
 export function useHiddenEarlier(pendingIds: readonly string[] | null) {
   return useStoredDraftIds(STORAGE_KEYS.inboxHiddenEarlier, pendingIds)
 }

@@ -29,7 +29,7 @@ const plain = (v: unknown) => (v == null || v === '' ? '—' : String(v))
 /**
  * What the hedge daemon says about itself — the readings the retired System ›
  * Daemon page carried as "strategy metrics" and as its Risk model tiles, which
- * were the same auto status twice (Owner 2026-09-25: they live with the hedge
+ * were the same auto status twice (决定 2026-09-25: they live with the hedge
  * controls). Read-only; nothing here is computed for this menu.
  */
 export function hedgeFacts(status: StatusResponse | undefined): HedgeFact[] {

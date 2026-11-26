@@ -13,7 +13,7 @@ describe('writesTo', () => {
     expect(writesTo('rule')).toBe('rules')
   })
 
-  it('files a playbook note with the rules (Owner 2026-10-04 #10) — it used to be in no place', () => {
+  it('files a playbook note with the rules (决定 2026-10-04 #10) — it used to be in no place', () => {
     expect(writesTo('playbook_note')).toBe('rules')
   })
 

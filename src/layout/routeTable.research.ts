@@ -400,7 +400,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       state: 'staging',
       note:
-        'Owner 2026-10-06: the Pine library needs a menu row — nobody found the editor as Backtest\u2019s third tab, and no user script was ever saved. ' +
+        '决定 2026-10-06: the Pine library gets a menu row — nobody found the editor as Backtest\u2019s third tab, and no user script was ever saved. ' +
         'Built app-side as its own page (the same library editor, PineLibraryTab) under Research \u203a Validate; every Manage scripts / Pine library link lands here. ' +
         'The question for Design: keep it as a page with its own row, or fold it back into Backtest with a row that opens the tab. ' +
         'Receipt: design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.',
@@ -416,7 +416,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     design: {
       state: 'staging',
       note:
-        'Owner 2026-10-06 (B7): one Pine script on one page — stored signals and Run now, edge after the signal on both sides, signals by month, names, latest signals, the simulator runs that entered on it. ' +
+        '决定 2026-10-06 (B7): one Pine script on one page — stored signals and Run now, edge after the signal on both sides, signals by month, names, latest signals, the simulator runs that entered on it. ' +
         'Built app-side in the existing panel language from the Signal Decay, Simulator and Try on a basket pieces; Design has not drawn it. ' +
         'Receipt: design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.',
     },

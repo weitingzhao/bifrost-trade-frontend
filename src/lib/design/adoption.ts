@@ -169,7 +169,7 @@ export const DESIGN_ONLY_WHY: Record<string, string> = {
 }
 
 function designOnlyNote(path: string): string {
-  return `Owner 2026-09-25: kept in the design package, not built in this app \u2014 ${DESIGN_ONLY_WHY[path]}.`
+  return `决定 2026-09-25: kept in the design package, not built in this app \u2014 ${DESIGN_ONLY_WHY[path]}.`
 }
 
 /**

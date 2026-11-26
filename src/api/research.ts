@@ -102,7 +102,7 @@ export async function fetchGreeks(params: FetchGreeksParams): Promise<GreeksResp
 export async function fetchGreeksAvailableDates(symbol: string): Promise<string[]> {
   const s = (symbol || '').trim().toUpperCase()
   if (!s) return []
-  // A failure throws (TD-50 batch 4, Owner 10-03): "no dates" is only what the server says.
+  // A failure throws (TD-50 batch 4, 决定 2026-10-03): "no dates" is only what the server says.
   const j = await requestJson<Record<string, unknown> | string[]>(
     tradeResearchUrl(`/research/greeks/available-dates?symbol=${encodeURIComponent(s)}`),
     { label: 'GET /research/greeks/available-dates' },

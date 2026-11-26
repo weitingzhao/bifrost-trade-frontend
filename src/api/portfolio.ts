@@ -62,7 +62,7 @@ export async function fetchMarketStreamsSymbolOrder(): Promise<{
   ok: boolean
   order?: Record<string, string[]>
 }> {
-  // A failure falls back to the default order (Owner 10-03, TD-50 batch 4: kept on purpose).
+  // A failure falls back to the default order (决定 2026-10-03, TD-50 batch 4: kept on purpose).
   // A network error still throws, as before.
   try {
     const j = await requestJson<{ ok?: boolean; order?: Record<string, string[]> }>(

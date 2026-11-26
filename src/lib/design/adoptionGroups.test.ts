@@ -127,7 +127,7 @@ describe('the design documents stay in the design', () => {
       '/docs/research-menu',
       '/docs/research-vision',
     ])
-    expect(docs.every((r) => (r.note ?? '').startsWith('Owner 2026-09-25: kept in the design package'))).toBe(true)
+    expect(docs.every((r) => (r.note ?? '').startsWith('决定 2026-09-25: kept in the design package'))).toBe(true)
     // The two pages Package .26 @ Rev .98 added wait on Rev .96's feedback
     // service and memory store; nothing else is left to build, and a built
     // page never reads as design-only.

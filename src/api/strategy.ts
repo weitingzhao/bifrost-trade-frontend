@@ -336,7 +336,7 @@ export async function fetchMetaValueOptions(
   templateCode: string,
   metaKey: string,
 ): Promise<{ options: TemplateConfigOption[] }> {
-  // A failure leaves the picker without suggestions (Owner 10-03, TD-50 batch 4: kept on purpose —
+  // A failure leaves the picker without suggestions (决定 2026-10-03, TD-50 batch 4: kept on purpose —
   // the field still takes a typed value). A network error still throws, as before.
   try {
     return await requestJson<{ options: TemplateConfigOption[] }>(

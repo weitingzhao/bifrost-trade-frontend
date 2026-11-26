@@ -1,5 +1,5 @@
 /**
- * TD-50 batch 4 (Owner 10-03): of the reads that turned any failure into "nothing",
+ * TD-50 batch 4 (决定 2026-10-03): of the reads that turned any failure into "nothing",
  * the symbol search and the greeks dates now say they failed; the template meta-value
  * suggestions and the market-streams symbol order keep their fallback on purpose (a refusal
  * gives no suggestions / the default order; a network error still throws, as before).

@@ -30,7 +30,7 @@
  *   the ranked table published.
  * - **snapshot** is today only: `/research/exhibit` takes no as-of.
  * - **the six verbs** walk a read artifact, and no artifact store exists on
- *   this side; the Owner deferred them, so the row says what is missing (and
+ *   this side; they are deferred, so the row says what is missing (and
  *   there is no artifact id to show or to hide).
  *
  * `compact` is the 440 form (Rev .57): the same facts, re-ordered for a panel
@@ -354,7 +354,7 @@ export function SymbolIdentity({
         <span className={css.verbs}>
           <span
             className="rounded-full border border-dashed border-border px-1.5 py-0.5 text-dense-caption text-muted-foreground/70"
-            title="The design gives every read an artifact id and six verbs that walk it — Explain, Challenge, Fork, Extend, Settle, Distill. No artifact store exists on this side (the Journal's own walk found no artifact endpoint across its five joins), and the Owner deferred the verbs until their semantics are settled."
+            title="The design gives every read an artifact id and six verbs that walk it — Explain, Challenge, Fork, Extend, Settle, Distill. No artifact store exists on this side (the Journal's own walk found no artifact endpoint across its five joins), and the verbs are deferred until their semantics are settled."
           >
             read · no artifact store
           </span>

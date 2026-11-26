@@ -3,7 +3,7 @@
  * the Stress page merged in as a full-width section; `/risk/stress` lands on
  * it).
  *
- * Owner ruling 2026-09-17 (option b): this page does what Backing & Model does
+ * 决定 2026-09-17 (option b): this page does what Backing & Model does
  * not — β-weighting, correlation, and the Greeks rolled to the whole book.
  * Per-underlying capital at risk, the payoff model and its own stress stay
  * Backing's subject and are cited here, never redrawn: two pages computing one

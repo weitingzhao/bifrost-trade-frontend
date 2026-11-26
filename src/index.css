@@ -304,7 +304,7 @@
 
     /* Business semantics — PnL (light).
        Green up, red down, unrealized orange for the whole column whatever its
-       sign (DESIGN_CONTRACTS §14.7, Owner ruling; it replaces the teal/orange
+       sign (DESIGN_CONTRACTS §14.7; it replaces the teal/orange
        of §11.9 and the uncoloured unrealized of §11.12).
 
        Red no longer means only "fault". §14.7 keeps the two readings apart by

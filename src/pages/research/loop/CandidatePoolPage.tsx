@@ -540,7 +540,7 @@ export default function CandidatePoolPage() {
                     design's two-line blocks.
 
                     The six verbs share this line in the design and are not
-                    here: the Owner ruled on 2026-09-21 (option B) that what
+                    here: a 2026-09-21 decision (option B) is that what
                     each verb writes and where it lands is a product decision,
                     so the line says they are owed where they would sit. */}
                 <tr>

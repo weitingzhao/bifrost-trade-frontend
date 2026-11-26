@@ -161,7 +161,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   },
 
   {
-    // Stock screen (design Rev .121–.130, Owner option A): Stock ratings and
+    // Stock screen (design Rev .121–.130, option A): Stock ratings and
     // the old Stock screen merged into one picking page — a universe, a model
     // to order it, a screen to cut it. Their old addresses forward here.
     path: '/research/stocks',
@@ -190,7 +190,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     },
   },
 
-  // In the design registry since 2026-09-14 (Owner kept it — a morning agent's
+  // In the design registry since 2026-09-14 (kept — a morning agent's
   // written product, filed under the Copilot fold); its state derives from the
   // snapshot now, no tag needed.
   // Left Copilot with the fold (§5a.8): the 9am read is Home's own clock.
@@ -592,7 +592,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
   // ── Research · Market ──────────────────────────────────────────────────
   {
     // Package 2026-09-23.3 (Rev .7) moved the row, not the page: Live left
-    // Home for the rail's Market group (§5a.10, Owner option B). Built
+    // Home for the rail's Market group (§5a.10, option B). Built
     // 2026-09-23 with the fourth rail group; waiting for the Owner's look.
     path: '/market/live',
     label: 'Live',
@@ -627,7 +627,7 @@ export const RESEARCH_ROUTES: readonly RouteEntry[] = [
     // The design's `bell` glyph and its own label. The events board this route
     // used to hold is on the Stock Explorer's `events` tab, unchanged. Rev .7
     // moved the row with Live — Home to the rail's Market group; built
-    // 2026-09-23; the Owner signed it 2026-09-24, the same round that fixed
+    // 2026-09-23; signed off 2026-09-24, the same round that fixed
     // the rail entry (a surface remembered as a page navigated nowhere).
     path: '/research/event-radar',
     label: 'Alerts',

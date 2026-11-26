@@ -153,7 +153,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     icon: LayoutDashboard,
     to: '/portfolio',
     // Two homes, each with its pages beneath, and no section labels — the
-    // homes are the labels (Owner decision, 2026-09-07). Performance is the
+    // homes are the labels (决定 2026-09-07). Performance is the
     // book: how it is doing, then what is in it, then what backs it. Accounts
     // is the ledger: what the broker says, then what was traded, then what
     // cash moved. The Trading Copilot lives with the Copilot seat under Research.
@@ -175,7 +175,7 @@ export const NAV_GROUPS: ShellNavGroup[] = [
     icon: ShieldAlert,
     to: '/risk',
     // The design's own order (shell-registry `G.Risk`), Rev .107: four rows,
-    // one word each — page name = menu name = crumb (Owner: fewer names to
+    // one word each — page name = menu name = crumb (fewer names to
     // hold). It reads forwards through a decision: how big, what I may not do,
     // what the broker allows, what I hold and what a shock would cost. Budget
     // folded into Sizing and Stress into Exposure; both old paths redirect.
@@ -249,7 +249,7 @@ export const SYSTEM_NAV_GROUPS: ShellNavGroup[] = [
     icon: DESIGN_GROUP_GLYPH.System ? glyph(DESIGN_GROUP_GLYPH.System) : Settings,
     defaultOpen: true,
     items: [
-      // The design's System landing (Owner ruling 2026-09-15): the three
+      // The design's System landing (决定 2026-09-15): the three
       // questions a trader asks, above the folds that answer how. Named as
       // the design's row names it.
       route('System Status', '/system/status', Gauge),

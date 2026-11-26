@@ -151,7 +151,7 @@ describe('every internal link reaches a route', () => {
  * The other direction of the same failure. A dead link points at nothing; an
  * orphan *is* nothing pointed at — routed, rendering, and with no way in but
  * the address bar. Stock ratings shipped that way and spent a day reachable
- * only by URL, which the Owner found by looking at the sidebar rather than by
+ * only by URL, which was found by looking at the sidebar rather than by
  * anything the suite checked.
  *
  * "Reachable" is the nav tree or a link from some page. The nav set is
@@ -160,7 +160,7 @@ describe('every internal link reaches a route', () => {
  * cannot be read from a constant.
  */
 const REACHABLE_BY_DESIGN: Record<string, string> = {
-  // Owner ruling 2026-09-20: a tab shell over SEPA, Momentum and Event Radar,
+  // 决定 2026-09-20: a tab shell over SEPA, Momentum and Event Radar,
   // all three of which the design redistributed. It answers to no design row,
   // so it holds no menu row — the route stays for the bookmarks that predate
   // the ruling.

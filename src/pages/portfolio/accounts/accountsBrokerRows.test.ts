@@ -73,7 +73,7 @@ describe('the by-account table', () => {
     // 19 days apart. One number over the book would have shown the fresher one.
   })
 
-  // Owner's ruling: standing idle, and not to be started. It is always on the
+  // Standing idle, and not to be started. It is always on the
   // table, it raises no freshness alarm, and its two rec columns have no reading
   // rather than a zero.
   it('keeps the dormant account on the table, with no reading where it has none', () => {

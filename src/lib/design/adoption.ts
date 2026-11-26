@@ -17,7 +17,7 @@
  *   staging    no home found in the design, and nobody has decided yet
  *   unbuilt    the design has a prototype, the app has no page
  *   backlog    the design lists the route but has no prototype behind it yet
- *   designOnly a design-package document the Owner ruled stays in the design
+ *   designOnly a design-package document decided to stay in the design
  *
  * Only `aligned`, `reviewing`, `moving` and `staging` are written down
  * (`RouteEntry.design`). `pending`, `unbuilt` and `backlog` are derived from the
@@ -74,7 +74,7 @@ export interface AdoptionRow {
    * side — `/research/loop/objectives/obj-daily-stock` reaches the built page
    * and is told there is no such objective, and `/research/loop/runs` has no
    * route at all and falls to the catch-all. Linking the fixture path made
-   * five rows the Owner could not open to confirm (found 2026-09-23). The
+   * five rows that could not be opened to confirm (found 2026-09-23). The
    * page that lists the real ones is openable, so the link goes there.
    */
   openAt?: string
@@ -124,7 +124,7 @@ const PARAM_COVERED: Record<string, string> = {
  * per-run form is `?run=` — "the pipeline drawer" — and this side answers it
  * the same way, with the console opening the run as a surface in place. So two
  * rows share one link honestly, and each says which route answers it rather
- * than looking like a duplicate (the Owner asked, 2026-09-23).
+ * than looking like a duplicate (2026-09-23).
  */
 const PARAM_PICKER: Record<string, { to: string; why: string }> = {
   '/research/loop/objectives/:objectiveId': {
@@ -139,18 +139,18 @@ const PARAM_PICKER: Record<string, { to: string; why: string }> = {
 
 
 /**
- * Design pages that stay in the design package (Owner ruling 2026-09-25).
+ * Design pages that stay in the design package (决定 2026-09-25).
  *
  * The ten `/docs/*` prototypes document the design and its process: an index
  * of the package, its changelog, its coverage gaps, the layout and menu specs,
  * a one-time ROI analysis, the capability map, the drill-down join and the
- * Research Vision. The Owner's call: the design keeps one copy, and the Trade
+ * Research Vision. The decision: the design keeps one copy, and the Trade
  * console does not carry a second. A hand-written document copied here drifts
  * from its source; this app's Reference keeps only pages it renders from a
  * live source (the research docs, the component galleries, this tracker).
  *
  * Until 2026-09-25 this was a table of recommendations — six "not this app",
- * four "build". Options Kit was built; the Owner ruled the other nine.
+ * four "build". Options Kit was built; the other nine were decided 2026-09-25.
  *
  * Which pages are design-only is the registry's call since Rev .48
  * (`DESIGN_ONLY`, frozen as `DesignRoute.designOnly`); this table only says
@@ -194,7 +194,7 @@ const DESIGN_ALIASES: Record<string, string> = {
  * is why `/research/screener` was left forwarding to the Option Screener and
  * counted as nobody's: the two are different prototypes, and forwarding one to
  * the other would have marked the Stock screen adopted by a page that was never
- * built. It is a real route now (Owner ruling 2026-09-20) and answers for
+ * built. It is a real route now (决定 2026-09-20) and answers for
  * itself.
  *
  * Only redirects whose target is itself a page count — a redirect to a path the
@@ -315,7 +315,7 @@ export interface AdoptionCounts {
    * page at all (the `unbuilt` list), so counting against the app would read
    * near 100% with much of the design unbuilt. And not every design route
    * either: a route the design resolves to `_Shell Stub` has nothing to adopt
-   * (the `backlog` list), and a design document the Owner kept in the design
+   * (the `backlog` list), and a design document kept in the design
    * (`designOnly`) was never this app's to build.
    */
   designed: number
@@ -385,7 +385,7 @@ export interface AdoptionGroup {
  * moved Autopilot, The Book and Copilot out of the business tree, so they are
  * on the rail rather than in the nav and `navGroups` gives them no group. The
  * fall-back sent them to Home, which reads as though Home holds an Autopilot
- * page — the Owner found it there (2026-09-23). A page with no group is not a
+ * page — found there 2026-09-23. A page with no group is not a
  * Home page; it heads a group of its own, and its own name is that group, so
  * the console joins the objectives and runs already filed under Autopilot.
  *
@@ -475,7 +475,7 @@ export const ADOPTION_SECTIONS: { state: AdoptionState; title: string; blurb: st
     state: 'designOnly',
     title: 'Kept in the design',
     blurb:
-      'Design-package documents the Owner ruled stay there (2026-09-25). The design keeps the one copy; not built here, and not counted.',
+      'Design-package documents decided to stay there (2026-09-25). The design keeps the one copy; not built here, and not counted.',
   },
 ]
 

@@ -10,7 +10,7 @@
  * fetch the chain, read greeks per contract with the Black-Scholes derivation
  * behind each row. Both are real, and they answer different questions, so the
  * design's page leads and the calculator is the second face rather than a
- * deletion (Owner ruling 2026-09-18: absence from the design is not deletion).
+ * deletion (决定 2026-09-18: absence from the design is not deletion).
  *
  * ## The strip is not computed here, and that is the design's own rule
  *

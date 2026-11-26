@@ -184,7 +184,7 @@ export const ROUTES: readonly RouteEntry[] = [
       // 2026-09-23.3 added one more: the contract face's third door into
       // Contract Greeks. Built 2026-09-23. Rev 2026-09-23.21 redrew it as the
       // §16 north-star page (hero band, tooltips, type scale, motion); built
-      // the same day; the Owner signed it 2026-09-24.
+      // the same day; signed off 2026-09-24.
       // Rev .90–.92 §16 refinement built in batch J5, waiting for a look.
       state: 'reviewing',
       // Rev .103 #NNN opens the Instance surface (T1); walk rev moved 2026-09-29 with the design receipt.
@@ -502,7 +502,7 @@ export const ROUTES: readonly RouteEntry[] = [
 
   // ── System ─────────────────────────────────────────────────────────────
   // Design Rev 2026-09-15.13 collapsed nine `/system/*` pages into
-  // `/system/status` plus `/settings` (the Owner's OLTP/OLAP/Ops ruling): this
+  // `/system/status` plus `/settings` (the OLTP/OLAP/Ops decision): this
   // console answers the trader's three questions — can I trade, can I see, did
   // the data land — while diagnosis and operation belong to the Ops Console.
   // Carried out 2026-09-25: the nine forward (redirectRoutes.ts, with where
@@ -520,7 +520,7 @@ export const ROUTES: readonly RouteEntry[] = [
     },
   },
   {
-    // The design's collapse target (Owner ruling 2026-09-15). Built
+    // The design's collapse target (决定 2026-09-15). Built
     // 2026-09-22; the nine `/system/*` pages below it keep their rows and
     // their "to ask" question — where each capability lands is the Owner's.
     path: '/system/status',

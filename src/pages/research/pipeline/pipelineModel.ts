@@ -23,7 +23,7 @@
  *   no-store-owed  Compare (assembles only) · History (recomputes a
  *                  denominator; nobody names one run of it again) ·
  *                  Narrative (tags are read live off the filings, not kept —
- *                  Owner via design Rev .43 Q8)
+ *                  design Rev .43 Q8)
  *   off-bench      Alerts — it belongs to Home › Alerts, so it keeps a row
  *                  and stays out of every denominator
  *
@@ -50,7 +50,7 @@
  * The source is not missing. Massive's SEC filing endpoints are in the
  * Stocks plan already paid for (measured the same day: 8-K disclosures and
  * risk factors answer with classified, quoted rows), and nothing ingests
- * them yet — Owner ruling 2026-09-23 is to ingest those two first. Until a
+ * them yet — 决定 2026-09-23: ingest those two first. Until a
  * store exists the row says so rather than counting someone else's.
  *
  * **`moved on` read zero on every station row**, and never because the join
@@ -126,7 +126,7 @@ const SPECS: readonly Spec[] = [
   { to: '/research/symbol', label: 'Symbol', station: 'analyze', store: 'symbol_verdict', storeState: 'store-owed', note: 'store owed — a verdict is cited as a hypothesis’s origin' },
   // The two rows the design redrew at Rev 2026-09-23.24, answering this side's
   // ask: their notes are the design's own words. Narrative's changed class at
-  // Rev .43 (Q8, Owner): its tags are read live off the filings and never kept,
+  // Rev .43 (Q8): its tags are read live off the filings and never kept,
   // so like Compare and History it owes no store — the words are the design's.
   { to: '/research/narrative', label: 'Narrative', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed · 8-K / 10-K text is in · tags read live, not kept' },
   { to: '/research/compare', label: 'Compare', station: 'analyze', store: null, storeState: 'no-store-owed', note: 'no store owed · 3 inputs owed: quotes · 20d distribution · regime record' },

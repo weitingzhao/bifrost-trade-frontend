@@ -21,7 +21,7 @@ export function useResearchNavGroup(): { group: ShellNavGroup; extras: (item: Sh
   const standingQ = useAutopilotStanding()
   const standing = standingQ.data
 
-  // One tree, both homes (Owner ruling 2026-09-19 on Vision §15 Q2): the
+  // One tree, both homes (决定 2026-09-19 on Vision §15 Q2): the
   // Autopilot engine and the Pipeline stations stand together; nothing swaps
   // under the reader.
   const group = useMemo(() => buildResearchNavGroup(), [])

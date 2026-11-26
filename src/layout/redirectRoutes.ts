@@ -117,7 +117,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     redirect: '/research/scan',
   },
   // `/research/screener` was the Option Screener's path until 2026-09-15 and
-  // then a redirect to it. It is the **Stock screen** now (Owner ruling
+  // then a redirect to it. It is the **Stock screen** now (决定
   // 2026-09-20): the design's own address for that page, and reading the
   // prototype settled which of this side's pages it means. So it is a real
   // route again, not a redirect — and an option-screener bookmark from before
@@ -130,7 +130,7 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: DISCOVER,
     redirect: '/research/stocks?model=none&start=legacy',
   },
-  // Stock screen merged with Stock ratings (design Rev .121, Owner option A).
+  // Stock screen merged with Stock ratings (design Rev .121, option A).
   // The design keeps the old addresses as aliases for one version: ratings
   // opens Rank by SEPA; screener opens Rank by None with the old screener's
   // opening criteria (trend ≥ 8); the two method faces open their tabs.
@@ -258,8 +258,8 @@ export const REDIRECTS: readonly RouteEntry[] = [
     crumbs: SYSTEM_DATA,
     redirect: '/research/signal-health',
   },
-  // System › Data, three pages retired 2026-09-25 (Owner, on the 2026-09-15
-  // ruling). The fold keeps the design's four. Where each capability went
+  // System › Data, three pages retired 2026-09-25 (on the 2026-09-15
+  // decision). The fold keeps the design's four. Where each capability went
   // (§15.2):
   //   Coverage — the plugin's watchlist verdict → a line under System Status ·
   //     Nightly data, linking Ops · Massive: equal. Inventory, per-symbol
@@ -268,24 +268,24 @@ export const REDIRECTS: readonly RouteEntry[] = [
   //     of Ops). Pull / Pull EOD → Ops Massive › Ingest (enqueue, Doctor ·
   //     Fix all): equal, less purpose-built. Refresh Index (trade-core pulling
   //     Polygon straight into stock_day, past the plugin) and Reset (deletes
-  //     stored bars) are dropped (Owner).
+  //     stored bars) are dropped.
   //   Feed — stream liveness → System Status · Market data and Ops IB Client /
   //     Bus Status: equal. Orders, fills, positions, subscribed tickers → Live,
   //     Orders & Fills, Positions: equal. Release ticker subscriptions (a
-  //     /control write that unsubscribes every ticker) is dropped (Owner).
+  //     /control write that unsubscribes every ticker) is dropped.
   //   Data Readiness — the SEPA run book, readiness, gap sheets, backfills →
   //     Ops Massive › Coverage (Readiness, Financials) and Ingest; universe
   //     readiness stays on Signal Health, where the old addresses land: equal,
   //     backfills less purpose-built. Mark source void (plugin state) is
-  //     unplaced (Owner) — asked of Ops.
+  //     unplaced — asked of Ops.
   { path: '/system/coverage', label: 'Coverage', crumbs: SYSTEM_DATA, redirect: '/system/status' },
   { path: '/system/feed', label: 'Feed', crumbs: SYSTEM_DATA, redirect: '/system/status' },
   { path: '/system/data-readiness', label: 'Data Readiness', crumbs: SYSTEM_DATA, redirect: '/research/signal-health' },
-  // IB Connection retired 2026-09-25 (Owner): its writes open in place on
+  // IB Connection retired 2026-09-25: its writes open in place on
   // Settings, the page the design merged it into on 2026-09-15.
   { path: '/system/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
   { path: '/settings/ib', label: 'IB Connection', crumbs: SYSTEM_CONFIG, redirect: '/settings' },
-  // Runtime, retired 2026-09-25 (Owner, on the 2026-09-15 ruling): diagnosis
+  // Runtime, retired 2026-09-25 (on the 2026-09-15 decision): diagnosis
   // and repair are the Ops Console's, and the trader's question is answered
   // on System Status, whose rows open the matching Ops view. Where each
   // capability went (§15.2):
@@ -295,24 +295,24 @@ export const REDIRECTS: readonly RouteEntry[] = [
   //   API Health — per-service /health, dev/prod probe grid → Ops Satellite
   //     Health · Probes (HTTP + auth per target per env) plus Runtime (rate,
   //     p99, errors): stronger. The eight Shut down buttons are dropped, not
-  //     moved (Owner): Ops has restart / scale per workload. The OpenAPI docs
-  //     table is dropped (Owner): each service serves its own /docs.
+  //     moved: Ops has restart / scale per workload. The OpenAPI docs
+  //     table is dropped: each service serves its own /docs.
   //   Platform — the three plugins' status → Ops Plugin Gallery and each
   //     plugin's manage page: stronger. Plugin alerts now open System Status.
   //   Socket — ingest services and the IB link → Ops Bus Status (socket
   //     matrix, IB Gateway → redis-ib → consumers) and IB Client (reconnect,
   //     live/mock, maintenance): stronger. Its start / stop / reset of four
   //     services — three of them the Platform IB Gateway's, which a Trade page
-  //     should not operate — and Clear leases are dropped (Owner).
+  //     should not operate — and Clear leases are dropped.
   //   Daemon — liveness, self-check, block reasons → System Status · Trading
   //     link and Ops Bus Status: equal. The hedge daemon's own reading (trading
   //     state, symbol · spot, position, net Δ, hedges and hedge P&L today) and
   //     the Risk model tiles, which were the same auto status twice → the
   //     Hedge menu on Trade Desk, beside the hedge controls: equal. Account
   //     sync liveness → Ops Bus Status: equal. Start / stop / reset and the
-  //     heartbeat-interval /control writes are dropped (Owner); Ops keeps Stop /
+  //     heartbeat-interval /control writes are dropped; Ops keeps Stop /
   //     Restart with Start locked by D10. Recent operations and the 24h count
-  //     are unplaced (Owner) — the monitor answers an empty list on DEV.
+  //     are unplaced — the monitor answers an empty list on DEV.
   { path: '/system/daemon', label: 'Daemon', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/system/socket', label: 'Socket', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },
   { path: '/system/topology', label: 'Topology', crumbs: SYSTEM_RUNTIME, redirect: '/system/status' },

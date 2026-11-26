@@ -1,7 +1,7 @@
 /**
  * The Research pages as a catalog, and the one sidebar tree built from it.
  *
- * One tree, no seats (Owner ruling 2026-09-19, deciding Vision §15 Q2 the way
+ * One tree, no seats (决定 2026-09-19, deciding Vision §15 Q2 the way
  * §12.3 argued: with the object layer out in the Book, both halves are short
  * enough to stand together, and a switcher that hides one of them answers
  * nothing). The Workbench seat's four folds live on as **Pipeline** — the
@@ -116,7 +116,7 @@ export const COPILOT_PAGES = {
 /**
  * The market's rows under **Home** — Events alone since design Rev 2026-09-23.7.
  *
- * Live and Alerts left the tree for the rail's fourth group (§5a.10, Owner
+ * Live and Alerts left the tree for the rail's fourth group (§5a.10,
  * option B): the left rail is where you stand, the right rail is what you use
  * beside it, and the tape and the rules you armed are the second kind. Their
  * routes are untouched — they live in `layout/equip.ts` now. Events stays: the
@@ -162,7 +162,7 @@ export const BENCHES: Bench[] = [
     // It had held two homes, Ratings (Stocks · Underlyings) and Screener
     // (Stocks · Contracts), and this side carried their children flat on the
     // ground that folding would point each heading at its only child's route:
-    // two rows, one page, the double-selection the Owner retired on
+    // two rows, one page, the double-selection retired on
     // 2026-09-08. Package 2026-09-23.3 reached the same conclusion from the
     // design's own side and went further — the two middle folds were
     // **aliases**, not parents (`/research/ratings` is the same file as
@@ -177,7 +177,7 @@ export const BENCHES: Bench[] = [
     // which is one instance of the 26-glyphs-over-70-rows finding that package
     // opens with.
     icon: foldGlyph('Discover') ?? Compass,
-    // Three rows since design Rev .121 (Owner option A, 2026-09-30): Stock
+    // Three rows since design Rev .121 (option A, 2026-09-30): Stock
     // ratings and Stock screen read the same SEPA tables twice, so they are
     // one picking page now — a model ranks, a screen cuts. Their old routes
     // forward to it. Vol ratings stays one version beside it as Rank by ›
@@ -263,7 +263,7 @@ export function staticResearchSubGroups(): ShellNavSubGroup[] {
  * Discover · Analyze · Validate carried nothing of their own: each row's
  * destination was an alias of the page directly beneath it, so clicking the
  * heading selected a child while the heading stayed lit. §5a answered that
- * with the caret's shape, and the Owner's reading is that the channel is too
+ * with the caret's shape, and the reading since is that the channel is too
  * narrow — every other row in the tree is a place, and a row that looks like
  * a row reads like one whatever its caret does.
  *

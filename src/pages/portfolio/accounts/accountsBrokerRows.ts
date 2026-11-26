@@ -16,7 +16,7 @@ import type { ExecutionFreshnessItem } from '@/types/trading'
 import { accountRoles, daysFor } from '@/utils/accountsFreshnessRows'
 
 /**
- * Owner's ruling: the third account stands idle long-term and is not expected to
+ * The third account stands idle long-term and is not expected to
  * be started. It is not "funded" — the broker reports it with no balance.
  */
 export const DORMANT_ROLE_NOTE = 'not in use'

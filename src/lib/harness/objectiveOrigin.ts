@@ -11,7 +11,7 @@
  *
  * **Dial.** Vision §8 defines L0 (nothing auto-accepted) and L1 (research
  * drafts accepted when the leash holds; Trust L0 + leash today); L2 and L3 do
- * not exist. The Owner chose a reading, not a new control: an objective is at
+ * not exist. The decision is a reading, not a new control: an objective is at
  * L1 only when the loop decides for it (`mode: auto`) and Trust grants L0;
  * everything else — worked by hand, or the loop proposing and you deciding —
  * accepts nothing on its own, which is L0. The auto-approve path is unchanged.

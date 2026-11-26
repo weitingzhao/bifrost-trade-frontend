@@ -7,9 +7,9 @@
  * acts on any of them.
  *
  * **The hedge menu is the one write on this page, and it is a move, not a new
- * capability** (Owner ruling 2026-09-18, option A). Suspend, resume and
+ * capability** (决定 2026-09-18, option A). Suspend, resume and
  * emergency flatten have existed since the Daemon page, moved to Strategy ›
- * Instances when the Owner ruled they were trading decisions rather than daemon
+ * Instances when they were ruled trading decisions rather than daemon
  * telemetry, and land here because this is the trader's home. Same three
  * endpoints, same consumer, same semantics; the acknowledgement on flatten is
  * the only thing added. D10 continues to govern, held where it has always been

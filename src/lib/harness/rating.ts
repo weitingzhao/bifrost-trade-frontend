@@ -1,7 +1,7 @@
 /**
  * The Bifrost Rating as the memo reads it.
  *
- * The rating is computed once, on the run, by a rule the Owner chose (option A,
+ * The rating is computed once, on the run, by a rule decided (option A,
  * 2026-09-07): a letter for the setup, stars for how much backs it, a verb for
  * what to do, price levels beside it, and an outlook. This module only parses
  * and formats. It must never recompute a grade or a level: two copies of the

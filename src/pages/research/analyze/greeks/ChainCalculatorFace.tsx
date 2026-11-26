@@ -9,7 +9,7 @@
  * right now. Nothing here was changed, only where it sits.
  *
  * Owner call outstanding: the design has no page for this, which is not the
- * same as saying it should go (Owner ruling 2026-09-18). It keeps its place
+ * same as saying it should go (决定 2026-09-18). It keeps its place
  * as the second face until the Owner says where it belongs.
  */
 import { useMemo, useRef, useState } from 'react'

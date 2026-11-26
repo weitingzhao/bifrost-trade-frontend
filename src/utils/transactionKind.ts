@@ -7,7 +7,7 @@ import type { AccountTransaction } from '@/types/trading'
  * everything else arrives as `other`: 85 of 116 rows measured on DEV, 73%. One
  * bucket cannot answer for both a market-data subscription (a cost) and
  * securities-lending income, so Kind cuts the description into the six classes
- * the Owner ruled (decision C4, with `Interest` renamed `Financing` by F-T2) and
+ * of decision C4 (with `Interest` renamed `Financing` by F-T2) and
  * echoes the broker's own label for the three types it does name.
  *
  * The rules run in order and are printed on the page — a reader can check the

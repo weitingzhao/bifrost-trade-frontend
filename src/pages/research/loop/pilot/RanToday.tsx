@@ -4,7 +4,7 @@
  *
  * Design (`design/trade/Research Copilot.dc.html`, Today) is a table of agents
  * with a lamp each, scheduled rows in grey, and "Run one now:" as a row of
- * links under it. The Owner chose that inline row over the Agents dropdown the
+ * links under it. That inline row was chosen over the Agents dropdown the
  * Desk used to carry (2026-09-13); the dropdown stays in the Copilot composer.
  */
 import { useMemo, useState } from 'react'

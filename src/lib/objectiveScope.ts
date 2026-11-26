@@ -1,7 +1,7 @@
 /**
  * The objective the shell is looking through — provenance as a scope.
  *
- * The Owner's ruling (design 2026-09-20, Vision §16): an objective is an
+ * 决定 (design 2026-09-20, Vision §16): an objective is an
  * instance, like a symbol is, and the mechanism is a **scope, not a menu
  * entry**. The menu has no NVDA on it; it has Symbol, the place. The same is
  * true here — Autopilot has Console and Inbox, and *which machine* is a lens

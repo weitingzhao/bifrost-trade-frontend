@@ -15,12 +15,12 @@ describe('the design walk, as it stands', () => {
     // Sign-off list 2026-09-15: all five at Rev 2026-09-15.5. 2026-09-16:
     // Accounts and Transfer & Pay signed off at their page rev 2026-09-16.9.
     // Rev .11 moved Accounts to .11 (the role word and the Data from string,
-    // both already built that way); the Owner re-signed it at .11 the same day.
+    // both already built that way); re-signed at .11 the same day.
     // 2026-09-17: Ledger signed off at page rev 2026-09-16.9, then
     // Performance at its page rev 2026-09-16.11 (nine walked).
     // Rev 2026-09-17.1 (§14.7, colour tokens only) moved Accounts, Ledger,
     // Transfer & Pay, Symbol and Performance, so those five read stale until the
-    // Owner's colour look; the Owner re-signed all five at .17.1 the same day.
+    // colour look; all five were re-signed at .17.1 the same day.
     // Outcome signed off 2026-09-17, the first page built from nothing rather
     // than walked against a page the app already had (aligned 9→10).
     // Risk Portfolio Exposure signed off 2026-09-17 — the first page outside
@@ -51,12 +51,12 @@ describe('the design walk, as it stands', () => {
     // Trade pages — Desk, Plans, Orders & Fills, Rules, Expiration — signed off
     // together 2026-09-18, after the sidebar itself was re-cut to the design's
     // shape (one Desk home row carrying all six) and Playbook was walked
-    // (aligned 27→32). The same evening the Owner opened Plans against the
-    // prototype and found the walk had covered the handoff diff, not the whole
+    // (aligned 27→32). The same evening a look at Plans against the
+    // prototype found the walk had covered the handoff diff, not the whole
     // page — scope bar, inbox signpost, inspector sections, footnotes. The
     // sign-off is withdrawn while it is rebuilt (aligned 32→31). Rebuilt the
     // same evening — and Playbook's own second look dissolved two of its
-    // "deliberate" divergences by reading the server — the Owner signed both
+    // "deliberate" divergences by reading the server — both were signed
     // off together (aligned 31→33). Trade joins Home, Portfolio, Review and
     // Risk as a finished group.
     // Package 2026-09-19.1 (the Research Vision baseline) then moved twelve
@@ -76,7 +76,7 @@ describe('the design walk, as it stands', () => {
     // `stale` without leaving the walked set.
     //
     // 41 with Stock ratings: built from nothing on 2026-09-21, re-walked the
-    // same day after the Owner read it beside the prototype — the ranked list
+    // same day after a read beside the prototype — the ranked list
     // was five hundred rows with no filter bar, and the lens cells were solid
     // colour where the design is a quiet track — and signed off after. 42 with
     // the Journal, built and walked the same day: The Book's index, joined out
@@ -88,16 +88,16 @@ describe('the design walk, as it stands', () => {
     // reported that not one station page records what it made. Then the first
     // of the seven the design had moved past was re-walked: Research Overview
     // leaves `stale` for `reviewing`, which is outside this sum until the
-    // Owner looks (45→44), and 45 again when the Owner signed it off the same
+    // Owner looks (45→44), and 45 again when it was signed off the same
     // day — the first of the seven answered rather than counted. Review is the
     // second, and it moves inside the sum rather than into it: `stale` →
     // `reviewing` (45→44), with `aligned` untouched at 39 until the Owner
-    // looks. The Desk is the third and moves the same way (44→43). The Owner
-    // signed both off 2026-09-21, which closes the batch: the three layer
+    // looks. The Desk is the third and moves the same way (44→43). Both were
+    // signed off 2026-09-21, which closes the batch: the three layer
     // heads §5a.1 moved are answered and back in the sum (43→45, aligned
     // 39→41). Then the second batch left the sum while it waits for a look:
     // the Copilot and its Personas face, one prototype and one cause
-    // (45→43). The Owner signed the Copilot the same day, and Package
+    // (45→43). The Copilot was signed off the same day, and Package
     // 2026-09-21.4 took `/research/copilot/trading` with it: that package
     // moved all three Copilot rows' rev, so the Book starters page — walked
     // at .15.5 and not re-walked — reads stale (aligned 41, stale 3, so the
@@ -126,16 +126,16 @@ describe('the design walk, as it stands', () => {
     // `stale`, which is why aligned falls 42→39 while stale stays empty:
     // nothing here is owed work, only a look.
     //
-    // The Owner walked the three faces that were one page short each,
+    // The three faces that were one page short each were walked
     // 2026-09-22: Positions and the Watchlist signed off (39→41), which closes
     // Portfolio at ten of ten and The Book at four of four. The same look put
     // the Decision Inbox back in the queue (41→40): it had been signed off
-    // 2026-09-21 and re-walked, and the Owner's reading is that the page still
+    // 2026-09-21 and re-walked, and the reading is that the page still
     // does not match — the card bodies have the design's shape and not its
     // readings. Only the Owner's look puts a page in place, and the same rule
     // takes one back out.
     //
-    // 2026-09-23, the Owner reading the confirm queue itself (40→55): four
+    // 2026-09-23, a read of the confirm queue itself (40→55): four
     // Research pages, Alerts, Daily Brief and the layer page; the objective page
     // (four fixture rows on one look), Loop Run and the console, closing
     // Autopilot; the rebuilt Decision Inbox and the Rule proposals link onto it,
@@ -152,25 +152,25 @@ describe('the design walk, as it stands', () => {
     // `reviewing`: a re-walked page is not a walked page until the Owner has
     // looked at it again. 56 → 54 when Portfolio Exposure and Positions grew
     // their doors into Contract Greeks and went the same way. 54 → 58 on
-    // 2026-09-23, the Owner signing four together: Option screen, Stock
+    // 2026-09-23, four signed off together: Option screen, Stock
     // ratings, Portfolio Exposure and Positions, and Contract Greeks once its
     // door was findable — 59. Back to 58 when Stock ratings was re-walked
-    // again for the Leaders view and left for `reviewing`. 59 when the Owner
-    // signed that walk too. 58 when Research Overview was re-walked against
+    // again for the Leaders view and left for `reviewing`. 59 when that
+    // walk was signed off too. 58 when Research Overview was re-walked against
     // Rev .24 (its census rows) and left `stale` for `reviewing`. 57 when
     // Positions was re-walked against Rev .21 as the §16 north-star page and
     // went the same way. 55 when Live and Alerts — the last two in `stale`,
     // waiting on the rail move — were built into the rail's Market group and
     // left the same way. 54 when Symbol grew its seventh face (Payoff,
     // 2026-09-24) and left for `reviewing` while the Owner looks. 56 on
-    // 2026-09-25: the Owner signed the two method faces that read right side
+    // 2026-09-25: sign-off of the two method faces that read right side
     // by side — Today's candidates and the Screener authoring face. 59 the
     // same day, round two: Compare, History and History's method face.
-    // 62 on 2026-09-24: the Owner signed Symbol (after the five tab-by-tab
+    // 62 on 2026-09-24: sign-off of Symbol (after the five tab-by-tab
     // re-alignment rounds), the Symbol lab method face, and Backtest.
     // 63 on 2026-09-24: Research Overview, after the dial and Today-feed rounds.
     // 64 on 2026-09-24: Live, after the narrow-surface round. 67 later the
-    // same day: the Owner signed Events (after the fed rounds), Positions
+    // same day: sign-off of Events (after the fed rounds), Positions
     // (the §16 north-star page) and Alerts — whose rail entry navigated
     // nowhere until the same round fixed it. 65 on 2026-09-25: Package .11
     // @ Rev .43 moved Stock screen and Symbol, both re-walked the same day and
@@ -209,7 +209,7 @@ describe('the design walk, as it stands', () => {
     // Research Overview's census carries the two rows this side's ask
     // corrected — Narrative `store owed`, Compare `3 inputs owed` (Rev .24).
     // 54 on 2026-09-24: Symbol left for `reviewing` with its new Payoff face.
-    // 56 on 2026-09-25: the Owner signed Today's candidates and the Screener
+    // 56 on 2026-09-25: sign-off of Today's candidates and the Screener
     // authoring face in the re-alignment round; 59 the same day with Compare,
     // History and History's method face. 62 on 2026-09-24: Symbol, the
     // Symbol lab and Backtest, signed together after the tab-by-tab rounds.
@@ -246,33 +246,33 @@ describe('the design walk, as it stands', () => {
     // built on the strategy_plan table. Transfer & Pay joined in R12, built in
     // R11 against Rev 2026-09-16.9 (pending 22→21). Accounts joined in R12,
     // built against Rev 2026-09-16.9 (pending 21→20). Both left for aligned
-    // on the Owner's look (reviewing 4→2). Ledger joined in R13, built
+    // on sign-off (reviewing 4→2). Ledger joined in R13, built
     // against page rev 2026-09-16.9 (pending 20→19, reviewing 2→3), then
-    // aligned on the Owner's look (reviewing 3→2). Performance walked and built
+    // aligned on sign-off (reviewing 3→2). Performance walked and built
     // 2026-09-17 against page rev 2026-09-16.11 (pending 19→18, reviewing 2→3),
-    // then signed off by the Owner (reviewing 3→2). Positions walked and built
+    // then signed off (reviewing 3→2). Positions walked and built
     // 2026-09-17 against page rev 2026-09-17.1 (pending 18→17, reviewing 2→3).
     // Outcome is the first page built from nothing: the design had a prototype
     // and the app had no page, so it leaves `unbuilt` rather than `pending`
-    // (unbuilt 43→42, reviewing 3→4), then aligned on the Owner's look
+    // (unbuilt 43→42, reviewing 3→4), then aligned on sign-off
     // (reviewing 4→3). P&L Explain is the second built from nothing, and the
     // first whose central identity the data cannot evaluate at all
     // (unbuilt 42→41, reviewing 3→4). Risk Portfolio Exposure is the first
-    // page outside the Portfolio group, built under the Owner's option-b ruling
-    // (unbuilt 41→40, reviewing 4→5), then aligned on the Owner's look
+    // page outside the Portfolio group, built under the option-b decision
+    // (unbuilt 41→40, reviewing 4→5), then aligned on sign-off
     // (reviewing 5→4). Stress & Scenario is the drill-down Exposure points at
     // (unbuilt 40→39, reviewing 4→5). Positions and Backing & Model, built in
     // C6 and R14 and waiting since, signed off 2026-09-17 (reviewing 5→3).
     // Expiration Desk is the first page in the Trade group (unbuilt 39→38,
-    // reviewing 3→4), then Stress & Scenario aligned on the Owner's look
+    // reviewing 3→4), then Stress & Scenario aligned on sign-off
     // (reviewing 4→3). Orders & Fills is the desk's window on the ledger's own
-    // fills (unbuilt 38→37, reviewing 3→4), then aligned on the Owner's look
+    // fills (unbuilt 38→37, reviewing 3→4), then aligned on sign-off
     // (reviewing 4→3). Margin & Buying Power is the link Positions and Backing
-    // both wanted (unbuilt 37→36, reviewing 3→4), then aligned on the Owner's
-    // look (reviewing 4→3). Assignment is Expiration's other half
-    // (unbuilt 36→35, reviewing 3→4), then aligned on the Owner's look
+    // both wanted (unbuilt 37→36, reviewing 3→4), then aligned on
+    // sign-off (reviewing 4→3). Assignment is Expiration's other half
+    // (unbuilt 36→35, reviewing 3→4), then aligned on sign-off
     // (reviewing 4→3). Limits & Breaches closes the readable part of Risk
-    // (unbuilt 35→34, reviewing 3→4), then aligned on the Owner's look after it
+    // (unbuilt 35→34, reviewing 3→4), then aligned on sign-off after it
     // was rebuilt to carry all twelve rules (reviewing 4→3). Corporate Actions
     // is the last page of the Portfolio group (unbuilt 34→33, reviewing 3→4).
     // Today closes the Home group the same day (unbuilt 33→32, reviewing 4→5),
@@ -306,17 +306,17 @@ describe('the design walk, as it stands', () => {
     // Positions closes it: the Instance row on the Risk profile face, where the
     // rename is a real PATCH and the status is a reading, because no column
     // stores one (stale 1→0, reviewing 9→10). Then the Desk is built from
-    // nothing on the Owner's ruling of 2026-09-18 — three lanes, and the hedge
+    // nothing on the decision of 2026-09-18 — three lanes, and the hedge
     // menu moved onto it from Strategy › Instances rather than armed there
-    // (unbuilt 24→23, reviewing 10→11). The Owner then signed off Portfolio and
-    // Review together, the same day the seven Strategy pages retired
+    // (unbuilt 24→23, reviewing 10→11). Then Portfolio and
+    // Review were signed off together, the same day the seven Strategy pages retired
     // (aligned 21→24, reviewing 11→8), then Risk the same day (24→27,
     // reviewing 8→5): what was left waiting was the five Trade pages, signed off
     // together 2026-09-18 once the Trade sidebar matched the design's shape
     // (aligned 27→32, reviewing 5→0). Playbook — the one Trade page never
     // walked — was walked and built the same day against its page rev
     // 2026-09-17.1 (pending 17→16, reviewing 0→1). Plans rejoined it the same
-    // evening: the Owner's look found the page thinner than its prototype, so
+    // evening: a look found the page thinner than its prototype, so
     // its sign-off was withdrawn while the full walk was built (aligned 32→31,
     // reviewing 1→2). Both were rebuilt against their prototypes and signed
     // off together 2026-09-18 (aligned 31→33, reviewing 2→0): every walked
@@ -334,11 +334,11 @@ describe('the design walk, as it stands', () => {
     // stations, the Book, Today, Health) and the Workbench home (context
     // strip only — the prototype's own ruling that the seat home is not
     // redesigned) for the first time (pending 16→14, reviewing 3→5). Overview
-    // left for aligned on the Owner's look 2026-09-19 (reviewing 5→4).
-    // 9: the three layer pages, `/research/screener` after the Owner's
-    // naming ruling, and `/review/objectives` — built on option (c) with its
+    // left for aligned on sign-off 2026-09-19 (reviewing 5→4).
+    // 9: the three layer pages, `/research/screener` after the
+    // naming decision, and `/review/objectives` — built on option (c) with its
     // chain honestly broken. Then `/risk` and `/portfolio` were re-walked
-    // section by section against their prototypes on the Owner's reading that
+    // section by section against their prototypes on a reading that
     // the first builds were not close enough, and `/portfolio` was signed off
     // at the end of that pass (reviewing 9→8, aligned 27→28). `/review/
     // objectives` followed: re-walked under the interaction standard — the
@@ -437,15 +437,15 @@ describe('the design walk, as it stands', () => {
     // and the design's collapse target for the nine `/system/*` pages. 24 with
     // Settings, the collapse's other half — `/settings` had been redirecting
     // to the Coverage page the same ruling retired. 23 on 2026-09-22: the
-    // Owner's walk took Positions and the Watchlist out to `aligned` and put
+    // walk took Positions and the Watchlist out to `aligned` and put
     // the Decision Inbox back in, which is two out and one in. 8 after
     // the 2026-09-23 pass through the queue (fifteen rows on eleven looks), 7
     // with Live, 6 with the census face. 7 with Options Kit, the first of the
     // four `/docs/*` builds the judgement of 2026-09-23 recommended, and 8
     // with Stock ratings, re-walked the same day onto the capabilities the
     // design moved there, and 10 with Portfolio Exposure and Positions, which
-    // grew Contract Greeks' three doors between them. Back to 6 when the Owner
-    // signed four of them together on 2026-09-23, and 5 with Contract Greeks.
+    // grew Contract Greeks' three doors between them. Back to 6 when four of them
+    // were signed off together on 2026-09-23, and 5 with Contract Greeks.
     // 6 again with Stock ratings, re-walked onto the Leaders view, and back
     // to 5 when that walk was signed. 6 with Events, built on the design's
     // four-state rule so an unfed pipeline reads as unfed. 7 with History,
@@ -463,11 +463,11 @@ describe('the design walk, as it stands', () => {
     // over the SEPA wide table. 19 with Calibration, the document rendered
     // as a page with its own count disagreement on display. 20 with Backtest,
     // the pending pool's last page, walked run-first onto the design. 18 on
-    // 2026-09-25: the Owner signed lab/today and lab/screener out of it, then
+    // 2026-09-25: lab/today and lab/screener signed out of it, then
     // 15 with Compare, History and History's method face. 12 on 2026-09-24,
-    // the Owner signing Symbol, the Symbol lab and Backtest out of it; 11 on
+    // Symbol, the Symbol lab and Backtest signed out of it; 11 on
     // 2026-09-24 with Research Overview; 10 on 2026-09-24 with Live; 7 later
-    // that day, the Owner signing Events, Positions and Alerts out of it. 8 on
+    // that day, Events, Positions and Alerts signed out of it. 8 on
     // 2026-09-25 with Narrative, built once its store (the 8-K text) existed.
     // 10 the same day: Stock screen and Symbol, re-walked at Rev .43.
     // 15 on 2026-09-25 (Rev .55): the five sample pages join the ten. 16
@@ -615,21 +615,21 @@ describe('the design walk, as it stands', () => {
     // question — where the events board goes. Backtest left on 2026-09-23:
     // the design voided the LAB mark that put it here (round LAB → OLD), and
     // an unwalked page with a current prototype is `pending`, not `moving`.
-    // 3 → 0 on 2026-09-23: the Owner retired all three once every capability
+    // 3 → 0 on 2026-09-23: all three retired once every capability
     // had a home in the design's §15.2 disposition tables — SEPA's five and
     // Momentum's nine factors on Stock ratings, the ranking as its Leaders
     // view, and Explorer's events board on Events. A redirect is not a row
     // here, so nothing is left for the design to dissolve elsewhere.
     expect(counts.byState.moving).toBe(0)
     // Rev 2026-09-15.13 collapsed nine `/system/*` routes into `/system/status`
-    // and `/settings` (the Owner's OLTP/OLAP/Ops ruling). The app still has the
+    // and `/settings` (the OLTP/OLAP/Ops decision). The app still has the
     // nine pages, so each one asks where it goes — that is nine rows in "to
-    // ask". `/research/stock-screener` used to be the tenth; the Owner's
-    // 2026-09-20 ruling answered it, so the page holds the design's own path
+    // ask". `/research/stock-screener` used to be the tenth; the
+    // 2026-09-20 decision answered it, so the page holds the design's own path
     // and nothing here is waiting on Design any more. 0 on 2026-09-25: the
-    // Owner carried the collapse out and all nine forward (redirectRoutes.ts
+    // collapse was carried out and all nine forwarded (redirectRoutes.ts
     // names where each capability went), so "to ask" is empty.
-    // 0 → 1 on 2026-10-06: the Pine library's own page and menu row (Owner),
+    // 0 → 1 on 2026-10-06: the Pine library's own page and menu row,
     // which the design draws as Backtest's third tab — asked of Design in
     // design/uploads/RECEIPT-pine-library-nav-row-2026-10-06.md.
     expect(counts.byState.staging).toBe(1)
@@ -653,7 +653,7 @@ describe('the design walk, as it stands', () => {
     // layer that is only a container cannot be its own first child (§5a.1).
     // 92 with Package 2026-09-21.4: `/research/orchestration`, split out of
     // the Personas page. 83 on 2026-09-25, with nothing removed from the
-    // design: the Owner kept nine `/docs/*` documents in the design package,
+    // design: nine `/docs/*` documents stay in the design package,
     // and a page that was never this app's to build is not in its denominator.
     // 84 with Rev .52: `/docs/research-calibration` now resolves to the
     // Calibration prototype, and here it is that page's forward (an alias).
@@ -679,7 +679,7 @@ describe('the design walk, as it stands', () => {
     // `/research/ratings` became a redirect to Vol ratings — the design
     // carries it as an alias of that same page, so it is answered, not built.
     // 32 with Package 2026-09-20.3's three layer overview pages, back to 29
-    // once all three were built, 28 when the Owner's ruling gave the Stock
+    // once all three were built, 28 when the decision gave the Stock
     // screen to a page that exists, and 27 with Review Objectives. 26 with
     // Stock ratings, and 25 with the Journal — W4's own page, built the day
     // after (2026-09-21). 23 on 2026-09-22 without anything being built: two
@@ -700,7 +700,7 @@ describe('the design walk, as it stands', () => {
     // and 11 with the Screener authoring face, the last of the four. 10 with
     // Calibration — the last page of the approved batch. 9 on 2026-09-25 with
     // Narrative, the last business page; the nine left are the design's docs.
-    // 0 the same day: the Owner kept those nine in the design package.
+    // 0 the same day: those nine stay in the design package.
     // 2 with Package .26 @ Rev .98: Agents You and System Feedback are new
     // designed pages with no app page yet — Rev .96's feedback service and
     // memory store have to exist before either has something to read.

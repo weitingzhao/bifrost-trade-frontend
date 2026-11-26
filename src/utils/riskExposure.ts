@@ -3,7 +3,7 @@
  *
  * This page answers what Backing & Model does not: how much of the book is one
  * bet. Per-underlying capital at risk, the payoff model and its stress are
- * Backing's subject and are cited, never recomputed (Owner ruling 2026-09-17,
+ * Backing's subject and are cited, never recomputed (决定 2026-09-17,
  * option b) — what lives here is β-weighting, correlation, and the Greeks
  * rolled to the whole book.
  *

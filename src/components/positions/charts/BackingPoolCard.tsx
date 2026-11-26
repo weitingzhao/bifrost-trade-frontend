@@ -9,7 +9,7 @@
  *
  * Five slices, two tones per layer: stock backing calls and stock still free;
  * cash backing puts and cash still free; income ETFs as a single slice. The
- * income slice is labelled the way the Owner decided it is counted — via buying
+ * income slice is labelled the way it is counted — via buying
  * power, not as cash — because the broker applies its own haircut to those
  * funds and this page does not second-guess it by treating them as put cover.
  *

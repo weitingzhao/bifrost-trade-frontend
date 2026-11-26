@@ -30,8 +30,8 @@ describe('adoptionByGroup', () => {
     // ten of ten, with nothing left waiting on a look.
     // Positions went stale in Package 2026-09-22.3 — still walked, still
     // built, its Ask owed a destination — and left `stale` for `reviewing`
-    // the same day the Thread became a surface and the Ask got one. The Owner
-    // answered it 2026-09-22 and the group is whole again at ten of ten.
+    // the same day the Thread became a surface and the Ask got one. It was
+    // answered 2026-09-22 and the group is whole again at ten of ten.
     // Stale again in Package 2026-09-23.2, for one line: the contract face
     // gains `every leg on <SYM> · Contract Greeks →`, the third of the three
     // doors the design gave that page when it moved it to Risk. Built the
@@ -62,7 +62,7 @@ describe('adoptionByGroup', () => {
 
     // The design's own backlog is nobody's work here, so it stays out of the
     // denominator: System's four `/docs/*` stubs do not make it read worse —
-    // and neither do the nine design documents the Owner kept in the design.
+    // and neither do the nine design documents kept in the design.
     // Four until Rev .52: Research Calibration then resolved to the Calibration
     // prototype (an alias here). None since Rev .53, which drew the last of
     // System's stubs.
@@ -112,7 +112,7 @@ describe('the design documents stay in the design', () => {
   it('rules on all nine, and none of them is work left here', () => {
     // Ten `/docs/*` prototypes went in undifferentiated; 2026-09-18 this side
     // recommended six "not this app" and four "build". Options Kit was built.
-    // On 2026-09-25 the Owner ruled the other nine: the design keeps its one
+    // On 2026-09-25 the other nine were decided: the design keeps its one
     // copy and the Trade console does not carry a second.
     const rows = adoptionRows()
     const docs = rows.filter((r) => r.path.startsWith('/docs/') && r.state === 'designOnly')

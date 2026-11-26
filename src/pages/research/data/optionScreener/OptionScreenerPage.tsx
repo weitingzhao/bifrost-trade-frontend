@@ -5,7 +5,7 @@ import { appendSymbols } from '@/components/symbol/symbolList'
  * numbered rail beside the Contracts table.
  *
  * The walk of 2026-09-22 kept a Run button and left the table unbuilt, because
- * the engine answered nothing on DEV. The Owner chose to build the design's
+ * the engine answered nothing on DEV. The decision was to build the design's
  * page anyway and fix the engine separately, so this is the design's shape:
  *
  * - **Live, no Run button.** The engine is asked once per name, structure and

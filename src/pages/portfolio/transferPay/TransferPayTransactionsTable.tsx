@@ -24,7 +24,7 @@ const COL_COUNT = 7
 /**
  * Kind carries a judgement, so it takes a tag colour: a cost is amber, income is
  * teal, a reversal is violet, a broker label is sky. Financing is the exception
- * the Owner ruled — it holds both directions, so its tag takes the sign of the
+ * by decision — it holds both directions, so its tag takes the sign of the
  * row rather than one colour for the class (F-T2).
  */
 const KIND_VARIANT: Record<TransactionKind, DenseTagVariant> = {

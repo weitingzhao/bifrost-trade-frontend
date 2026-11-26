@@ -107,7 +107,7 @@ const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
   '/research/agent-personas',
   '/research/orchestration',
   // `/settings` is the design's own address for the System collapse's second
-  // half (Owner ruling 2026-09-15), and it is not under `/system/`.
+  // half (决定 2026-09-15), and it is not under `/system/`.
   '/settings',
 ])
 
@@ -116,7 +116,7 @@ const SYSTEM_TREE_PAGES: ReadonlySet<string> = new Set([
  *
  * Prefix matching gets this right for every page the tree lists, and wrong
  * for a page reached from somewhere else: an objective's path does not begin
- * with the Autopilot Console's, so with the Objectives fold cancelled (Owner
+ * with the Autopilot Console's, so with the Objectives fold cancelled (决定
  * 2026-09-21, design Rev 2026-09-20.1) nothing in the tree lit at all — the
  * reader stood inside Research with the whole tree dark.
  *

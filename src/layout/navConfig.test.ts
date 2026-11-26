@@ -12,7 +12,7 @@ function routesOf(group: (typeof NAV_GROUPS)[number]): (string | undefined)[] {
 
 describe('Trading nav', () => {
   it('stands before Portfolio, with Playbook as the only row', () => {
-    // Owner (a), 2026-09-14: new top-level Trade group, design order Home ·
+    // 决定 2026-09-14 (a): new top-level Trade group, design order Home ·
     // Trade · Portfolio · Research · …, one row until the rest of Trade exists.
     // Risk joined 2026-09-17 with its first built row (Portfolio Exposure); the
     // design files it as its own group of six, after Portfolio.
@@ -141,7 +141,7 @@ describe('System nav', () => {
     // Agents arrived 2026-09-22 (§5a.8): the roster and the wiring diagram are
     // the operator's and the engineer's pages, and a trader's tree is the one
     // place they do not belong. Status arrived the same day, built against the
-    // design — it is the group's landing (Owner ruling 2026-09-15: System
+    // design — it is the group's landing (决定 2026-09-15: System
     // collapses to it and Settings), so it sits above the folds rather than
     // inside one: the three questions come before the machinery that answers
     // how.

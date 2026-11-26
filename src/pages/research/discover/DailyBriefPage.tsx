@@ -15,7 +15,7 @@
  * Every one of those nine is now a row on a Symbol face. The page was a second
  * rendering of the Symbol page's lenses with a date picker on it, which is the
  * same duplication this round removed from Pipeline and from the Symbol
- * Overview. The Owner ruled on 2026-09-22 that it goes.
+ * Overview. 决定 2026-09-22: it goes.
  *
  * ## What it reads now, measured before it was built
  *

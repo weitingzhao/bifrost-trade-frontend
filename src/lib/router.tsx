@@ -412,7 +412,7 @@ export const router = withPageTransitions(createBrowserRouter([
         lazy: lazyPage(() => import('@/pages/system/settings/SettingsPage')),
       },
       {
-        // The design's collapse target (Owner ruling 2026-09-15): the nine
+        // The design's collapse target (决定 2026-09-15): the nine
         // other `/system/*` pages become diagnosis, and this answers the three
         // questions a trader asks before opening a position.
         path: 'system/status',
